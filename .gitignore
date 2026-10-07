@@ -1,0 +1,22 @@
+node_modules
+.next
+out
+next-env.d.ts
+*.tsbuildinfo
+.env*.local
+/qa
+/visual/output
+/.playwright-mcp
+
+# env / secrets (keep an example file if one is added)
+.env*
+!.env.example
+
+# deploy / local tooling
+.vercel
+.claude/settings.local.json
+
+# logs / OS files
+*.log
+.DS_Store
+Thumbs.db

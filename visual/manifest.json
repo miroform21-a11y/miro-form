@@ -1,0 +1,111 @@
+{
+  "figmaFileKey": "6GYVUPOgxDIbEqwUr8MENT",
+  "siteUrl": "http://localhost:3000",
+  "pixelmatch": { "threshold": 0.1, "includeAA": false },
+  "defaultMaxDiffPercent": 5,
+  "breakpoints": {
+    "1440": { "viewportWidth": 1440 },
+    "390": { "viewportWidth": 390 }
+  },
+  "sections": [
+    {
+      "id": "top",
+      "name": "Hero",
+      "selector": "#top",
+      "figma": {
+        "1440": { "nodeId": "92:349", "height": 810 },
+        "390": { "nodeId": "92:298", "height": 751 }
+      }
+    },
+    {
+      "id": "services",
+      "name": "Послуги",
+      "selector": "#services",
+      "figma": {
+        "1440": { "nodeId": "49:128", "height": 1643 },
+        "390": { "nodeId": "50:2", "height": 2180 }
+      }
+    },
+    {
+      "id": "works",
+      "name": "Роботи",
+      "selector": "#works",
+      "figma": {
+        "1440": { "nodeId": "65:2", "height": 2407, "refOffset": { "left": 0, "top": 230 } },
+        "390": { "nodeId": "67:2", "height": 716, "refOffset": { "left": 0, "top": 120 } }
+      }
+    },
+    {
+      "id": "about",
+      "name": "Про нас",
+      "selector": "#about",
+      "figma": {
+        "1440": { "nodeId": "1:2", "height": 1023 },
+        "390": { "nodeId": "3:2", "height": 1360 }
+      }
+    },
+    {
+      "id": "why",
+      "name": "Чому ми",
+      "selector": "#why",
+      "figma": {
+        "1440": { "nodeId": "74:119", "height": 624 },
+        "390": { "nodeId": "75:2", "height": 667 }
+      }
+    },
+    {
+      "id": "process",
+      "name": "Етапи",
+      "selector": "#process",
+      "figma": {
+        "1440": { "nodeId": "56:283", "height": 818 },
+        "390": { "nodeId": "57:2", "height": 1554 }
+      }
+    },
+    {
+      "id": "pricing",
+      "name": "Тарифи",
+      "selector": "#pricing",
+      "figma": {
+        "1440": { "nodeId": "78:191", "height": 1402 },
+        "390": { "nodeId": "80:2", "height": 1931 }
+      }
+    },
+    {
+      "id": "reviews",
+      "name": "Відгуки",
+      "selector": "#reviews",
+      "figma": {
+        "1440": { "nodeId": "36:2", "height": 888 },
+        "390": { "nodeId": "41:2", "height": 1226 }
+      }
+    },
+    {
+      "id": "faq",
+      "name": "FAQ",
+      "selector": "#faq",
+      "figma": {
+        "1440": { "nodeId": "26:57", "height": 906 },
+        "390": { "nodeId": "29:2", "height": 1339 }
+      }
+    },
+    {
+      "id": "contact",
+      "name": "Заявка",
+      "selector": "#contact",
+      "figma": {
+        "1440": { "nodeId": "10:2", "height": 916 },
+        "390": { "nodeId": "12:2", "height": 1479 }
+      }
+    },
+    {
+      "id": "footer",
+      "name": "Footer",
+      "selector": "footer",
+      "figma": {
+        "1440": { "nodeId": "59:350", "height": 690 },
+        "390": { "nodeId": "60:3", "height": 695 }
+      }
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="660" height="430" viewBox="0 0 660 430" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Glow" opacity="0.45">
+<g id="Glow / blue" filter="url(#filter0_f_0_31)">
+<ellipse cx="220" cy="220" rx="120" ry="110" fill="#146EF5" fill-opacity="0.38"/>
+</g>
+<g id="Glow / lime" filter="url(#filter1_f_0_31)">
+<ellipse cx="440" cy="190" rx="130" ry="100" fill="#AEEE05" fill-opacity="0.32"/>
+</g>
+</g>
+<defs>
+<filter id="filter0_f_0_31" x="0" y="10" width="440" height="420" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="50" result="effect1_foregroundBlur_0_31"/>
+</filter>
+<filter id="filter1_f_0_31" x="220" y="0" width="440" height="380" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="45" result="effect1_foregroundBlur_0_31"/>
+</filter>
+</defs>
+</svg>

@@ -1,0 +1,450 @@
+@import "tailwindcss";
+
+@theme {
+  /* Colors from Figma */
+  --color-ink: #050505;
+  --color-ink-2: #0a0a0a;
+  --color-lime: #aeee05;
+  --color-paper: #ededeb;
+  --color-card: #0e0e0e;
+  --color-card-2: #151515;
+  --color-orange: #ff5c39;
+
+  /* Fonts (CSS variables are set by next/font in layout.tsx) */
+  --font-display: var(--font-unbounded), system-ui, sans-serif;
+  --font-body: var(--font-noto), system-ui, sans-serif;
+  --font-pixel: var(--font-press-start), monospace;
+
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Figma "line-height: normal" = font metrics (ascender + descender) */
+  --leading-pixel: 1;
+  --leading-display: 1.24;
+  --leading-body: 1.362;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Lenis animates the scroll itself — native smoothing on top of it would fight every frame */
+  html.lenis {
+    scroll-behavior: auto;
+  }
+
+  body {
+    background: var(--color-ink);
+    color: #fff;
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: clip;
+  }
+
+  section[id] {
+    scroll-margin-top: 16px;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  ::selection {
+    background: var(--color-lime);
+    color: var(--color-ink-2);
+  }
+}
+
+@utility container-x {
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  padding-inline: 20px;
+
+  @media (width >= 48rem) {
+    padding-inline: clamp(32px, 6.25vw, 90px);
+  }
+}
+
+/* Gradient text used for the giant MIROFORM wordmarks */
+@utility text-chrome {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.1) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---------- Hero 3D object (geometry from Figma, incl. its non-uniform stretch) ---------- */
+.hero-blob {
+  left: -9.49vw;
+  top: 117.7vw;
+  width: 131.8vw;
+  height: 172.3vw;
+}
+
+@media (width >= 48rem) {
+  .hero-blob {
+    left: calc(50% - 360px);
+    top: 470px;
+    width: 720px;
+    height: 941px;
+  }
+}
+
+/*
+ * Desktop: in Figma (1440) the blob sits in the 617px gap between the H1 column
+ * (323px) and the subtitle column (320px), with 49px / 94px clearance.
+ * The text columns keep their size on narrower desktops, so the blob is laid out
+ * on its own scale `--blob-stage`: the stage width, but never more than what keeps
+ * the Figma proportion inside the actual gap between the columns.
+ * At 1440 everything resolves to the Figma values (left 273px, top 80px).
+ *  - left: subtitle's left edge minus the Figma offset 757px (scaled);
+ *  - top:  text top (header 132px + margin) minus the Figma offset 132px (scaled).
+ */
+@media (width >= 64rem) {
+  .hero-blob {
+    --hero-pad: clamp(40px, 6.25vw, 90px);
+    --hero-h1-width: calc(7.69 * clamp(34px, 2.92vw, 42px));
+    --blob-stage: min(
+      var(--stage),
+      calc((var(--stage) - 2 * var(--hero-pad) - 320px - var(--hero-h1-width)) * 2.3339)
+    );
+    left: calc(50% + var(--stage) * 0.5 - var(--hero-pad) - 320px - var(--blob-stage) * 0.52567);
+    top: calc(132px + clamp(48px, 5.56vw, 80px) - var(--blob-stage) * 0.09167);
+    width: calc(var(--blob-stage) * 0.6868);
+    height: calc(var(--blob-stage) * 0.8972);
+    filter: drop-shadow(0 14px 20px rgba(0, 0, 0, 0.6)) drop-shadow(0 44px 64px rgba(0, 0, 0, 0.85));
+  }
+}
+
+/* ---------- Scroll reveal ---------- */
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 28px, 0);
+  transition:
+    opacity 0.8s var(--ease-smooth),
+    transform 0.8s var(--ease-smooth);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- Marquee ---------- */
+@keyframes marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    /* one copy + the gap after it, so the seam doesn't jump */
+    transform: translate3d(calc(-50% - var(--marquee-gap, 0px) / 2), 0, 0);
+  }
+}
+
+.marquee-track {
+  animation: marquee var(--marquee-duration, 40s) linear infinite;
+}
+
+@media (max-width: 767px) {
+  .marquee-track {
+    animation-duration: var(--marquee-duration-sm, var(--marquee-duration, 40s));
+  }
+}
+
+/* Pause on hover only with a real pointer — a tap must not freeze the ticker on touch screens */
+@media (hover: hover) {
+  .marquee:hover .marquee-track {
+    animation-play-state: paused;
+  }
+}
+
+/* ---------- Floating 3D objects ---------- */
+@keyframes float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0);
+  }
+}
+
+.float {
+  animation: float 7s ease-in-out infinite;
+}
+
+/* ---------- Ambient drift (small looping back-and-forth motion) ---------- */
+/* Uses the `translate` property so it composes with existing transforms (scale / rotate). */
+@keyframes drift {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: var(--drift-x, 14px) var(--drift-y, -6px);
+  }
+}
+
+.drift {
+  animation: drift var(--drift-duration, 5s) ease-in-out infinite;
+}
+
+/* ---------- Rating card entrance (reviews) ---------- */
+.rating-card .star-pop {
+  opacity: 0;
+  transform: translate3d(0, 8px, 0) scale(0.6) rotate(-24deg);
+  transform-origin: center;
+  transition:
+    opacity 0.5s var(--ease-smooth),
+    transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition-delay: calc(260ms + var(--i) * 90ms);
+}
+
+.rating-card .rating-fade {
+  opacity: 0;
+  transform: translate3d(-14px, 0, 0);
+  transition:
+    opacity 0.7s var(--ease-smooth),
+    transform 0.7s var(--ease-smooth);
+  transition-delay: var(--d, 420ms);
+}
+
+.rating-card.is-in .star-pop,
+.rating-card.is-in .rating-fade {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- Logo pixel morph (hover on desktop, tap on touch) ---------- */
+.logo-morph .logo-img,
+.logo-morph .logo-pixel {
+  transition:
+    opacity 0.35s steps(5, end),
+    filter 0.35s steps(5, end);
+}
+
+.logo-morph .logo-pixel {
+  opacity: 0;
+  filter: blur(3px);
+}
+
+.logo-morph.is-pixel .logo-img {
+  opacity: 0;
+  filter: blur(3px);
+}
+
+.logo-morph.is-pixel .logo-pixel {
+  opacity: 1;
+  filter: none;
+}
+
+@media (hover: hover) {
+  .logo-morph:hover .logo-img {
+    opacity: 0;
+    filter: blur(3px);
+  }
+  .logo-morph:hover .logo-pixel {
+    opacity: 1;
+    filter: none;
+  }
+}
+
+/* ---------- Preloader (pixel wordmark assembly) ---------- */
+.preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: var(--color-ink);
+  touch-action: none;
+  overscroll-behavior: none;
+  transition:
+    opacity 0.55s var(--ease-smooth),
+    visibility 0.55s;
+  /* fail-safe: never cover the site forever if scripts fail */
+  animation: pl-failsafe 0.4s 8s forwards;
+}
+
+.preloader.is-leaving {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* No scrolling under the intro (before hydration too); the lock expires with the fail-safe */
+html:has(.preloader:not(.is-leaving)) {
+  animation: pl-lock 8.4s;
+}
+
+.preloader-word {
+  display: flex;
+  font-family: var(--font-pixel);
+  font-size: clamp(24px, 5.6vw, 64px);
+  line-height: 1;
+  color: #fff;
+  white-space: nowrap;
+  animation: pl-glitch 0.28s steps(3, end) 0.9s forwards;
+  transition:
+    opacity 0.45s var(--ease-smooth),
+    transform 0.45s var(--ease-smooth);
+}
+
+.preloader.is-leaving .preloader-word {
+  opacity: 0;
+  transform: scale(1.04);
+}
+
+.pl-ch {
+  position: relative;
+  display: block;
+}
+
+.pl-ch > span {
+  display: block;
+  animation: pl-part 0.55s steps(7, end) both;
+  animation-delay: calc(var(--i) * 45ms + 60ms);
+}
+
+.pl-top {
+  clip-path: inset(0 0 50% 0);
+  --from: translate3d(var(--fx), calc(var(--fy) * -1), 0);
+}
+
+.pl-bot {
+  position: absolute;
+  inset: 0;
+  clip-path: inset(50% 0 0 0);
+  --from: translate3d(calc(var(--fx) * -1), var(--fy), 0);
+}
+
+.pl-ch > .pl-bot {
+  animation-delay: calc(var(--i) * 45ms + 120ms);
+}
+
+@keyframes pl-part {
+  from {
+    transform: var(--from);
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes pl-glitch {
+  0% {
+    text-shadow:
+      0.07em 0 var(--color-lime),
+      -0.07em 0 rgba(47, 91, 255, 0.9);
+  }
+  60% {
+    text-shadow:
+      -0.04em 0 var(--color-lime),
+      0.04em 0 rgba(47, 91, 255, 0.9);
+  }
+  100% {
+    text-shadow: none;
+  }
+}
+
+@keyframes pl-failsafe {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes pl-lock {
+  from,
+  to {
+    overflow: hidden;
+  }
+}
+
+/* ---------- Scrollbar ---------- */
+html {
+  /* the gutter stays reserved, so locking scroll (intro, menu, modal) never shifts the layout */
+  scrollbar-gutter: stable;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.2);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(174, 238, 5, 0.7);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--color-lime);
+}
+
+/* Firefox has no ::-webkit-scrollbar */
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+  }
+}
+
+/* Hide native scrollbar on horizontal sliders */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .marquee-track,
+  .float,
+  .drift {
+    animation: none;
+  }
+
+  .rating-card .star-pop,
+  .rating-card .rating-fade {
+    opacity: 1;
+    transform: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

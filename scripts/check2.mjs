@@ -1,0 +1,12 @@
+import { chromium } from "playwright";
+const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
+await p.goto("http://localhost:3000", { waitUntil: "networkidle" });
+const pages = () => p.$$eval("#reviews [aria-hidden]", (els) => els.filter((e) => e.offsetParent && e.querySelector("figure")).map((e) => e.getAttribute("aria-hidden")).join(","));
+console.log("desktop pages aria-hidden before:", await pages());
+await p.locator('#reviews button[aria-label="Наступні відгуки"]').filter({ visible: true }).first().click(); await p.waitForTimeout(800);
+console.log("desktop pages aria-hidden after :", await pages());
+await p.locator("#pricing a", { hasText: "Обрати пакет" }).filter({ visible: true }).nth(1).click(); await p.waitForTimeout(1200);
+console.log("preselected:", await p.locator('#contact [aria-label="Тип проєкту"] [aria-checked=true]').textContent());
+await p.locator("#pricing a", { hasText: "Обговорити" }).filter({ visible: true }).first().click(); await p.waitForTimeout(1200);
+console.log("preselected:", await p.locator('#contact [aria-label="Тип проєкту"] [aria-checked=true]').textContent());
+await b.close();
