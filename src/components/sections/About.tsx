@@ -4,7 +4,7 @@ import { Reveal } from "@/components/ui/Reveal";
 import { CountUp } from "@/components/ui/CountUp";
 import { ArrowShot } from "@/components/ui/ArrowShot";
 import { ReadWords, ScrollRead } from "@/components/ui/ScrollRead";
-import { founderInstagram } from "@/data/navigation";
+import { socialLinks } from "@/data/navigation";
 
 function InlinePhoto({ className }: { className: string }) {
   return (
@@ -24,10 +24,11 @@ function InlinePhoto({ className }: { className: string }) {
 function FounderCard() {
   return (
     <a
-      href={founderInstagram}
+      // for now the card leads to the company Instagram (@miro.form); founderInstagram (@gukgerman) is kept in navigation.ts
+      href={socialLinks.instagram}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="German Guk, Founder & CEO — Instagram @gukgerman"
+      aria-label="German Guk, Founder & CEO — Instagram MIROFORM @miro.form"
       draggable={false}
       className="pop-trigger no-native-image relative flex flex-col gap-[34px] overflow-hidden rounded-[28px] border border-white/8 bg-[#111] transition-[translate,border-color,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 active:-translate-y-1 hover:border-white/16 hover:shadow-[0_24px_60px_-30px_rgba(174,238,5,0.3)] active:border-white/16 p-2.5 max-md:h-[496px] md:gap-[30px] md:rounded-[32px] md:p-5 lg:h-full">
       <Image
