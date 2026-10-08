@@ -38,10 +38,10 @@ export function ProjectCard({
 
   return (
     <article
-      className={`group/project @container relative flex flex-col overflow-hidden bg-white transition-[translate,box-shadow] duration-500 ease-(--ease-smooth) ${
+      className={`group/project pop-trigger @container relative flex flex-col overflow-hidden bg-white transition-[translate,box-shadow] duration-500 ease-(--ease-smooth) ${
         mobile
-          ? "gap-(--card-gap,16px) rounded-[24px] px-2 pt-2 pb-(--card-pb,18px)"
-          : "gap-[21px] rounded-[32px] px-3 pt-3 pb-7 hover:-translate-y-1.5 hover:shadow-[0_24px_60px_-28px_rgba(10,10,10,0.35)]"
+          ? "gap-(--card-gap,16px) rounded-[24px] px-2 pt-2 pb-(--card-pb,18px) active:-translate-y-1 active:shadow-[0_24px_60px_-30px_rgba(174,238,5,0.35)]"
+          : "gap-[21px] rounded-[32px] px-3 pt-3 pb-7 hover:-translate-y-1.5 hover:shadow-[0_24px_60px_-30px_rgba(174,238,5,0.35)]"
       } ${className}`}
       style={style}
     >
@@ -81,11 +81,11 @@ export function ProjectCard({
         <a
           href={project.href}
           aria-label={`${project.title} — відкрити проєкт`}
-          className={`absolute grid place-items-center rounded-full bg-lime transition-transform duration-400 ease-(--ease-smooth) group-hover/project:rotate-45 hover:scale-110 ${
+          className={`absolute grid place-items-center rounded-full bg-lime ${
             mobile ? "top-[26px] right-2 h-[44.8px] w-[43.4px]" : "top-9 right-[19px] h-14 w-[54.28px]"
           }`}
         >
-          <ArrowIcon color="#0A0A0A" size={mobile ? 16 : 20} />
+          <ArrowIcon color="#0A0A0A" size={mobile ? 16 : 20} className="arrow-pop" />
         </a>
       </div>
     </article>

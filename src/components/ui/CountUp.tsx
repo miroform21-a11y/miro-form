@@ -9,11 +9,22 @@ type CountUpProps = {
   duration?: number;
   /** Digits after the decimal point (e.g. 1 for "4.9") */
   decimals?: number;
+  /** Text before the number, e.g. "$" or "-" */
+  prefix?: string;
+  /** Group thousands with a space ("1 490") */
+  group?: boolean;
+  /** Reserve the final width so neighbours do not move while counting */
+  reserve?: boolean;
   className?: string;
 };
 
+const format = (n: number, decimals: number, group: boolean) => {
+  const s = n.toFixed(decimals);
+  return group ? s.replace(/\B(?=(\d{3})+(?!\d))/g, " ") : s;
+};
+
 /** Animates a number from 0 to `to` the first time it becomes visible. */
-export function CountUp({ to, suffix = "", duration = 1600, decimals = 0, className }: CountUpProps) {
+export function CountUp({ to, suffix = "", duration = 1600, decimals = 0, prefix = "", group = false, reserve = false, className }: CountUpProps) {
   const ref = useRef<HTMLSpanElement>(null);
   const [value, setValue] = useState(to);
 
@@ -66,9 +77,17 @@ export function CountUp({ to, suffix = "", duration = 1600, decimals = 0, classN
   }, [to, duration, decimals]);
 
   return (
-    <span ref={ref} className={className} aria-label={`${to}${suffix}`}>
-      <span aria-hidden="true">
-        {value.toFixed(decimals)}
+    <span ref={ref} className={`${reserve ? "inline-grid" : ""} ${className ?? ""}`} aria-label={`${prefix}${format(to, decimals, group)}${suffix}`}>
+      {reserve && (
+        <span aria-hidden="true" className="invisible col-start-1 row-start-1">
+          {prefix}
+          {format(to, decimals, group)}
+          {suffix}
+        </span>
+      )}
+      <span aria-hidden="true" className={reserve ? "col-start-1 row-start-1 text-right" : undefined}>
+        {prefix}
+        {format(value, decimals, group)}
         {suffix}
       </span>
     </span>

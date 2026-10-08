@@ -4,6 +4,7 @@ import { Reveal } from "@/components/ui/Reveal";
 import { CountUp } from "@/components/ui/CountUp";
 import { ArrowIcon } from "@/components/ui/ArrowIcon";
 import { ReadWords, ScrollRead } from "@/components/ui/ScrollRead";
+import { founderInstagram } from "@/data/navigation";
 
 function InlinePhoto({ className }: { className: string }) {
   return (
@@ -21,7 +22,12 @@ function InlinePhoto({ className }: { className: string }) {
 
 function FounderCard() {
   return (
-    <article className="relative flex flex-col gap-[34px] overflow-hidden rounded-[28px] border border-white/8 bg-[#111] transition-[translate,border-color,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 active:-translate-y-1 hover:border-white/16 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.9)] active:border-white/16 p-2.5 max-md:h-[496px] md:gap-[30px] md:rounded-[32px] md:p-5 lg:h-full">
+    <a
+      href={founderInstagram}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="German Guk, Founder & CEO — Instagram @gukgerman"
+      className="pop-trigger relative flex flex-col gap-[34px] overflow-hidden rounded-[28px] border border-white/8 bg-[#111] transition-[translate,border-color,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 active:-translate-y-1 hover:border-white/16 hover:shadow-[0_24px_60px_-30px_rgba(174,238,5,0.3)] active:border-white/16 p-2.5 max-md:h-[496px] md:gap-[30px] md:rounded-[32px] md:p-5 lg:h-full">
       <Image
         src="/images/about/orange-glow.png"
         alt=""
@@ -38,7 +44,7 @@ function FounderCard() {
           alt="German Guk — засновник MIROFORM"
           fill
           sizes="350px"
-          className="object-fill md:hidden"
+          className="object-cover object-[50%_18%] md:hidden"
         />
         {/* Desktop photo (crop from Figma) */}
         <Image
@@ -56,15 +62,11 @@ function FounderCard() {
           <p className="font-pixel text-[20px] leading-pixel tracking-[-0.01em] text-white md:text-[24px]">German Guk</p>
           <p className="text-[18px] leading-body text-white/60 md:text-[21px]">Founder &amp; CEO</p>
         </div>
-        <a
-          href="#contact"
-          aria-label="Зв’язатися з засновником"
-          className="grid size-[52px] shrink-0 place-items-center rounded-full bg-lime transition-transform duration-400 ease-(--ease-smooth) hover:scale-110 hover:rotate-45"
-        >
-          <ArrowIcon color="#0A0A0A" size={20} />
-        </a>
+        <span aria-hidden="true" className="grid size-[52px] shrink-0 place-items-center rounded-full bg-lime">
+          <ArrowIcon color="#0A0A0A" size={20} className="arrow-pop" />
+        </span>
       </div>
-    </article>
+    </a>
   );
 }
 
@@ -75,7 +77,7 @@ function StatCard({ label, value, suffix, tone }: { label: string; value: number
       className={`@container flex h-[170px] min-w-0 flex-1 flex-col justify-between overflow-hidden rounded-[24px] px-4 pt-4 pb-5 md:h-[280px] md:rounded-[32px] md:px-8 md:pt-8 md:pb-7 transition-[translate,border-color,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 active:-translate-y-1 ${
         lime
           ? "bg-lime text-ink-2 hover:shadow-[0_24px_60px_-28px_rgba(174,238,5,0.55)] active:shadow-[0_24px_60px_-28px_rgba(174,238,5,0.55)]"
-          : "border border-white/8 bg-[#111] text-white hover:border-white/16 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.9)] active:border-white/16"
+          : "border border-white/8 bg-[#111] text-white hover:border-white/16 hover:shadow-[0_24px_60px_-30px_rgba(174,238,5,0.3)] active:border-white/16"
       }`}
     >
       <p
@@ -94,7 +96,7 @@ function StatCard({ label, value, suffix, tone }: { label: string; value: number
 
 function FullCycleCard() {
   return (
-    <div className="relative flex h-[340px] flex-col gap-4 overflow-hidden rounded-[28px] border border-white/8 transition-[translate,border-color,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 active:-translate-y-1 hover:border-white/16 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.9)] active:border-white/16 px-5 pt-[30px] pb-5 md:h-[280px] md:gap-[18px] md:rounded-[32px] md:p-8">
+    <div className="relative flex h-[340px] flex-col gap-4 overflow-hidden rounded-[28px] border border-white/8 transition-[translate,border-color,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 active:-translate-y-1 hover:border-white/16 hover:shadow-[0_24px_60px_-30px_rgba(174,238,5,0.3)] active:border-white/16 px-5 pt-[30px] pb-5 md:h-[280px] md:gap-[18px] md:rounded-[32px] md:p-8">
       {/* Glow + fade + glass star (mobile and desktop placements differ) */}
       <Image
         src="/images/glow.png"

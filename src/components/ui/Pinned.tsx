@@ -50,7 +50,7 @@ export function Pinned({ children, className = "" }: { children: ReactNode; clas
     <>
       <div ref={placeholder} className={className} aria-hidden="true" />
       {createPortal(
-        <div ref={box} className="fixed z-40">
+        <div ref={box} className="pointer-events-none fixed z-40 [&>*]:pointer-events-auto">
           {children}
         </div>,
         document.body,

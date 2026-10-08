@@ -6,6 +6,7 @@ import { navLinks } from "@/data/navigation";
 import { LangSwitch } from "@/components/ui/LangSwitch";
 import { PillButton } from "@/components/ui/PillButton";
 import { Pinned } from "@/components/ui/Pinned";
+import { usePixelMorph } from "@/components/ui/usePixelMorph";
 
 export function Header() {
   const [open, setOpen] = useState(false);
@@ -14,7 +15,7 @@ export function Header() {
   const [pill, setPill] = useState({ left: 0, width: 0 });
   // pinned menu / language switch get a denser background once the page scrolls under them
   const [scrolled, setScrolled] = useState(false);
-  const [pixel, setPixel] = useState(false);
+  const logo = usePixelMorph<HTMLAnchorElement>();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -22,13 +23,6 @@ export function Header() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  // Touch devices have no hover: a tap plays the pixel logo morph once
-  useEffect(() => {
-    if (!pixel) return;
-    const t = setTimeout(() => setPixel(false), 1100);
-    return () => clearTimeout(t);
-  }, [pixel]);
 
   // Sliding highlight behind the hovered desktop menu item
   useEffect(() => {
@@ -55,8 +49,9 @@ export function Header() {
         <a
           href="#top"
           aria-label="MIROFORM — на головну"
-          onPointerDown={(e) => e.pointerType !== "mouse" && setPixel(true)}
-          className={`logo-morph relative block h-[41.6px] w-[160px] shrink-0 xl:h-[72px] xl:w-[198px] ${pixel ? "is-pixel" : ""}`}
+          ref={logo.ref}
+          onPointerDown={logo.onPointerDown}
+          className={`${logo.className} relative block h-[41.6px] w-[160px] shrink-0 xl:h-[72px] xl:w-[198px]`}
         >
           <Image
             src="/images/hero/logo.png"
@@ -110,7 +105,7 @@ export function Header() {
 
       <div className="flex items-center gap-2.5 md:gap-6 xl:gap-[clamp(16px,calc((100vw-1280px)*0.156+16px),41px)]">
         <Pinned className="xl:hidden">
-          <LangSwitch size="sm" solid={scrolled} />
+          <LangSwitch size="sm" solid={scrolled} className={open ? "invisible" : ""} />
         </Pinned>
         <Pinned className="hidden xl:block">
           <LangSwitch solid={scrolled} />
@@ -127,7 +122,7 @@ export function Header() {
             aria-expanded={open}
             aria-controls="mobile-menu"
             onClick={() => setOpen(true)}
-            className="grid size-[42px] place-items-center rounded-full bg-lime transition-transform duration-300 hover:scale-105"
+            className={`grid size-[42px] place-items-center rounded-full bg-lime transition-transform duration-300 hover:scale-105 ${open ? "invisible" : ""}`}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
               <path d="M3 6H15M3 12H15" stroke="#0A0A0A" strokeWidth="1.8" strokeLinecap="round" />
@@ -151,15 +146,14 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
       aria-hidden={!open}
       inert={!open}
       data-lenis-prevent
-      className={`fixed inset-0 z-50 flex flex-col overflow-y-auto bg-ink/96 px-5 pt-6 pb-8 backdrop-blur-xl transition-[opacity,visibility] duration-400 ease-(--ease-smooth) md:px-8 xl:hidden ${
+      className={`fixed inset-0 z-50 flex flex-col overflow-x-hidden overflow-y-auto overscroll-contain touch-pan-y bg-ink/96 px-5 pt-6 pb-8 backdrop-blur-xl transition-[opacity,visibility] duration-400 ease-(--ease-smooth) md:px-8 xl:hidden ${
         open ? "visible opacity-100" : "invisible opacity-0"
       }`}
     >
-      {/* Soft glow, same palette as the hero */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-40 -left-24 size-[520px] rounded-full bg-[#146EF5]/30 blur-[90px]"
-      />
+      {/* Soft glow, same palette as the hero — clipped to the menu so it can’t widen it */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -bottom-40 -left-24 size-[520px] rounded-full bg-[#146EF5]/30 blur-[90px]" />
+      </div>
 
       <div className="relative flex items-center justify-between">
         <a href="#top" onClick={onClose} aria-label="MIROFORM — на головну" className="relative block h-[41.6px] w-[160px]">
@@ -177,7 +171,7 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
             type="button"
             aria-label="Закрити меню"
             onClick={onClose}
-            className="grid size-[42px] place-items-center rounded-full bg-lime transition-transform duration-300 hover:rotate-90"
+            className="relative grid size-[42px] place-items-center rounded-full bg-lime transition-transform duration-300 after:absolute after:-inset-1.5 after:content-[''] hover:rotate-90"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
               <path d="M4.5 4.5l9 9M13.5 4.5l-9 9" stroke="#0A0A0A" strokeWidth="1.8" strokeLinecap="round" />

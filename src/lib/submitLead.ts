@@ -1,10 +1,13 @@
-import type { Budget, ProjectType } from "@/data/pricing";
+import type { Budget } from "@/data/leads";
 
 export type Lead = {
-  name: string;
+  /** "lead" — project request, "question" — the FAQ popup */
+  kind: "lead" | "question";
+  name?: string;
   contact: string;
-  projectType: ProjectType;
-  /** Not asked in the pricing popup */
+  direction?: string;
+  option?: string;
+  /** Asked only in the contacts section form */
   budget?: Budget;
   message: string;
 };

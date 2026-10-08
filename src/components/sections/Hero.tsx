@@ -49,7 +49,7 @@ function StackTags({ className = "", size }: { className?: string; size: "lg" | 
         <li
           key={t.label}
           style={{ width: t.w[size === "lg" ? 0 : 1] }}
-          className="flex items-center justify-center rounded-full border border-white/30 bg-white/4 font-display leading-display font-medium tracking-[0.04em] whitespace-nowrap text-white uppercase"
+          className="flex items-center justify-center rounded-full border border-white/30 bg-white/4 transition-[translate,border-color] duration-400 ease-(--ease-smooth) hover:-translate-y-[3px] hover:border-white/50 active:-translate-y-[3px] font-display leading-display font-medium tracking-[0.04em] whitespace-nowrap text-white uppercase"
         >
           {t.label}
         </li>
@@ -60,9 +60,11 @@ function StackTags({ className = "", size }: { className?: string; size: "lg" | 
 
 export function Hero() {
   return (
+    // EXPERIMENT (mobile): the first screen is capped to the visible viewport height (100svh).
+    // Roll back by changing max-lg:min-h-[min(192.5vw,100svh)] to max-lg:min-h-[192.5vw].
     <section
       id="top"
-      className="relative isolate overflow-hidden bg-ink [--stage:min(100vw,1440px)] max-lg:min-h-[192.5vw] md:max-lg:min-h-[1000px] lg:h-[max(600px,calc(var(--stage)*0.5625))]"
+      className="@container relative isolate overflow-hidden bg-ink [--stage:min(100cqw,1440px)] max-lg:min-h-[min(192.5vw,100svh)] md:max-lg:min-h-[1000px] lg:h-[max(600px,calc(var(--stage)*0.5625))]"
     >
       {/* ---------- Background layers (mobile / tablet) ---------- */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 lg:hidden">
@@ -77,7 +79,7 @@ export function Hero() {
         <img
           src="/images/hero/m-glow-object.svg"
           alt=""
-          className="absolute top-[113.8vw] left-[-42.3vw] h-[164vw] w-[184.6vw] max-w-none md:top-[480px] md:left-[-15%] md:h-[900px] md:w-[130%]"
+          className="absolute top-[calc(min(192.5vw,100svh)-78.7vw)] left-[-42.3vw] h-[164vw] w-[184.6vw] max-w-none md:top-[480px] md:left-[-15%] md:h-[900px] md:w-[130%]"
         />
         <img src="/images/hero/m-dot-grid.svg" alt="" className="absolute top-[90px] left-0 h-[321px] w-[651px] max-w-none" />
       </div>
@@ -103,7 +105,8 @@ export function Hero() {
           style={{
             height: "calc(var(--stage) * 0.6667)",
             backgroundImage:
-              "linear-gradient(180deg, rgba(5,5,5,0) 72%, #050505 100%), linear-gradient(90deg, #050505 calc((100% - var(--stage)) / 2 + var(--stage) * 0.3), rgba(5,5,5,0) calc((100% - var(--stage)) / 2 + var(--stage) * 0.62))",
+              // right layer: beyond the 1440 frame the glow’s outer blue ring would show as a vertical band (zero width up to 1440px)
+              "linear-gradient(180deg, rgba(5,5,5,0) 72%, #050505 100%), linear-gradient(270deg, #050505 calc((100% - var(--stage)) * 0.375), rgba(5,5,5,0) calc((100% - var(--stage)) / 2)), linear-gradient(90deg, #050505 calc((100% - var(--stage)) / 2 + var(--stage) * 0.3), rgba(5,5,5,0) calc((100% - var(--stage)) / 2 + var(--stage) * 0.62))",
           }}
         />
         <img
@@ -142,7 +145,7 @@ export function Hero() {
           </div>
 
           <div className="flex flex-col items-start lg:items-end lg:pt-8">
-            <p className="mt-[18px] text-[14px] leading-[1.55] text-white md:text-[16px] lg:mt-0 lg:pr-[19px] lg:text-right lg:text-[16px]">
+            <p className="mt-[18px] text-[14px] leading-[1.55] font-[350] text-white md:text-[16px] lg:mt-0 lg:pr-[19px] lg:text-right lg:text-[16px]">
               Дизайн, розробка й AI-рішення під ключ.
               <br />
               Від ідеї до першої заявки — від 7 днів.

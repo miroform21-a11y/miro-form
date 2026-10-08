@@ -3,10 +3,10 @@
 import Image from "next/image";
 import { useId, useState } from "react";
 import { faq, type FaqItem } from "@/data/faq";
-import { socialLinks } from "@/data/navigation";
 import { SectionTag } from "@/components/ui/SectionTag";
 import { Reveal } from "@/components/ui/Reveal";
 import { PillButton } from "@/components/ui/PillButton";
+import { LeadCard } from "@/components/ui/LeadCard";
 
 function ToggleIcon({ open }: { open: boolean }) {
   return (
@@ -43,7 +43,7 @@ function FaqRow({ item, index, open, onToggle }: { item: FaqItem; index: number;
 
   return (
     <div
-      className={`rounded-[22px] border bg-[#111] transition-colors duration-400 md:rounded-[24px] ${
+      className={`rounded-[22px] border bg-[#111] transition-[border-color,translate,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1 hover:shadow-[0_24px_60px_-30px_rgba(174,238,5,0.3)] md:rounded-[24px] ${
         open ? "border-lime/60" : "border-white/8 hover:border-white/16"
       }`}
     >
@@ -110,7 +110,10 @@ function FaqRow({ item, index, open, onToggle }: { item: FaqItem; index: number;
 
 function AskCard() {
   return (
-    <div className="group/pill relative flex h-[398px] flex-col gap-5 overflow-hidden rounded-[32px] border border-white/8 bg-[#111] px-6 pt-7 transition-[translate,border-color,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 hover:border-lime/35 hover:shadow-[0_24px_60px_-30px_rgba(174,238,5,0.35)] active:-translate-y-1 md:h-[471px] md:px-[30px] md:pt-[39px]">
+    <LeadCard
+      question
+      label="Не знайшли відповідь? Поставити питання"
+      className="relative flex h-[398px] flex-col gap-5 overflow-hidden rounded-[32px] border border-white/8 bg-[#111] px-6 pt-7 transition-[translate,border-color,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 hover:border-lime/35 hover:shadow-[0_24px_60px_-30px_rgba(174,238,5,0.35)] active:-translate-y-1 md:h-[471px] md:px-[30px] md:pt-[39px]">
       <div className="relative flex flex-col gap-3.5 md:gap-5">
         <p className="font-display text-[18px] leading-display font-semibold text-white md:text-[20px]">
           Не знайшли
@@ -121,7 +124,7 @@ function AskCard() {
           Напишіть нам у Telegram — відповімо протягом 15 хвилин у робочий час.
         </p>
       </div>
-      <PillButton href={socialLinks.telegram} circleSize={44} gap={10} className="relative h-[60px] w-[273px] pr-2 pl-[27px]">
+      <PillButton as="span" circleSize={44} gap={10} className="relative h-[60px] w-[273px] pr-2 pl-[27px]">
         Поставити питання
       </PillButton>
       <div className="pointer-events-none absolute right-[-5px] bottom-[-7px] left-[-5px] h-[185px] overflow-hidden rounded-[24px] md:right-[-1px] md:bottom-[-3px] md:h-[228px]">
@@ -134,7 +137,7 @@ function AskCard() {
           className="absolute top-[-6.2%] left-0 h-[199.5%] w-[100.12%] max-w-none"
         />
       </div>
-    </div>
+    </LeadCard>
   );
 }
 

@@ -1,8 +1,4 @@
-export const projectTypes = ["Лендінг", "Багатосторінковий сайт", "Інтернет-магазин", "Дизайн", "AI-рішення"] as const;
-export type ProjectType = (typeof projectTypes)[number];
-
-export const budgets = ["до $500", "$500–1500", "$1500+", "Не знаю"] as const;
-export type Budget = (typeof budgets)[number];
+import type { LeadPreset } from "./leads";
 
 export type Plan = {
   id: "landing" | "multi";
@@ -14,7 +10,8 @@ export type Plan = {
   /** Mobile copy has an explicit line break before the last sentence */
   mobileDescription?: [string, string];
   price: string;
-  projectType: ProjectType;
+  /** Preselected in the lead popup */
+  lead: LeadPreset;
 };
 
 export const plans: Plan[] = [
@@ -29,7 +26,7 @@ export const plans: Plan[] = [
     description:
       "Односторінковий сайт для продукту, послуги чи рекламної кампанії. До 10 продуманих блоків, індивідуальний дизайн. Запуск — від 7 днів.",
     price: "$490",
-    projectType: "Лендінг",
+    lead: { direction: "web", option: "Лендінг пейдж" },
   },
   {
     id: "multi",
@@ -43,7 +40,7 @@ export const plans: Plan[] = [
       "Термін — від 3 тижнів.",
     ],
     price: "$1 490",
-    projectType: "Багатосторінковий сайт",
+    lead: { direction: "web", option: "Багатосторінковий сайт" },
   },
 ];
 
@@ -51,7 +48,7 @@ export const customPlan = {
   badge: "Індивідуально",
   title: "AI & Custom",
   description: "AI-асистенти, Telegram-боти, автоматизація процесів та інтеграції під ваш бізнес.",
-  projectType: "AI-рішення" as ProjectType,
+  lead: { direction: "ai" } as LeadPreset,
 };
 
 export const discounts: { value: string; title: string; lines: [string, string]; wrapOnDesktop?: boolean }[] = [

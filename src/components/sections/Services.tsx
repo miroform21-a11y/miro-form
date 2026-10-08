@@ -4,6 +4,7 @@ import { services, type Service } from "@/data/services";
 import { SectionTag } from "@/components/ui/SectionTag";
 import { Reveal } from "@/components/ui/Reveal";
 import { ArrowIcon } from "@/components/ui/ArrowIcon";
+import { LeadOverlayButton } from "@/components/ui/LeadCard";
 import { CursorLabel, Rotated, SelectionBox } from "@/components/ui/Decor";
 import { ReadWords, ScrollRead } from "@/components/ui/ScrollRead";
 
@@ -108,10 +109,10 @@ function DesktopDecor({ id }: { id: Service["id"] }) {
     return (
       <div aria-hidden="true" className={layer}>
         <BigNumber value="01" className="text-[250px] text-ink-2/6" style={{ left: 36.6, top: 55 }} />
-        <Rotated box={{ left: -184, top: -270, width: 782.5, height: 886 }} inner={{ width: 564.3, height: 737.5 }} rotate={20} className="transition-[rotate,scale] duration-[900ms] ease-(--ease-smooth) group-hover/card:rotate-[-28deg] group-active/card:rotate-[-28deg]">
+        <Rotated box={{ left: -184, top: -270, width: 782.5, height: 886 }} inner={{ width: 564.3, height: 737.5 }} rotate={20} className="transition-[rotate,scale] duration-[900ms] ease-(--ease-smooth) group-hover/card:rotate-[-4deg] group-active/card:rotate-[-4deg]">
           <KeyImage />
         </Rotated>
-        <Rotated box={{ left: 171, top: 111, width: 94.75, height: 93.65 }} inner={{ width: 77.7, height: 76.1 }} rotate={-15} className="transition-[rotate,scale] duration-[900ms] ease-(--ease-smooth) group-hover/card:rotate-[-28deg] group-active/card:rotate-[-28deg]">
+        <Rotated box={{ left: 171, top: 111, width: 94.75, height: 93.65 }} inner={{ width: 77.7, height: 76.1 }} rotate={-15} className="transition-[rotate,scale] duration-[900ms] ease-(--ease-smooth) group-hover/card:rotate-[-21.5deg] group-active/card:rotate-[-21.5deg]">
           <KeyLetter size={70} />
         </Rotated>
         <CursorLabel label="Сайт" tone="dark" left={347} top={119} labelWidth={63} className="drift" />
@@ -155,11 +156,11 @@ function MobileDecor({ id }: { id: Service["id"] }) {
     return (
       <div aria-hidden="true" className={layer}>
         <BigNumber value="01" className="text-[155px] text-ink-2/6" style={{ left: 29, top: 328 }} />
-        <Rotated box={{ left: -129, top: 126, width: 547.8, height: 620.2 }} inner={{ width: 395, height: 516.2 }} rotate={20} className="transition-[rotate,scale] duration-[900ms] ease-(--ease-smooth) group-hover/card:rotate-[-28deg] group-active/card:rotate-[-28deg]">
+        <Rotated box={{ left: -129, top: 126, width: 547.8, height: 620.2 }} inner={{ width: 395, height: 516.2 }} rotate={20} className="transition-[rotate,scale] duration-[900ms] ease-(--ease-smooth) group-hover/card:rotate-[-4deg] group-active/card:rotate-[-4deg]">
           <KeyImage />
         </Rotated>
         <CursorLabel label="Сайт" tone="dark" left={245} top={358} labelWidth={63} scale={0.62} className="drift [--drift-x:-12px]" />
-        <Rotated box={{ left: 126, top: 396, width: 58.7, height: 58 }} inner={{ width: 48.2, height: 47.2 }} rotate={-15} className="transition-[rotate,scale] duration-[900ms] ease-(--ease-smooth) group-hover/card:rotate-[-28deg] group-active/card:rotate-[-28deg]">
+        <Rotated box={{ left: 126, top: 396, width: 58.7, height: 58 }} inner={{ width: 48.2, height: 47.2 }} rotate={-15} className="transition-[rotate,scale] duration-[900ms] ease-(--ease-smooth) group-hover/card:rotate-[-21.5deg] group-active/card:rotate-[-21.5deg]">
           <KeyLetter size={43.4} />
         </Rotated>
       </div>
@@ -220,7 +221,7 @@ function ServiceCard({ service }: { service: Service }) {
 
   return (
     <article
-      className={`group/card relative w-full cursor-pointer overflow-hidden rounded-[28px] px-6 pt-6 transition-[translate] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 active:-translate-y-1 md:h-[360px] md:rounded-[36px] md:px-8 md:pt-11 lg:px-[47px] ${t.card} ${mobileHeights[service.id]}`}
+      className={`group/card pop-trigger relative w-full cursor-pointer overflow-hidden rounded-[28px] px-6 pt-6 transition-[translate,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 hover:shadow-[0_24px_60px_-30px_rgba(174,238,5,0.35)] active:-translate-y-1 active:shadow-[0_24px_60px_-30px_rgba(174,238,5,0.35)] md:h-[360px] md:rounded-[36px] md:px-8 md:pt-11 lg:px-[47px] ${t.card} ${mobileHeights[service.id]}`}
     >
       <MobileDecor id={service.id} />
       <DesktopDecor id={service.id} />
@@ -284,11 +285,11 @@ function ServiceCard({ service }: { service: Service }) {
 
       <span
         aria-hidden="true"
-        className={`absolute grid h-14 w-[54.28px] place-items-center rounded-full transition-[scale,rotate] duration-400 ease-(--ease-smooth) group-hover/card:scale-110 group-hover/card:rotate-45 md:top-11 md:right-8 lg:right-[47px] ${t.arrow.bg} ${mobileArrowPos[service.id]}`}
+        className={`absolute grid h-14 w-[54.28px] place-items-center rounded-full md:top-11 md:right-8 lg:right-[47px] ${t.arrow.bg} ${mobileArrowPos[service.id]}`}
       >
-        <ArrowIcon color={t.arrow.color} size={20} />
+        <ArrowIcon color={t.arrow.color} size={20} className="arrow-pop" />
       </span>
-      <a href="#contact" aria-label={`${service.title} — обговорити проєкт`} className="absolute inset-0 z-[2] rounded-[inherit]" />
+      <LeadOverlayButton preset={{ direction: service.id }} label={`${service.title} — залишити заявку`} />
     </article>
   );
 }
@@ -355,7 +356,7 @@ export function Services() {
             <p aria-hidden="true" className="font-display text-[48px] leading-[0.6] font-bold text-lime">
               “
             </p>
-            <p className="max-w-[350px] text-[15px] leading-[1.55] text-white/70 xl:max-w-none">
+            <p className="max-w-[350px] text-[15px] leading-[1.55] font-[350] text-white/70 xl:max-w-none">
               Незалежно від типу проєкту, ми вкладаємо максимум умінь і досвіду, щоб отримати результат, яким не соромно
               хвалитися.
             </p>

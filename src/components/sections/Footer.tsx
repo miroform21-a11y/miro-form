@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { contacts, socialLinks } from "@/data/navigation";
 import { PillButton } from "@/components/ui/PillButton";
+import { FooterWordmark } from "@/components/ui/FooterWordmark";
 
 const navColumn = [
   { label: "Послуги", href: "#services" },
@@ -22,7 +23,7 @@ function ColumnTitle({ children }: { children: string }) {
   return <p className="font-display text-[12px] leading-display font-medium tracking-[0.08em] text-lime uppercase">{children}</p>;
 }
 
-const linkClass = "text-[16px] leading-body text-white/80 transition-colors duration-300 hover:text-lime";
+const linkClass = "text-[15px] leading-body font-[350] text-white/75 transition-colors duration-300 hover:text-lime";
 
 function Socials() {
   return (
@@ -32,6 +33,8 @@ function Socials() {
           <a
             href={s.href}
             aria-label={s.name}
+            target="_blank"
+            rel="noopener noreferrer"
             className="grid h-[57px] w-14 place-items-center rounded-full border border-white/18 bg-white/9 font-display text-[14px] font-semibold text-white transition-[background-color,border-color,color] duration-300 hover:border-lime hover:bg-lime hover:text-ink-2"
           >
             {s.label}
@@ -155,17 +158,12 @@ export function Footer() {
         </div>
 
         {/* ---------- Wordmark ---------- */}
-        <p
-          aria-hidden="true"
-          className="mt-[33px] w-max bg-gradient-to-b from-white to-[#2a2a2a] bg-clip-text pl-1 font-display text-[min(11.54vw,45px)] md:text-[min(11.74vw,169px)] leading-[0.9] font-bold tracking-[-0.04em] whitespace-nowrap text-transparent select-none md:mt-[72px] md:pl-0"
-        >
-          MIROFORM®
-        </p>
+        <FooterWordmark className="mt-[33px] pl-1 text-[min(11.54vw,45px)] md:mt-[72px] md:pl-0 md:text-[min(11.74vw,169px)]" />
 
         {/* ---------- Bottom ---------- */}
         <div className="mt-[27px] border-t border-white/99 pt-5 pb-8 md:mt-[72px] md:grid md:h-[73px] md:grid-cols-[45.58%_1fr_auto] md:items-center md:border-white/10 md:pt-0 md:pb-0 lg:h-[115px] lg:items-start lg:pt-[28px]">
           <p className="hidden text-[14px] leading-body text-white/50 md:block lg:pt-[13.5px]">© 2026 MIROFORM®. Усі права захищені.</p>
-          <a href={socialLinks.privacy} className="block text-[14px] leading-[17px] text-white/50 md:leading-body transition-colors hover:text-white md:self-center lg:self-auto lg:pt-[13.5px]">
+          <a href={socialLinks.privacy} className="block self-start justify-self-start text-[14px] leading-[17px] text-white/50 underline decoration-white/35 underline-offset-4 md:leading-body transition-colors hover:text-white hover:decoration-white md:self-center lg:self-auto lg:pt-[13.5px]">
             Політика конфіденційності
           </a>
           <div className="hidden md:block">

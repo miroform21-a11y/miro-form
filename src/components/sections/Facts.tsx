@@ -21,7 +21,7 @@ function FactValue({ fact, mobile }: { fact: Fact; mobile?: boolean }) {
 
 export function Facts() {
   return (
-    <section id="why" className="relative overflow-hidden bg-ink pt-14 pb-[35px] md:py-[110px]">
+    <section id="why" className="relative overflow-hidden bg-ink md:[overflow:clip_visible] pt-14 pb-[35px] md:py-[110px]">
       {/* Glows */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0">
         <img src="/images/facts/m-glow-violet.svg" alt="" className="absolute top-[-123px] left-[45px] h-[660px] w-[720px] max-w-none md:hidden" />

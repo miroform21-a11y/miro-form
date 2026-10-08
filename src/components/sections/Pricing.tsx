@@ -4,6 +4,7 @@ import { SectionTag } from "@/components/ui/SectionTag";
 import { Reveal } from "@/components/ui/Reveal";
 import { PillButton } from "@/components/ui/PillButton";
 import { LeadCard } from "@/components/ui/LeadCard";
+import { CountUp } from "@/components/ui/CountUp";
 
 /* ---------------------------------------------------------------- */
 /* Shared pieces                                                     */
@@ -19,14 +20,20 @@ function PlanPill({ children, className = "" }: { children: string; className?: 
   );
 }
 
-function Price({ value, size }: { value: string; size: "sm" | "lg" }) {
+/** "$1 490" → counter from 0 (used on the mobile / tablet cards) */
+function PriceCounter({ value }: { value: string }) {
+  const n = Number(value.replace(/[^\d]/g, ""));
+  return <CountUp to={n} prefix="$" group={value.includes(" ")} reserve duration={1400} />;
+}
+
+function Price({ value, size, animate = false }: { value: string; size: "sm" | "lg"; animate?: boolean }) {
   return (
     <p className={`flex items-end whitespace-nowrap ${size === "lg" ? "gap-2.5" : "gap-2"}`}>
       <span className="text-[14px] leading-body text-ink-2/60">Від</span>
       <span
         className={`font-display leading-none font-normal tracking-[-0.04em] text-ink-2 ${size === "lg" ? "text-[42px]" : "text-[36px]"}`}
       >
-        {value}
+        {animate ? <PriceCounter value={value} /> : value}
       </span>
     </p>
   );
@@ -75,7 +82,9 @@ function HitEllipse({ className }: { className: string }) {
 function Discount({ d, mobile }: { d: (typeof discounts)[number]; mobile?: boolean }) {
   return (
     <div className={`flex min-w-0 flex-1 flex-col ${mobile ? "gap-3" : "gap-3.5 pt-6"}`}>
-      <p className={`font-pixel leading-pixel whitespace-nowrap text-orange ${mobile ? "text-[24px]" : "text-[30px]"}`}>{d.value}</p>
+      <p className={`font-pixel leading-pixel whitespace-nowrap text-orange ${mobile ? "text-[24px]" : "text-[30px]"}`}>
+        <CountUp to={Math.abs(parseInt(d.value, 10))} prefix="-" suffix="%" reserve duration={1200} />
+      </p>
       <div className={`flex flex-col ${mobile ? "gap-1.5" : "gap-2"}`}>
         <p className="font-display text-[15px] leading-display font-semibold text-white">{d.title}</p>
         <p className={`leading-[1.5] text-white/55 ${mobile ? "text-[12px]" : "w-[250px] max-w-full text-[13px]"}`}>
@@ -104,7 +113,7 @@ function CompactPlanCard({ plan }: { plan: Plan }) {
   const isMulti = plan.id === "multi";
   return (
     <LeadCard
-      projectType={plan.projectType}
+      preset={plan.lead}
       label={`${plan.title.join("")} — обрати пакет`}
       className={`relative flex flex-col overflow-hidden rounded-[28px] p-6 transition-[translate,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 active:-translate-y-1 hover:shadow-[0_28px_60px_-30px_rgba(10,10,10,0.4)] ${isMulti ? "bg-lime" : "bg-white"}`}
     >
@@ -112,7 +121,7 @@ function CompactPlanCard({ plan }: { plan: Plan }) {
       {isMulti ? (
         <>
           <HitEllipse className="top-[-17px] right-[-17px] size-[106px]" />
-          <svg width="26" height="26" viewBox="0 0 22 22" fill="none" aria-hidden="true" className="absolute top-[126px] right-[127px]">
+          <svg width="26" height="26" viewBox="0 0 22 22" fill="none" aria-hidden="true" className="cursor-pop absolute top-[121px] right-[136px]">
             <path d="M2 2L19 9L11.5 11.5L9 19L2 2Z" fill="#0A0A0A" stroke="white" strokeWidth="1.4" strokeLinejoin="round" />
           </svg>
           <span className="absolute top-[137px] right-12 flex h-5 w-[90px] items-center rounded-[1.6px_40px_40px_40px] bg-ink-2 pl-[17px] font-display text-[8px] font-medium text-white">
@@ -165,7 +174,7 @@ function CompactPlanCard({ plan }: { plan: Plan }) {
       </div>
 
       <div className="relative mt-auto pt-5">
-        <Price value={plan.price} size="sm" />
+        <Price value={plan.price} size="sm" animate />
         <PillButton as="span" variant={isMulti ? "white" : "lime"} className="mt-[18px] h-[60px] w-full pr-1.5 pl-7">
           Обрати пакет
         </PillButton>
@@ -177,7 +186,7 @@ function CompactPlanCard({ plan }: { plan: Plan }) {
 function CompactCustomCard() {
   return (
     <LeadCard
-      projectType={customPlan.projectType}
+      preset={customPlan.lead}
       label={`${customPlan.title} — обговорити`}
       className="relative block overflow-hidden rounded-[28px] border border-white/8 bg-card-2 px-6 pt-[42px] pb-7 transition-[translate,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 active:-translate-y-1 hover:border-white/16 md:col-span-2"
     >
@@ -226,7 +235,7 @@ function DesktopPlanCard({ plan }: { plan: Plan }) {
   const isMulti = plan.id === "multi";
   return (
     <LeadCard
-      projectType={plan.projectType}
+      preset={plan.lead}
       label={`${plan.title.join("")} — обрати пакет`}
       className={`group/plan relative flex h-[466px] min-w-0 flex-1 flex-col justify-between overflow-hidden rounded-[36px] px-10 pt-10 pb-[42px] transition-[translate,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 active:-translate-y-1 hover:shadow-[0_28px_60px_-30px_rgba(10,10,10,0.4)] ${
         isMulti ? "bg-lime" : "bg-white"
@@ -236,7 +245,7 @@ function DesktopPlanCard({ plan }: { plan: Plan }) {
         <>
           <Grain />
           <HitEllipse className="top-[-60px] right-[-61px] size-[199px]" />
-          <svg width="25.7" height="25.7" viewBox="0 0 22 22" fill="none" aria-hidden="true" className="absolute top-24 right-[160px] min-[1440px]:top-12 min-[1440px]:right-[209px]">
+          <svg width="25.7" height="25.7" viewBox="0 0 22 22" fill="none" aria-hidden="true" className="cursor-pop absolute top-24 right-[160px] min-[1440px]:top-12 min-[1440px]:right-[209px]">
             <path d="M2 2L19 9L11.5 11.5L9 19L2 2Z" fill="#0A0A0A" stroke="white" strokeWidth="1.4" strokeLinejoin="round" />
           </svg>
           <span className="absolute top-[119px] right-[22px] min-[1440px]:top-[71.4px] min-[1440px]:right-[71px] flex h-[31.6px] w-[142.8px] items-center rounded-[4px_100px_100px_100px] bg-ink-2 pl-[26px] font-display text-[12px] font-medium whitespace-nowrap text-white">
@@ -287,7 +296,7 @@ function DesktopPlanCard({ plan }: { plan: Plan }) {
 function DesktopCustomCard() {
   return (
     <LeadCard
-      projectType={customPlan.projectType}
+      preset={customPlan.lead}
       label={`${customPlan.title} — обговорити`}
       className="relative flex h-[400px] gap-[33px] overflow-hidden rounded-[36px] border border-white/8 bg-card-2 p-10 transition-[translate,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 active:-translate-y-1 hover:border-white/16"
     >
@@ -333,7 +342,7 @@ function DesktopCustomCard() {
 
 export function Pricing() {
   return (
-    <section id="pricing" className="relative bg-ink px-2 pt-6 pb-10 md:px-[33px] md:pt-[84px] md:pb-[93px]">
+    <section id="pricing" className="relative bg-ink px-2 md:bg-transparent pt-6 pb-10 md:px-[33px] md:pt-[84px] md:pb-[93px]">
       <div className="mx-auto max-w-[1375px] rounded-[32px] bg-paper px-4 pt-10 pb-6 md:rounded-[48px] md:px-10 md:pt-14 md:pb-[83px] xl:pb-[47px] xl:pr-[58px] xl:pl-[57px]">
         {/* Header */}
         <Reveal className="flex flex-col gap-[18px] xl:h-[182px] xl:flex-row xl:items-end xl:justify-between xl:pb-11">

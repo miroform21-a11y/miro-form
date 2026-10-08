@@ -7,13 +7,16 @@ export const navLinks = [
   { label: "Контакти", href: "#contact" },
 ] as const;
 
-/** Placeholder links — real URLs will be provided later. */
+/** Company contacts: Telegram @MirooForm, Instagram @miro.form, WhatsApp +380730217721 */
 export const socialLinks = {
-  telegram: "#",
-  whatsapp: "#",
-  instagram: "#",
+  telegram: "https://t.me/MirooForm",
+  whatsapp: "https://wa.me/380730217721",
+  instagram: "https://www.instagram.com/miro.form/",
   privacy: "/privacy",
 } as const;
+
+/** Founder’s personal Instagram (@gukgerman) — the "German Guk / Founder & CEO" card */
+export const founderInstagram = "https://www.instagram.com/gukgerman/";
 
 export const contacts = {
   email: "hello@miroform.studio",

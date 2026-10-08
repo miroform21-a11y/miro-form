@@ -38,7 +38,7 @@ function StepText({ step }: { step: Step }) {
 
 export function Process() {
   return (
-    <section id="process" className="relative overflow-hidden bg-ink pt-12 pb-[50px] md:py-14">
+    <section id="process" className="relative overflow-hidden bg-ink md:[overflow:clip_visible] pt-12 pb-[50px] md:py-14">
       {/* Glows */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0">
         {/* Mobile lime arc: blue glow tinted lime, radial mask */}
@@ -75,7 +75,7 @@ export function Process() {
               запуску
             </h2>
           </div>
-          <p className="text-[16px] leading-[1.55] text-white/65 md:max-w-[420px] md:text-[18px] lg:w-[322px] lg:pb-[9px]">
+          <p className="text-[16px] leading-[1.55] font-[350] text-white/65 md:max-w-[420px] md:text-[18px] lg:w-[322px] lg:pb-[9px]">
             Прозорий процес у 4 кроки. На кожному етапі ви бачите результат і погоджуєте його перед наступним.
           </p>
         </Reveal>
