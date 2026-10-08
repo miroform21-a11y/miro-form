@@ -6,6 +6,7 @@ import { budgets, directionById, projectTypes, type Budget, type LeadPreset, typ
 import { socialLinks } from "@/data/navigation";
 import { submitLead } from "@/lib/submitLead";
 import { ArrowShot } from "@/components/ui/ArrowShot";
+import { inputBase, legendClass } from "@/components/ui/formStyles";
 
 type Errors = Partial<Record<"name" | "contact" | "message", string>>;
 
@@ -20,8 +21,6 @@ function validate(name: string, contact: string, question: boolean, message: str
   return errors;
 }
 
-const inputBase =
-  "w-full rounded-[16px] border bg-white/4 text-[15px] leading-body text-white placeholder:text-white/45 outline-none transition-[border-color,background-color,box-shadow] duration-300 hover:border-white/25 focus:border-lime/70 focus:bg-white/6 focus:shadow-[0_0_0_4px_rgba(174,238,5,0.08)]";
 
 function Chip({
   selected,
@@ -194,8 +193,6 @@ export function ContactForm({ variant = "section", preset = { direction: "web" }
       <FieldError id={`${id}-contact-error`} text={errors.contact} />
     </div>
   );
-
-  const legendClass = "mb-3 font-display text-[12px] leading-display font-medium tracking-[0.06em] text-white/50 uppercase md:mb-4";
 
   return (
     <form noValidate onSubmit={onSubmit} className={`${box} gap-3.5 md:gap-4`} aria-label={title}>
