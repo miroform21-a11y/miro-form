@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { budgets, directionById, projectTypes, type Budget, type LeadPreset, type ProjectType } from "@/data/leads";
 import { socialLinks } from "@/data/navigation";
 import { submitLead } from "@/lib/submitLead";
@@ -41,11 +42,11 @@ function Chip({
         role="radio"
         aria-checked={selected}
         onClick={onClick}
-        className={`flex h-[43px] flex-[1_1_auto] items-center justify-center rounded-full border px-4 text-[14px] leading-body whitespace-nowrap transition-[background-color,border-color,color] duration-300 ${
+        className={`flex min-h-[42px] min-w-0 items-center justify-center rounded-[21px] border px-2.5 py-1.5 text-center text-[13px] leading-[1.2] transition-[background-color,border-color,color] duration-300 md:min-h-[43px] md:px-4 md:text-[14px] ${
           selected ? "border-lime bg-lime text-ink-2" : "border-white/18 bg-white/4 text-white hover:border-white/35 hover:bg-white/8"
         }`}
       >
-        {children}
+        {children.replace(/-/g, "\u2011")}
       </button>
     );
   }
@@ -106,12 +107,17 @@ export function ContactForm({ variant = "section", preset = { direction: "web" }
   const [errors, setErrors] = useState<Errors>({});
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
+  const router = useRouter();
+  const sending = useRef(false);
+
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (sending.current) return;
     const found = validate(name, contact, question, message);
     setErrors(found);
     if (Object.keys(found).length) return;
 
+    sending.current = true;
     setStatus("sending");
     try {
       await submitLead(
@@ -122,7 +128,10 @@ export function ContactForm({ variant = "section", preset = { direction: "web" }
             : { kind: "lead", name: name.trim(), contact: contact.trim(), direction: title, option, message: message.trim() },
       );
       setStatus("sent");
+      // only after the request succeeded
+      router.push(question ? "/thank-you?type=question" : "/thank-you");
     } catch {
+      sending.current = false;
       setStatus("error");
     }
   };
@@ -200,11 +209,14 @@ export function ContactForm({ variant = "section", preset = { direction: "web" }
       )}
 
       {/* Popup: the concrete service comes first, the direction is already known from the card */}
+      {!question && nameField}
+      {contactField}
+
+      {/* Popup: the direction is known from the card, the user picks the concrete service */}
       {variant === "modal" && (
-        <fieldset className="mt-1">
-          <legend className="sr-only">Що вас цікавить</legend>
-          {/* two per row where both fit in full, otherwise one per row — labels never break */}
-          <div role="radiogroup" aria-label="Що вас цікавить" className="flex flex-wrap gap-2 md:grid md:grid-cols-2">
+        <fieldset>
+          <legend className={legendClass}>Оберіть, що саме вас цікавить</legend>
+          <div role="radiogroup" aria-label="Оберіть, що саме вас цікавить" className="grid grid-cols-2 gap-2">
             {service.options.map((o) => (
               <Chip key={o} variant="option" selected={option === o} onClick={() => setOption(o)}>
                 {o}
@@ -213,9 +225,6 @@ export function ContactForm({ variant = "section", preset = { direction: "web" }
           </div>
         </fieldset>
       )}
-
-      {!question && nameField}
-      {contactField}
 
       {section && (
         <>
