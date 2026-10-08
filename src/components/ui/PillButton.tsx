@@ -1,4 +1,5 @@
-import type { ComponentPropsWithoutRef, ReactNode } from "react";
+import Link from "next/link";
+import type { ComponentPropsWithoutRef, ElementType, ReactNode } from "react";
 import { ArrowShot } from "./ArrowShot";
 
 type Variant = "lime" | "white" | "dark";
@@ -44,7 +45,9 @@ export function PillButton({
   as,
   ...rest
 }: PillButtonProps) {
-  const Tag = as ?? ("href" in rest && rest.href ? "a" : "button");
+  const href = "href" in rest ? rest.href : undefined;
+  // internal pages ("/", "/privacy") go through the Next.js router; anchors and external links stay <a>
+  const Tag: ElementType = as ?? (href ? (href.startsWith("/") ? Link : "a") : "button");
   const c = circle[variant];
 
   return (

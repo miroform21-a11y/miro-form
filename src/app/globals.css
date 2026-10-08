@@ -371,13 +371,13 @@ html:has(.preloader:not(.is-leaving)) {
   }
 }
 
-/* Thank-you heading: same assembly + glitch as the intro; waits while the intro screen is up */
-.thanks-title {
+/* Pixel headings on the service pages (thank-you, 404): intro assembly + glitch; wait while the intro screen is up */
+.pixel-headline {
   animation: pl-glitch 0.28s steps(3, end) 1.25s forwards;
 }
 
-html:has(.preloader:not(.is-leaving)) .thanks-title,
-html:has(.preloader:not(.is-leaving)) .thanks-title .pl-ch > span {
+html:has(.preloader:not(.is-leaving)) .pixel-headline,
+html:has(.preloader:not(.is-leaving)) .pixel-headline .pl-ch > span {
   animation-play-state: paused;
 }
 

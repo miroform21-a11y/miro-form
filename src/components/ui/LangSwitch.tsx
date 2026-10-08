@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type LangSwitchProps = { size?: "md" | "sm"; className?: string; /** Denser background when pinned over content */ solid?: boolean };
 
 /** UA / EN toggle. EN is a placeholder until the English version exists. */
@@ -18,14 +20,10 @@ export function LangSwitch({ size = "md", className = "", solid = false }: LangS
       <button type="button" aria-pressed="true" className={`${item} bg-lime text-ink-2`}>
         UA
       </button>
-      <button
-        type="button"
-        aria-pressed="false"
-        title="English version — coming soon"
-        className={`${item} text-white/70 transition-colors hover:text-white`}
-      >
+      {/* The English version is not built yet: /en has no page, so it shows the MIROFORM 404 for now */}
+      <Link href="/en" hrefLang="en" lang="en" aria-label="English version" className={`${item} text-white/70 transition-colors hover:text-white`}>
         EN
-      </button>
+      </Link>
     </div>
   );
 }

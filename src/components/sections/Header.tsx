@@ -153,6 +153,8 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
       aria-modal="true"
       aria-label="Меню"
       aria-hidden={!open}
+      // any link in the menu (sections, EN, logo, CTA) closes it — so the scroll lock is released before navigating
+      onClickCapture={(e) => (e.target as Element).closest("a") && onClose()}
       inert={!open}
       data-lenis-prevent
       className={`fixed inset-0 z-50 flex flex-col overflow-x-hidden overflow-y-auto overscroll-contain touch-pan-y bg-ink/96 px-5 pt-6 pb-8 backdrop-blur-xl transition-[opacity,visibility] duration-400 ease-(--ease-smooth) md:px-8 xl:hidden ${
