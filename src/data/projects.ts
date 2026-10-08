@@ -26,7 +26,7 @@ export const projects: Project[] = [
     crop: { left: 0, top: 0, width: 99.99, height: 269.07 },
     mobileCrop: { left: 0, top: 0, width: 100, height: 245.16 },
     titleSize: [30, 20],
-    href: "#",
+    href: "https://www.prestige-rent.info/",
   },
   {
     id: "we-padel",
@@ -37,7 +37,7 @@ export const projects: Project[] = [
     crop: { left: 0, top: 0, width: 100, height: 222.14 },
     mobileCrop: { left: 0.04, top: 0.18, width: 100, height: 497.11 },
     titleSize: [30, 22],
-    href: "#",
+    href: "https://www.we-padel.fun/",
   },
   {
     id: "bloomly",
@@ -48,7 +48,7 @@ export const projects: Project[] = [
     crop: { left: 0.08, top: -453.07, width: 100, height: 624.66 },
     mobileCrop: { left: 0, top: 0.28, width: 100, height: 1011.35 },
     titleSize: [30, 22],
-    href: "#",
+    href: "https://blooomly.space/",
   },
   {
     id: "modular-homes",
@@ -60,7 +60,7 @@ export const projects: Project[] = [
     crop: { left: -0.39, top: 0.13, width: 100.83, height: 102.5 },
     mobileCrop: { left: 0, top: 0, width: 101.23, height: 100 },
     titleSize: [30, 16],
-    href: "#",
+    href: "https://chetkov.pro/",
   },
   {
     id: "avalon",
@@ -72,7 +72,7 @@ export const projects: Project[] = [
     crop: { left: 0.06, top: -0.1, width: 99.97, height: 100 },
     mobileCrop: { left: 0, top: 0, width: 100, height: 100 },
     titleSize: [30, 17],
-    href: "#",
+    href: "https://om-residence.com/ua",
   },
   {
     id: "padel-alicante",
@@ -83,7 +83,7 @@ export const projects: Project[] = [
     crop: { left: 0.2, top: 0.11, width: 99.83, height: 151.17 },
     mobileCrop: { left: 0, top: 0, width: 100, height: 245.16 },
     titleSize: [25, 22],
-    href: "#",
+    href: "https://top-padel.pro/",
   },
 ];
 

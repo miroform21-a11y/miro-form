@@ -97,18 +97,12 @@ function Discount({ d, mobile }: { d: (typeof discounts)[number]; mobile?: boole
   );
 }
 
-/** "Хіт продажів" pointer — fires the same arrow shot as the other arrows on card hover / tap */
+/** "Хіт продажів" pointer */
 function HitPointer({ size, className }: { size: number; className: string }) {
-  const icon = (cls: string) => (
-    <svg width={size} height={size} viewBox="0 0 22 22" fill="none" className={cls}>
+  return (
+    <svg width={size} height={size} viewBox="0 0 22 22" fill="none" aria-hidden="true" className={`absolute ${className}`}>
       <path d="M2 2L19 9L11.5 11.5L9 19L2 2Z" fill="#0A0A0A" stroke="white" strokeWidth="1.4" strokeLinejoin="round" />
     </svg>
-  );
-  return (
-    <span aria-hidden="true" className={`absolute grid overflow-hidden ${className}`} style={{ width: size, height: size }}>
-      {icon("arrow-shot-out col-start-1 row-start-1")}
-      {icon("arrow-shot-in col-start-1 row-start-1")}
-    </span>
   );
 }
 
@@ -136,10 +130,13 @@ function CompactPlanCard({ plan }: { plan: Plan }) {
       {isMulti ? (
         <>
           <HitEllipse className="top-[-17px] right-[-17px] size-[106px]" />
-          <HitPointer size={26} className="top-[121px] right-[136px]" />
-          <span className="absolute top-[137px] right-12 flex h-5 w-[90px] items-center rounded-[1.6px_40px_40px_40px] bg-ink-2 pl-[17px] font-display text-[8px] font-medium text-white">
-            Хіт продажів
-          </span>
+          {/* moves on its own, like the cursor labels in Services — not tied to the card hover */}
+          <div aria-hidden="true" className="drift pointer-events-none absolute inset-0 [--drift-x:-8px] [--drift-y:5px]">
+            <HitPointer size={26} className="top-[121px] right-[136px]" />
+            <span className="absolute top-[137px] right-12 flex h-5 w-[90px] items-center rounded-[1.6px_40px_40px_40px] bg-ink-2 pl-[17px] font-display text-[8px] font-medium text-white">
+              Хіт продажів
+            </span>
+          </div>
         </>
       ) : (
         <Image
@@ -261,10 +258,13 @@ function DesktopPlanCard({ plan }: { plan: Plan }) {
         <>
           <Grain />
           <HitEllipse className="top-[-60px] right-[-61px] size-[199px]" />
-          <HitPointer size={25.7} className="top-24 right-[160px] min-[1440px]:top-12 min-[1440px]:right-[209px]" />
-          <span className="absolute top-[119px] right-[22px] min-[1440px]:top-[71.4px] min-[1440px]:right-[71px] flex h-[31.6px] w-[142.8px] items-center rounded-[4px_100px_100px_100px] bg-ink-2 pl-[26px] font-display text-[12px] font-medium whitespace-nowrap text-white">
-            Хіт продажів
-          </span>
+          {/* moves on its own, like the cursor labels in Services — not tied to the card hover */}
+          <div aria-hidden="true" className="drift pointer-events-none absolute inset-0 [--drift-x:-12px] [--drift-y:8px]">
+            <HitPointer size={25.7} className="top-24 right-[160px] min-[1440px]:top-12 min-[1440px]:right-[209px]" />
+            <span className="absolute top-[119px] right-[22px] min-[1440px]:top-[71.4px] min-[1440px]:right-[71px] flex h-[31.6px] w-[142.8px] items-center rounded-[4px_100px_100px_100px] bg-ink-2 pl-[26px] font-display text-[12px] font-medium whitespace-nowrap text-white">
+              Хіт продажів
+            </span>
+          </div>
         </>
       ) : (
         <Image

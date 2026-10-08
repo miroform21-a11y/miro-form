@@ -78,16 +78,24 @@ export function ProjectCard({
           </p>
         </div>
 
-        <a
-          href={project.href}
-          aria-label={`${project.title} — відкрити проєкт`}
+        <span
+          aria-hidden="true"
           className={`absolute grid place-items-center overflow-hidden rounded-full bg-lime ${
             mobile ? "top-[26px] right-2 h-[44.8px] w-[43.4px]" : "top-9 right-[19px] h-14 w-[54.28px]"
           }`}
         >
           <ArrowShot color="#0A0A0A" size={mobile ? 16 : 20} />
-        </a>
+        </span>
       </div>
+
+      {/* The whole card (arrow included) opens the project site in a new tab */}
+      <a
+        href={project.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`${project.title} — відкрити сайт проєкту`}
+        className="absolute inset-0 z-[2] rounded-[inherit] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-lime"
+      />
     </article>
   );
 }
