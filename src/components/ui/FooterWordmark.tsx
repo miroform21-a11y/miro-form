@@ -3,11 +3,11 @@
 import { usePixelMorph } from "./usePixelMorph";
 
 /**
- * Giant footer "MIROFORM®" with the same pixel morph as the header logo,
- * looping on its own: 2s regular → 2s pixel → … (hover / tap work too).
+ * Giant footer "MIROFORM®" with the same pixel morph as the header logo:
+ * hover on desktop, tap / second tap on touch screens.
  */
 export function FooterWordmark({ className = "" }: { className?: string }) {
-  const morph = usePixelMorph<HTMLDivElement>({ cycle: 2000 });
+  const morph = usePixelMorph<HTMLDivElement>();
   const gradient = "bg-gradient-to-b from-white to-[#2a2a2a] bg-clip-text text-transparent";
 
   return (

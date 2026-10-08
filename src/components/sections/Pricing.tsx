@@ -206,8 +206,11 @@ function CompactCustomCard() {
           <div className="flex flex-col gap-3">
             <h3 className="font-display text-[32px] leading-display font-medium tracking-[-0.04em] whitespace-nowrap text-white">{customPlan.title}</h3>
             <p className="text-[14px] leading-[1.5] text-white/60">
-              AI-асистенти, Telegram-боти, автоматизація процесів та
-              <br /> інтеграції під ваш бізнес.
+              AI-асистенти, Telegram-боти,
+              <br />
+              <span className="whitespace-nowrap">автоматизація процесів</span> та
+              <br />
+              <span className="whitespace-nowrap">інтеграції під ваш бізнес.</span>
             </p>
           </div>
         </div>

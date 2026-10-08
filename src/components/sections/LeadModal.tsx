@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { OPEN_LEAD_EVENT, type LeadPopupRequest } from "@/components/ui/LeadCard";
+import { directionById } from "@/data/leads";
 import { ContactForm } from "./ContactForm";
 
 /**
@@ -44,7 +45,8 @@ export function LeadModal() {
     };
   }, [open]);
 
-  const label = request.kind === "question" ? "Залишилися питання? Задайте їх тут" : "Залиште свою заявку";
+  const label =
+    request.kind === "question" ? "Залишилися питання?" : (request.preset.title ?? directionById(request.preset.direction).popupTitle);
 
   return (
     <div

@@ -26,7 +26,7 @@ export const plans: Plan[] = [
     description:
       "Односторінковий сайт для продукту, послуги чи рекламної кампанії. До 10 продуманих блоків, індивідуальний дизайн. Запуск — від 7 днів.",
     price: "$490",
-    lead: { direction: "web", option: "Лендінг пейдж" },
+    lead: { direction: "web", option: "Лендінг пейдж", title: "Landing Page" },
   },
   {
     id: "multi",
@@ -40,7 +40,7 @@ export const plans: Plan[] = [
       "Термін — від 3 тижнів.",
     ],
     price: "$1 490",
-    lead: { direction: "web", option: "Багатосторінковий сайт" },
+    lead: { direction: "web", option: "Багатосторінковий сайт", title: "Багатосторінковий сайт" },
   },
 ];
 
@@ -48,7 +48,7 @@ export const customPlan = {
   badge: "Індивідуально",
   title: "AI & Custom",
   description: "AI-асистенти, Telegram-боти, автоматизація процесів та інтеграції під ваш бізнес.",
-  lead: { direction: "ai" } as LeadPreset,
+  lead: { direction: "ai", title: "AI & Custom" } as LeadPreset,
 };
 
 export const discounts: { value: string; title: string; lines: [string, string]; wrapOnDesktop?: boolean }[] = [

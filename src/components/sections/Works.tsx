@@ -41,7 +41,7 @@ export function Works() {
           <Reveal delay={100} className="flex items-center gap-[37px]">
             <p className="font-pixel text-[13px] leading-pixel whitespace-nowrap text-ink-2/50 md:text-[18px]">{counter}</p>
             <div className="hidden md:block">
-              <PillButton href="#" variant="dark" circleSize={44} gap={12} className="h-[60px] w-[190px] pr-2 pl-[27px]">
+              <PillButton href="#contact" variant="dark" circleSize={44} gap={12} className="h-[60px] w-[190px] pr-2 pl-[27px]">
                 Усі роботи
               </PillButton>
             </div>
@@ -51,7 +51,7 @@ export function Works() {
         {/* Mobile slider */}
         <div className="mt-4 md:hidden">
           <WorksSlider />
-          <PillButton href="#" variant="dark" circleSize={44} className="mt-6 h-[60px] w-full pr-2 pl-[27px]">
+          <PillButton href="#contact" variant="dark" circleSize={44} className="mt-6 h-[60px] w-full pr-2 pl-[27px]">
             Усі роботи
           </PillButton>
         </div>

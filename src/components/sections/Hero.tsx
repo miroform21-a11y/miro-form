@@ -60,11 +60,9 @@ function StackTags({ className = "", size }: { className?: string; size: "lg" | 
 
 export function Hero() {
   return (
-    // EXPERIMENT (mobile): the first screen is capped to the visible viewport height (100svh).
-    // Roll back by changing max-lg:min-h-[min(192.5vw,100svh)] to max-lg:min-h-[192.5vw].
     <section
       id="top"
-      className="@container relative isolate overflow-hidden bg-ink [--stage:min(100cqw,1440px)] max-lg:min-h-[min(192.5vw,100svh)] md:max-lg:min-h-[1000px] lg:h-[max(600px,calc(var(--stage)*0.5625))]"
+      className="relative isolate overflow-hidden bg-ink [--stage:min(100vw,1440px)] max-lg:min-h-[192.5vw] md:max-lg:min-h-[1000px] lg:h-[max(600px,calc(var(--stage)*0.5625))]"
     >
       {/* ---------- Background layers (mobile / tablet) ---------- */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 lg:hidden">
@@ -79,7 +77,7 @@ export function Hero() {
         <img
           src="/images/hero/m-glow-object.svg"
           alt=""
-          className="absolute top-[calc(min(192.5vw,100svh)-78.7vw)] left-[-42.3vw] h-[164vw] w-[184.6vw] max-w-none md:top-[480px] md:left-[-15%] md:h-[900px] md:w-[130%]"
+          className="absolute top-[113.8vw] left-[-42.3vw] h-[164vw] w-[184.6vw] max-w-none md:top-[480px] md:left-[-15%] md:h-[900px] md:w-[130%]"
         />
         <img src="/images/hero/m-dot-grid.svg" alt="" className="absolute top-[90px] left-0 h-[321px] w-[651px] max-w-none" />
       </div>

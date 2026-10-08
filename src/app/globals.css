@@ -79,8 +79,7 @@
 /* ---------- Hero 3D object (geometry from Figma, incl. its non-uniform stretch) ---------- */
 .hero-blob {
   left: -9.49vw;
-  /* EXPERIMENT: anchored to the bottom of the (possibly shorter) mobile first screen; was top: 117.7vw */
-  top: calc(min(192.5vw, 100svh) - 74.8vw);
+  top: 117.7vw;
   width: 131.8vw;
   height: 172.3vw;
 }
@@ -255,20 +254,33 @@
   }
 }
 
-/* ---------- Shared arrow motion ----------
-   The ↗ arrow "pops" forward along its own direction (no rotation) while its card / button
-   (.pop-trigger) is hovered, or pressed on touch screens. */
-.arrow-pop {
-  transition: translate 0.45s cubic-bezier(0.34, 1.7, 0.64, 1);
+/* ---------- Shared arrow "shot" (see ArrowShot.tsx) ----------
+   While the card / button (.pop-trigger) is hovered — or pressed on touch screens — the ↗ arrow
+   flies out up-right and a fresh one slides in from bottom-left. No rotation. */
+.arrow-shot-out,
+.arrow-shot-in {
+  transition: translate 0.4s var(--ease-smooth);
 }
 
-.pop-trigger:active .arrow-pop {
-  translate: 3px -3px;
+.arrow-shot-in {
+  translate: -150% 150%;
+}
+
+.pop-trigger:active .arrow-shot-out {
+  translate: 150% -150%;
+}
+
+.pop-trigger:active .arrow-shot-in {
+  translate: 0 0;
 }
 
 @media (hover: hover) {
-  .pop-trigger:hover .arrow-pop {
-    translate: 3px -3px;
+  .pop-trigger:hover .arrow-shot-out {
+    translate: 150% -150%;
+  }
+
+  .pop-trigger:hover .arrow-shot-in {
+    translate: 0 0;
   }
 }
 
@@ -441,6 +453,18 @@ html {
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
   }
+}
+
+/* Photos / decorative images that must not open, drag or "save image" on long-press.
+   On images the element itself ignores the pointer, so a tap still reaches the card link around it. */
+.no-native-image {
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+img.no-native-image {
+  pointer-events: none;
 }
 
 /* Hide native scrollbar on horizontal sliders */

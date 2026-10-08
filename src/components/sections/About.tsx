@@ -2,7 +2,7 @@ import Image from "next/image";
 import { SectionTag } from "@/components/ui/SectionTag";
 import { Reveal } from "@/components/ui/Reveal";
 import { CountUp } from "@/components/ui/CountUp";
-import { ArrowIcon } from "@/components/ui/ArrowIcon";
+import { ArrowShot } from "@/components/ui/ArrowShot";
 import { ReadWords, ScrollRead } from "@/components/ui/ScrollRead";
 import { founderInstagram } from "@/data/navigation";
 
@@ -14,7 +14,8 @@ function InlinePhoto({ className }: { className: string }) {
         alt=""
         width={254}
         height={364}
-        className="absolute top-[-89.18%] left-[0.13%] h-[413.11%] w-full max-w-none"
+        draggable={false}
+        className="no-native-image absolute top-[-89.18%] left-[0.13%] h-[413.11%] w-full max-w-none"
       />
     </span>
   );
@@ -27,14 +28,16 @@ function FounderCard() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="German Guk, Founder & CEO — Instagram @gukgerman"
-      className="pop-trigger relative flex flex-col gap-[34px] overflow-hidden rounded-[28px] border border-white/8 bg-[#111] transition-[translate,border-color,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 active:-translate-y-1 hover:border-white/16 hover:shadow-[0_24px_60px_-30px_rgba(174,238,5,0.3)] active:border-white/16 p-2.5 max-md:h-[496px] md:gap-[30px] md:rounded-[32px] md:p-5 lg:h-full">
+      draggable={false}
+      className="pop-trigger no-native-image relative flex flex-col gap-[34px] overflow-hidden rounded-[28px] border border-white/8 bg-[#111] transition-[translate,border-color,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 active:-translate-y-1 hover:border-white/16 hover:shadow-[0_24px_60px_-30px_rgba(174,238,5,0.3)] active:border-white/16 p-2.5 max-md:h-[496px] md:gap-[30px] md:rounded-[32px] md:p-5 lg:h-full">
       <Image
         src="/images/about/orange-glow.png"
         alt=""
         width={736}
         height={816}
         aria-hidden="true"
-        className="pointer-events-none absolute top-[199px] left-[-96px] h-[460px] w-[540px] max-w-none object-contain md:top-auto md:bottom-[-193px] md:left-[-104px] md:h-[560px] md:w-[641px]"
+        draggable={false}
+        className="no-native-image absolute top-[199px] left-[-96px] h-[460px] w-[540px] max-w-none object-contain md:top-auto md:bottom-[-193px] md:left-[-104px] md:h-[560px] md:w-[641px]"
       />
 
       <div className="relative h-[372px] w-full shrink-0 overflow-hidden rounded-[20px] md:h-auto md:min-h-[320px] md:flex-1 md:rounded-[22px] lg:h-[432px] lg:flex-none">
@@ -44,7 +47,8 @@ function FounderCard() {
           alt="German Guk — засновник MIROFORM"
           fill
           sizes="350px"
-          className="object-cover object-[50%_18%] md:hidden"
+          draggable={false}
+          className="no-native-image object-fill md:hidden"
         />
         {/* Desktop photo (crop from Figma) */}
         <Image
@@ -53,7 +57,8 @@ function FounderCard() {
           width={839}
           height={1119}
           sizes="420px"
-          className="absolute top-[-7.41%] left-[-1.17%] h-[119.61%] w-[101.96%] max-w-none max-md:hidden"
+          draggable={false}
+          className="no-native-image absolute top-[-7.41%] left-[-1.17%] h-[119.61%] w-[101.96%] max-w-none max-md:hidden"
         />
       </div>
 
@@ -62,8 +67,8 @@ function FounderCard() {
           <p className="font-pixel text-[20px] leading-pixel tracking-[-0.01em] text-white md:text-[24px]">German Guk</p>
           <p className="text-[18px] leading-body text-white/60 md:text-[21px]">Founder &amp; CEO</p>
         </div>
-        <span aria-hidden="true" className="grid size-[52px] shrink-0 place-items-center rounded-full bg-lime">
-          <ArrowIcon color="#0A0A0A" size={20} className="arrow-pop" />
+        <span aria-hidden="true" className="relative grid size-[52px] shrink-0 place-items-center overflow-hidden rounded-full bg-lime">
+          <ArrowShot color="#0A0A0A" size={20} />
         </span>
       </div>
     </a>

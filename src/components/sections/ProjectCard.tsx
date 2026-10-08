@@ -1,7 +1,7 @@
 import Image from "next/image";
 import type { CSSProperties } from "react";
 import type { Project, ProjectCrop } from "@/data/projects";
-import { ArrowIcon } from "@/components/ui/ArrowIcon";
+import { ArrowShot } from "@/components/ui/ArrowShot";
 
 function Media({ project, crop, sizes, radius }: { project: Project; crop: ProjectCrop; sizes: string; radius: string }) {
   const { src, width, height } = project.image;
@@ -81,11 +81,11 @@ export function ProjectCard({
         <a
           href={project.href}
           aria-label={`${project.title} — відкрити проєкт`}
-          className={`absolute grid place-items-center rounded-full bg-lime ${
+          className={`absolute grid place-items-center overflow-hidden rounded-full bg-lime ${
             mobile ? "top-[26px] right-2 h-[44.8px] w-[43.4px]" : "top-9 right-[19px] h-14 w-[54.28px]"
           }`}
         >
-          <ArrowIcon color="#0A0A0A" size={mobile ? 16 : 20} className="arrow-pop" />
+          <ArrowShot color="#0A0A0A" size={mobile ? 16 : 20} />
         </a>
       </div>
     </article>

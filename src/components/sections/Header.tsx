@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { navLinks } from "@/data/navigation";
 import { LangSwitch } from "@/components/ui/LangSwitch";
 import { PillButton } from "@/components/ui/PillButton";
@@ -136,8 +137,16 @@ export function Header() {
   );
 }
 
+/**
+ * Rendered into <body>: the hero is its own stacking context (isolate), so a fixed menu inside it
+ * would be painted under every later section once the page is scrolled — invisible, yet scroll-locked.
+ */
 function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
-  return (
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+
+  return createPortal(
     <div
       id="mobile-menu"
       role="dialog"
@@ -208,6 +217,7 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
           Зв’язатися
         </PillButton>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

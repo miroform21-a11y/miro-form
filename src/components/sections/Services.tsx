@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { services, type Service } from "@/data/services";
 import { SectionTag } from "@/components/ui/SectionTag";
 import { Reveal } from "@/components/ui/Reveal";
-import { ArrowIcon } from "@/components/ui/ArrowIcon";
+import { ArrowShot } from "@/components/ui/ArrowShot";
 import { LeadOverlayButton } from "@/components/ui/LeadCard";
 import { CursorLabel, Rotated, SelectionBox } from "@/components/ui/Decor";
 import { ReadWords, ScrollRead } from "@/components/ui/ScrollRead";
@@ -285,9 +285,9 @@ function ServiceCard({ service }: { service: Service }) {
 
       <span
         aria-hidden="true"
-        className={`absolute grid h-14 w-[54.28px] place-items-center rounded-full md:top-11 md:right-8 lg:right-[47px] ${t.arrow.bg} ${mobileArrowPos[service.id]}`}
+        className={`absolute grid h-14 w-[54.28px] place-items-center overflow-hidden rounded-full md:top-11 md:right-8 lg:right-[47px] ${t.arrow.bg} ${mobileArrowPos[service.id]}`}
       >
-        <ArrowIcon color={t.arrow.color} size={20} className="arrow-pop" />
+        <ArrowShot color={t.arrow.color} size={20} />
       </span>
       <LeadOverlayButton preset={{ direction: service.id }} label={`${service.title} — залишити заявку`} />
     </article>

@@ -1,47 +1,22 @@
 "use client";
 
-import { useEffect, useRef, useState, type PointerEvent } from "react";
+import { useRef, useState, type PointerEvent } from "react";
 
 /**
  * Shared "MIROFORM ↔ pixel MIROFORM" morph (see .logo-morph / .logo-img / .logo-pixel in globals.css).
  *
- * - hover (pointer devices) is pure CSS;
- * - a tap on touch screens plays the pixel state once;
- * - `cycle` loops by itself: `cycle` ms normal → `cycle` ms pixel → … (only while on screen,
- *   and never with prefers-reduced-motion).
+ * - desktop: hover → pixel, mouse leave → normal (pure CSS, pointer devices only);
+ * - touch: tap → pixel, next tap → normal. No automatic loop.
  */
-export function usePixelMorph<T extends HTMLElement>({ cycle }: { cycle?: number } = {}) {
+export function usePixelMorph<T extends HTMLElement>() {
   const ref = useRef<T>(null);
-  const [tapped, setTapped] = useState(false);
-  const [cyclePixel, setCyclePixel] = useState(false);
-
-  useEffect(() => {
-    if (!tapped) return;
-    const t = setTimeout(() => setTapped(false), 1100);
-    return () => clearTimeout(t);
-  }, [tapped]);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!cycle || !el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    let timer: ReturnType<typeof setInterval> | undefined;
-    const observer = new IntersectionObserver(([entry]) => {
-      clearInterval(timer);
-      if (entry.isIntersecting) timer = setInterval(() => setCyclePixel((p) => !p), cycle);
-      else setCyclePixel(false);
-    });
-    observer.observe(el);
-    return () => {
-      observer.disconnect();
-      clearInterval(timer);
-    };
-  }, [cycle]);
+  const [pixel, setPixel] = useState(false);
 
   return {
     ref,
-    className: `logo-morph ${tapped || cyclePixel ? "is-pixel" : ""}`,
+    className: `logo-morph ${pixel ? "is-pixel" : ""}`,
     onPointerDown: (e: PointerEvent) => {
-      if (e.pointerType !== "mouse") setTapped(true);
+      if (e.pointerType !== "mouse") setPixel((p) => !p);
     },
   };
 }

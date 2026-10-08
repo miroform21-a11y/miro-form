@@ -65,7 +65,7 @@ export function Contact() {
             <span className="text-lime">нам про неї</span>
           </h2>
           <div className="flex flex-col gap-[22px] xl:gap-7">
-            <p className="max-w-[282px] text-[15px] leading-[1.55] font-[350] text-white/90 md:max-w-[462px] xl:text-[17px]">
+            <p className="max-w-[282px] text-[15px] leading-[1.55] text-white/90 md:max-w-[462px] xl:text-[17px]">
               Відповімо протягом 15 хвилин та запропонуємо оптимальне рішення для вашого проєкту.
             </p>
             <ul className="flex flex-wrap gap-1.5 xl:gap-4">
