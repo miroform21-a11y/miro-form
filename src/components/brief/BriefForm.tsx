@@ -531,6 +531,7 @@ export function BriefForm() {
   const [furthest, setFurthest] = useState(0);
   const [errors, setErrors] = useState<Errors>({});
   const [status, setStatus] = useState<"idle" | "sending" | "error" | "limited" | "sent">("idle");
+  const [errorCode, setErrorCode] = useState("");
   const sending = useRef(false);
   const topRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -631,6 +632,8 @@ export function BriefForm() {
     } catch (err) {
       sending.current = false;
       // every answer stays in the form
+      // a short code next to the message tells us what went wrong if a client reports it (no secrets in it)
+      setErrorCode(err instanceof FormSubmitError ? String(err.status) : "мережа");
       setStatus(err instanceof FormSubmitError && err.status === 429 ? "limited" : "error");
     }
   };
@@ -839,7 +842,7 @@ export function BriefForm() {
               <a href={socialLinks.telegram} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
                 напишіть нам у Telegram
               </a>
-              .
+              . {errorCode && <span className="text-orange/60">(код: {errorCode})</span>}
             </p>
           )}
         </section>

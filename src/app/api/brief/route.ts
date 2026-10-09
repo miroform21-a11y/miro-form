@@ -91,14 +91,22 @@ export const maxDuration = 60;
 export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
-    if (!(await withinRateLimit("brief", clientKey(request), 5, 600))) return reply(429);
 
     const body = await readJson(request, MAX_BODY);
     if (!isRecord(body)) return reply(400);
     if (looksAutomated(body)) return reply(200); // silently dropped
 
     const answers = parse(body);
-    if (!answers) return reply(400);
+    if (!answers) {
+      console.warn("[brief] refused: answers did not pass validation");
+      return reply(400);
+    }
+    // only valid briefs count towards the limit, so failed attempts (or tests from the same network)
+    // never lock a real client out; Telegram is still protected from floods
+    if (!(await withinRateLimit("brief-sent", clientKey(request), 5, 600))) {
+      console.warn("[brief] refused: rate limit");
+      return reply(429);
+    }
     if (!telegramConfigured()) {
       console.error("[brief] Telegram is not configured — brief not delivered");
       return reply(503);
