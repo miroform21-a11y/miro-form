@@ -20,12 +20,12 @@ export default function BriefPage() {
         an abstract sweep of it shows (no dot pattern on the brief page)
       */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[1100px] overflow-hidden">
-        {/* same render: original blue on phones, recoloured to brand lime from md up (the footer's hue + colour blend) */}
+        {/* same render, recoloured to brand lime on every screen (the footer's hue + colour blend) */}
         <div className="absolute top-[-440px] right-[-820px] h-[1240px] w-[1560px] rotate-[122deg] opacity-[0.48] [mask-image:url(/images/glow-mask.svg)] [mask-size:100%_100%] max-md:top-[-330px] max-md:right-[-560px] max-md:h-[800px] max-md:w-[1000px]">
           <div className="absolute inset-0 isolate">
             <Image src="/images/glow.png" alt="" width={1470} height={1176} priority className="absolute inset-0 size-full max-w-none object-cover" />
-            <div className="absolute inset-0 bg-lime mix-blend-hue max-md:hidden" />
-            <div className="absolute inset-0 bg-lime opacity-60 mix-blend-color max-md:hidden" />
+            <div className="absolute inset-0 bg-lime mix-blend-hue" />
+            <div className="absolute inset-0 bg-lime opacity-60 mix-blend-color" />
           </div>
         </div>
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,5,5,0)_45%,#050505_100%)]" />
