@@ -16,13 +16,16 @@ import {
   emptySiteContacts,
   hasAnswer,
   isShown,
+  OTHER_NETWORK,
+  SOCIAL_NETWORKS,
+  sendErrors,
   skipKey,
-  stepErrors,
   type BriefAnswers,
   type BriefField,
   type BriefLink,
   type BriefNotice,
   type BriefSiteContacts,
+  type BriefSocial,
 } from "@/data/brief";
 
 /** field key → message */
@@ -115,13 +118,17 @@ function Chips({
   const id = useId();
   const multi = field.type === "multi";
   const exclusive = field.type === "multi" ? field.exclusive : undefined;
+  const independent: readonly string[] = (field.type === "multi" && field.independent) || [];
   const list = Array.isArray(value) ? value : [];
   const isOn = (v: string) => (multi ? list.includes(v) : value === v);
   const toggle = (v: string) => {
     if (!multi) return onChange(value === v ? "" : v);
     if (list.includes(v)) return onChange(list.filter((x) => x !== v));
-    // "nothing yet" can't be combined with real materials, and vice versa
-    if (exclusive) return onChange(v === exclusive ? [v] : [...list.filter((x) => x !== exclusive), v]);
+    // "nothing yet" can't be combined with real materials, and vice versa; independent options go with anything
+    if (exclusive) {
+      if (v === exclusive) return onChange([...list.filter((x) => independent.includes(x)), v]);
+      if (!independent.includes(v)) return onChange([...list.filter((x) => x !== exclusive), v]);
+    }
     onChange([...list, v]);
   };
 
@@ -208,7 +215,90 @@ function Links({ field, value, onChange }: { field: Extract<BriefField, { type: 
   );
 }
 
-/** Company contacts for the future site: phone, email and "network + link" rows. */
+/**
+ * Phone mask in the site's format: "+38 (073) 021 77 21" for Ukrainian numbers (typed from 0… or +380…),
+ * "+<digits>" for other countries. Separators are added only before the next digit, so Backspace never gets stuck.
+ */
+function formatPhone(input: string): string {
+  const digits = input.replace(/\D/g, "").slice(0, 15);
+  if (!digits) return input.trim().startsWith("+") ? "+" : "";
+  const d = digits.startsWith("0") ? `38${digits}` : digits;
+  if (!d.startsWith("380")) return `+${d}`;
+  const [op, a, b, c] = [d.slice(2, 5), d.slice(5, 8), d.slice(8, 10), d.slice(10, 12)];
+  return `+38${op ? ` (${op}` : ""}${a ? `) ${a}` : ""}${b ? ` ${b}` : ""}${c ? ` ${c}` : ""}`;
+}
+
+const socialPlaceholder: Record<string, string> = {
+  Instagram: "https://instagram.com/…",
+  Telegram: "https://t.me/… або @username",
+  YouTube: "https://youtube.com/@…",
+  Viber: "Номер або посилання",
+  WhatsApp: "Номер або https://wa.me/…",
+  TikTok: "https://tiktok.com/@…",
+};
+
+/** "+ Додати соціальну мережу" with a compact dropdown of networks. */
+function AddSocialMenu({ onPick }: { onPick: (network: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const menuId = useId();
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent | KeyboardEvent) => {
+      if (e instanceof KeyboardEvent ? e.key === "Escape" : !boxRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", close);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", close);
+    };
+  }, [open]);
+
+  return (
+    <div ref={boxRef} className="relative self-start">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={menuId}
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1.5 rounded-full px-1 text-[14px] leading-[1.3] text-white/60 underline decoration-white/25 underline-offset-4 transition-colors hover:text-lime hover:decoration-lime/60"
+      >
+        + Додати соціальну мережу
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true" className={`transition-transform duration-300 ${open ? "rotate-180" : ""}`}>
+          <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      {open && (
+        <ul
+          id={menuId}
+          role="menu"
+          className="absolute top-[calc(100%+8px)] left-0 z-20 grid w-[230px] gap-0.5 rounded-[18px] border border-white/12 bg-[#111] p-1.5 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.8)]"
+        >
+          {SOCIAL_NETWORKS.map((n) => (
+            <li key={n} role="none">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setOpen(false);
+                  onPick(n);
+                }}
+                className="w-full rounded-[12px] px-3.5 py-2.5 text-left text-[14px] leading-[1.3] text-white/85 transition-colors hover:bg-white/8 hover:text-lime focus-visible:bg-white/8 focus-visible:text-lime focus-visible:outline-none"
+              >
+                {n}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/** Company contacts for the future site: phone (masked), email and the chosen social networks. */
 function SiteContacts({
   field,
   value,
@@ -221,10 +311,18 @@ function SiteContacts({
   error?: string;
 }) {
   const id = useId();
+  const listRef = useRef<HTMLUListElement>(null);
   const v = value ?? emptySiteContacts();
-  const socials = v.socials.length ? v.socials : [{ name: "", url: "" }];
-  const setSocial = (i: number, patch: Partial<BriefSiteContacts["socials"][number]>) =>
-    onChange({ ...v, socials: socials.map((s, j) => (j === i ? { ...s, ...patch } : s)) });
+  const socials = v.socials;
+  const setSocial = (i: number, patch: Partial<BriefSocial>) => onChange({ ...v, socials: socials.map((s, j) => (j === i ? { ...s, ...patch } : s)) });
+  const addSocial = (network: string) => onChange({ ...v, socials: [...socials, { network, name: "", url: "" }] });
+
+  // a network was just added → put the cursor into its first input (after the row is on the page)
+  const rows = useRef(socials.length);
+  useEffect(() => {
+    if (socials.length > rows.current) listRef.current?.querySelector<HTMLInputElement>("li:last-child input")?.focus();
+    rows.current = socials.length;
+  }, [socials.length]);
 
   return (
     <div role="group" aria-labelledby={id} aria-describedby={error ? `brief-${field.key}-error` : undefined} className="flex min-w-0 flex-col gap-3">
@@ -235,19 +333,19 @@ function SiteContacts({
           <label className="flex min-w-0 flex-col gap-1.5">
             <span className={subLabelClass}>Телефон</span>
             <input
-              type="text"
+              type="tel"
               inputMode="tel"
               autoComplete="off"
-              placeholder="+380 або “Надамо пізніше”"
+              placeholder="+38 (0__) ___ __ __"
               value={v.phone}
-              onChange={(e) => onChange({ ...v, phone: e.target.value })}
+              onChange={(e) => onChange({ ...v, phone: formatPhone(e.target.value) })}
               className={`${fieldClass} border-white/14`}
             />
           </label>
           <label className="flex min-w-0 flex-col gap-1.5">
             <span className={subLabelClass}>Email</span>
             <input
-              type="text"
+              type="email"
               inputMode="email"
               autoComplete="off"
               placeholder="info@company.com"
@@ -259,36 +357,41 @@ function SiteContacts({
         </div>
         <div className="flex flex-col gap-1.5">
           <span className={subLabelClass}>Соціальні мережі</span>
-          <ul className="flex flex-col gap-2.5">
-            {socials.map((s, i) => (
-              <li key={i} className="grid grid-cols-[minmax(0,1fr)_44px] gap-2 md:grid-cols-[minmax(0,0.65fr)_minmax(0,1.35fr)_44px] md:items-center">
-                <input
-                  aria-label={`Соціальна мережа ${i + 1} — назва`}
-                  placeholder="Instagram, Facebook…"
-                  value={s.name}
-                  onChange={(e) => setSocial(i, { name: e.target.value })}
-                  className={`${fieldClass} border-white/14 max-md:col-span-2`}
-                />
-                <input
-                  aria-label={`Соціальна мережа ${i + 1} — посилання`}
-                  inputMode="url"
-                  placeholder="https://"
-                  value={s.url}
-                  onChange={(e) => setSocial(i, { url: e.target.value })}
-                  className={`${fieldClass} border-white/14 ${i === 0 ? "max-md:col-span-2" : ""}`}
-                />
-                {i > 0 ? (
-                  <RemoveButton label={`Прибрати соціальну мережу ${i + 1}`} onClick={() => onChange({ ...v, socials: socials.filter((_, j) => j !== i) })} />
-                ) : (
-                  <span className="max-md:hidden" />
-                )}
-              </li>
-            ))}
-          </ul>
+          {socials.length > 0 && (
+            <ul ref={listRef} className="flex flex-col gap-2.5">
+              {socials.map((s, i) => {
+                const other = s.network === OTHER_NETWORK;
+                return (
+                  <li key={i} className="grid grid-cols-[minmax(0,1fr)_44px] gap-2 md:grid-cols-[180px_minmax(0,1fr)_44px] md:items-center">
+                    {other ? (
+                      <input
+                        aria-label={`Соціальна мережа ${i + 1} — назва`}
+                        placeholder="Назва соціальної мережі"
+                        value={s.name}
+                        onChange={(e) => setSocial(i, { name: e.target.value })}
+                        className={`${fieldClass} border-white/14`}
+                      />
+                    ) : (
+                      <span className="flex h-[54px] items-center rounded-[16px] border border-white/14 bg-white/6 px-5 text-[15px] leading-none text-white md:h-[56px]">
+                        {s.network}
+                      </span>
+                    )}
+                    <RemoveButton label={`Прибрати ${other ? s.name || "соціальну мережу" : s.network}`} onClick={() => onChange({ ...v, socials: socials.filter((_, j) => j !== i) })} />
+                    <input
+                      aria-label={`${other ? s.name || "Соціальна мережа" : s.network} — посилання`}
+                      inputMode="url"
+                      placeholder={other ? "Посилання" : socialPlaceholder[s.network]}
+                      value={s.url}
+                      onChange={(e) => setSocial(i, { url: e.target.value })}
+                      className={`${fieldClass} border-white/14 col-span-2 md:order-2 md:col-span-1`}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
-        {socials.length < MAX_SOCIALS && (
-          <AddButton onClick={() => onChange({ ...v, socials: [...socials, { name: "", url: "" }] })}>+ Додати соціальну мережу</AddButton>
-        )}
+        {socials.length < MAX_SOCIALS && <AddSocialMenu onPick={addSocial} />}
       </div>
       <ErrorText id={`brief-${field.key}-error`} text={error} />
     </div>
@@ -309,23 +412,41 @@ function Reveal({ show, children, flush }: { show: boolean; children: ReactNode;
   );
 }
 
-/** Lime "paperclip" plate: compact, outlined, not a full-width fill. */
+/** Lime "paperclip" plate: compact, outlined, not a full-width fill. With `href` the whole plate opens it in a new tab. */
 function Notice({ notice }: { notice: BriefNotice }) {
-  return (
-    <div className="flex items-center gap-3.5 rounded-[18px] border border-lime/35 bg-lime/[0.06] py-3 pr-4 pl-3 md:gap-4 md:pr-5">
+  const content = (
+    <>
       <span className="grid size-10 shrink-0 place-items-center rounded-full bg-lime text-ink-2" aria-hidden="true">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M20.5 11.2l-8.1 8.1a5.2 5.2 0 01-7.4-7.4l8.1-8.1a3.5 3.5 0 015 5l-8.2 8.1a1.7 1.7 0 01-2.4-2.4l7.5-7.5"
-            stroke="currentColor"
-            strokeWidth="1.9"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        {notice.icon === "card" ? (
+          // the same card icon as the "Гнучка оплата частинами" note in the main page pricing
+          <img src="/images/pricing/card-icon.svg" alt="" className="size-5" />
+        ) : (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M20.5 11.2l-8.1 8.1a5.2 5.2 0 01-7.4-7.4l8.1-8.1a3.5 3.5 0 015 5l-8.2 8.1a1.7 1.7 0 01-2.4-2.4l7.5-7.5"
+              stroke="currentColor"
+              strokeWidth="1.9"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        )}
       </span>
       <p className="text-[13px] leading-[1.45] text-white/85 md:text-[14px]">{notice.text}</p>
-    </div>
+    </>
+  );
+  const box = "flex items-center gap-3.5 rounded-[18px] border border-lime/35 bg-lime/[0.06] py-3 pr-4 pl-3 md:gap-4 md:pr-5";
+  if (!notice.href) return <div className={box}>{content}</div>;
+  return (
+    <a
+      href={notice.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`${notice.text} Відкрити Telegram MIROFORM у новій вкладці`}
+      className={`${box} transition-[border-color,background-color,translate] duration-300 ease-(--ease-smooth) hover:-translate-y-0.5 hover:border-lime/60 hover:bg-lime/[0.09] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-lime active:translate-y-0`}
+    >
+      {content}
+    </a>
   );
 }
 
@@ -364,6 +485,8 @@ const ClockIcon = () => (
 export function BriefForm() {
   const [answers, setAnswers] = useState<BriefAnswers>(defaultAnswers);
   const [step, setStep] = useState(0);
+  /** Furthest step opened so far — the steps before it are marked as passed in the side list */
+  const [furthest, setFurthest] = useState(0);
   const [errors, setErrors] = useState<Errors>({});
   const [status, setStatus] = useState<"idle" | "sending" | "error" | "sent">("idle");
   const sending = useRef(false);
@@ -408,12 +531,11 @@ export function BriefForm() {
 
   const goTo = (i: number) => {
     setErrors({});
-    setStep(Math.max(0, Math.min(LAST, i)));
+    const next = Math.max(0, Math.min(LAST, i));
+    setStep(next);
+    setFurthest((f) => Math.max(f, next));
   };
 
-  /** First step that still has an unanswered required field (the side list can't jump past it). */
-  const firstUnfinished = briefSteps.findIndex((s) => Object.keys(stepErrors(s, answers)).length > 0);
-  const reachable = (i: number) => firstUnfinished === -1 || i <= firstUnfinished;
 
   /** Shows the errors and moves focus to the first field that needs an answer. */
   const showErrors = (found: Errors) => {
@@ -426,12 +548,8 @@ export function BriefForm() {
     });
   };
 
-  /** "Далі": only when the required fields of this step are answered. */
-  const goNext = () => {
-    const found = stepErrors(current, answers);
-    if (Object.keys(found).length) return showErrors(found);
-    goTo(step + 1);
-  };
+  /** "Далі" is never blocked: stars are hints; only the final contacts step is checked before sending. */
+  const goNext = () => goTo(step + 1);
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -440,10 +558,10 @@ export function BriefForm() {
     if (sending.current) return;
 
     const trap = readHoneypot(e.currentTarget);
-    if (firstUnfinished !== -1) {
-      const found = stepErrors(briefSteps[firstUnfinished], answers);
-      if (firstUnfinished !== step) setStep(firstUnfinished);
-      return showErrors(found);
+    const blocked = sendErrors(answers);
+    if (blocked) {
+      if (blocked.step !== step) setStep(blocked.step);
+      return showErrors(blocked.errors);
     }
 
     // only answers of shown fields that are filled in
@@ -689,17 +807,15 @@ export function BriefForm() {
           <ol className="flex flex-col gap-0.5 border-t border-white/8 pt-3">
             {briefSteps.map((s, i) => {
               const active = i === step;
-              const locked = !reachable(i);
-              const done = !active && i < step && Object.keys(stepErrors(s, answers)).length === 0;
+              const done = !active && i < furthest;
               return (
                 <li key={s.id}>
                   <button
                     type="button"
                     onClick={() => goTo(i)}
-                    disabled={locked}
                     aria-current={active ? "step" : undefined}
                     className={`flex w-full items-center gap-3 rounded-full px-4 py-2.5 text-left text-[14px] leading-[1.3] transition-colors duration-300 ${
-                      active ? "bg-white/8 text-white" : locked ? "cursor-default text-white/30" : "text-white/50 hover:text-white"
+                      active ? "bg-white/8 text-white" : "text-white/50 hover:text-white"
                     }`}
                   >
                     <span className={`font-pixel text-[10px] ${active ? "text-lime" : "text-white/35"}`}>{s.number}</span>

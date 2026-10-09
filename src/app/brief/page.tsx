@@ -20,14 +20,14 @@ export default function BriefPage() {
         an abstract sweep of it shows (no dot pattern on the brief page)
       */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[1100px] overflow-hidden">
-        <Image
-          src="/images/glow.png"
-          alt=""
-          width={1470}
-          height={1176}
-          priority
-          className="absolute top-[-440px] right-[-820px] h-[1240px] w-[1560px] max-w-none rotate-[122deg] object-cover opacity-[0.48] [mask-image:url(/images/glow-mask.svg)] [mask-size:100%_100%] max-md:top-[-330px] max-md:right-[-560px] max-md:h-[800px] max-md:w-[1000px]"
-        />
+        {/* same render, recoloured to brand lime the way the footer does it (hue + colour blend over the image) */}
+        <div className="absolute top-[-440px] right-[-820px] h-[1240px] w-[1560px] rotate-[122deg] opacity-[0.48] [mask-image:url(/images/glow-mask.svg)] [mask-size:100%_100%] max-md:top-[-330px] max-md:right-[-560px] max-md:h-[800px] max-md:w-[1000px]">
+          <div className="absolute inset-0 isolate">
+            <Image src="/images/glow.png" alt="" width={1470} height={1176} priority className="absolute inset-0 size-full max-w-none object-cover" />
+            <div className="absolute inset-0 bg-lime mix-blend-hue" />
+            <div className="absolute inset-0 bg-lime opacity-60 mix-blend-color" />
+          </div>
+        </div>
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,5,5,0)_45%,#050505_100%)]" />
       </div>
 
@@ -53,8 +53,10 @@ export default function BriefPage() {
         <header className="grid gap-6 pt-10 pb-8 md:pt-14 md:pb-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)] lg:items-end lg:gap-12 lg:pt-16 lg:pb-12">
           <div className="flex flex-col gap-4 md:gap-5">
             <p className="font-pixel text-[11px] leading-pixel text-white/60 xl:text-[12px]">Make the right decision</p>
-            <h1 className="font-display text-[48px] leading-[0.95] font-bold tracking-[-0.05em] text-white md:text-[64px] xl:text-[72px]">
-              Бриф<span className="text-lime">.</span>
+            {/* pixel font (Press Start 2P — the preloader / eyebrow font) only for this heading */}
+            <h1 className="font-pixel text-[38px] leading-[1.15] font-normal text-white md:text-[52px] xl:text-[60px]">
+              {/* the monospace dot cell is wide — pull it to the word */}
+              Бриф<span className="-ml-[0.4em] text-lime">.</span>
             </h1>
             <div className="flex flex-col gap-2.5 text-[14px] leading-[1.6] font-[350] text-white/65 md:text-[15px]">
               <p className="max-w-[640px]">

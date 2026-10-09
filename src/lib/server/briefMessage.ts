@@ -1,4 +1,4 @@
-import { briefSteps, skipKey, type BriefAnswers, type BriefField, type BriefLink, type BriefSiteContacts } from "@/data/brief";
+import { OTHER_NETWORK, briefSteps, skipKey, type BriefAnswers, type BriefField, type BriefLink, type BriefSiteContacts } from "@/data/brief";
 
 /**
  * Telegram message for a brief (parse_mode "HTML"): five sections with bold headings and field names,
@@ -106,7 +106,9 @@ function valueLines(field: BriefField, answers: BriefAnswers): string[] | null {
     const lines = [
       c.phone && `Телефон: ${escapeHtml(c.phone)}`,
       c.email && `Email: ${escapeHtml(c.email)}`,
-      ...c.socials.filter((s) => s.name || s.url).map((s) => `${escapeHtml(s.name || "Соцмережа")}: ${escapeHtml(s.url || "—")}`),
+      ...c.socials
+        .filter((s) => s.name || s.url)
+        .map((s) => `${escapeHtml((s.network === OTHER_NETWORK ? s.name : s.network) || "Соцмережа")}: ${escapeHtml(s.url || "—")}`),
     ].filter(Boolean) as string[];
     return lines.length ? lines : null;
   }
@@ -160,7 +162,7 @@ function fieldBlocks(field: BriefField, answers: BriefAnswers): string[] {
 /** Builds the HTML message(s) for Telegram. */
 export function buildBriefMessages(answers: BriefAnswers, sentAt: string): string[] {
   const PART = "\u0000PART\u0000";
-  const title = `${b("Новий бриф · MIROFORM")}${PART}\n${escapeHtml(sentAt)}`;
+  const title = `🟢 ${b("Новий бриф · MIROFORM")}${PART}\n${escapeHtml(sentAt)}`;
   const who = [answers.name, answers.contact].filter((x): x is string => typeof x === "string" && !!x).map(escapeHtml).join(" · ");
   const continuation = `${b("Бриф · продовження")}${PART}${who ? `\n${who}` : ""}`;
 

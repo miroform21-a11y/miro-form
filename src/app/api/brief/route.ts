@@ -1,4 +1,4 @@
-import { MAX_LINKS, MAX_SOCIALS, briefSteps, isShown, skipKey, stepErrors, type BriefAnswers, type BriefField, type BriefValue } from "@/data/brief";
+import { MAX_LINKS, MAX_SOCIALS, OTHER_NETWORK, SOCIAL_NETWORKS, briefSteps, isShown, sendErrors, skipKey, type BriefAnswers, type BriefField, type BriefValue } from "@/data/brief";
 import { claimOnce, releaseClaim, withinRateLimit } from "@/lib/server/limits";
 import { sendTelegramHtml, telegramConfigured } from "@/lib/server/telegram";
 import { buildBriefMessages } from "@/lib/server/briefMessage";
@@ -30,7 +30,9 @@ function parseValue(field: BriefField, raw: unknown): BriefValue | undefined | n
       if (!Array.isArray(raw) || raw.length > field.options.length) return null;
       if (!raw.every((v) => typeof v === "string" && field.options.includes(v))) return null;
       const list = [...new Set(raw as string[])];
-      if (field.exclusive && list.includes(field.exclusive) && list.length > 1) return null; // "nothing yet" + materials
+      // "nothing yet" + real materials is contradictory ("turnkey" is independent of both)
+      const independent = field.independent ?? [];
+      if (field.exclusive && list.includes(field.exclusive) && list.some((v) => v !== field.exclusive && !independent.includes(v))) return null;
       return list.length ? list : undefined;
     }
     case "links": {
@@ -52,11 +54,11 @@ function parseValue(field: BriefField, raw: unknown): BriefValue | undefined | n
       if (phone === null || email === null) return null;
       const socials = [];
       for (const item of raw.socials) {
-        if (!isRecord(item)) return null;
-        const name = text(item.name, 60);
+        if (!isRecord(item) || typeof item.network !== "string" || !(SOCIAL_NETWORKS as readonly string[]).includes(item.network)) return null;
+        const name = item.network === OTHER_NETWORK ? text(item.name, 60) : ""; // a custom name only for "Інше"
         const url = text(item.url, 300);
         if (name === null || url === null) return null;
-        if (name || url) socials.push({ name, url });
+        if (name || url) socials.push({ network: item.network, name, url });
       }
       return phone || email || socials.length ? { phone, email, socials } : undefined;
     }
@@ -76,8 +78,9 @@ function parse(body: Record<string, unknown>): BriefAnswers | null {
   // conditional answers whose trigger is not selected are dropped (they are hidden in the form)
   for (const field of fields) if (!isShown(field, answers)) delete answers[field.key];
 
-  // required fields and the contact format — exactly as the form checks them before "Далі"
-  if (briefSteps.some((s) => Object.keys(stepErrors(s, answers)).length > 0)) return null;
+  // the final "Ваші контакти" step must be complete (name, valid phone / Telegram, method, time) —
+  // the same check the form runs before sending; stars on other steps are hints only
+  if (sendErrors(answers)) return null;
   return answers;
 }
 

@@ -6,9 +6,15 @@
  */
 
 import { contactError } from "@/lib/contact";
+import { socialLinks } from "@/data/navigation";
+
+/** Networks offered in the "+ Додати соціальну мережу" menu; "Інше" asks for a name as well */
+export const SOCIAL_NETWORKS = ["Instagram", "Telegram", "YouTube", "Viber", "WhatsApp", "TikTok", "Інше"] as const;
+export const OTHER_NETWORK = "Інше";
 
 export type BriefLink = { url: string; note: string };
-export type BriefSocial = { name: string; url: string };
+/** `network` — one of SOCIAL_NETWORKS; `name` is used only for "Інше" */
+export type BriefSocial = { network: string; name: string; url: string };
 export type BriefSiteContacts = { phone: string; email: string; socials: BriefSocial[] };
 export type BriefValue = string | string[] | BriefLink[] | BriefSiteContacts;
 export type BriefAnswers = Record<string, BriefValue>;
@@ -20,7 +26,10 @@ type Base = {
   key: string;
   label: string;
   hint?: string;
-  /** Marked with * and checked before "Далі" (only while the field is shown) */
+  /**
+   * Marked with *. A visual hint everywhere; it blocks sending only on a step with `blocking`
+   * (the final "Ваші контакти"), never moving between steps.
+   */
   required?: boolean;
   showIf?: ShowIf;
 };
@@ -34,18 +43,35 @@ export type BriefField =
       skip?: string;
     })
   | (Base & { type: "choice"; options: readonly string[]; default?: string })
-  | (Base & { type: "multi"; options: readonly string[]; default?: readonly string[]; exclusive?: string })
+  | (Base & {
+      type: "multi";
+      options: readonly string[];
+      default?: readonly string[];
+      /** Can't be combined with the other options, except those listed in `independent` */
+      exclusive?: string;
+      independent?: readonly string[];
+    })
   | (Base & { type: "links"; notePlaceholder: string })
   | (Base & { type: "siteContacts" })
   | (Base & { type: "contact"; placeholder?: string });
 
-/** A visual note inside a step (the paperclip "send materials to Telegram" plate) */
-export type BriefNotice = { icon: "paperclip"; text: string };
+/** A visual note inside a step (the paperclip "send materials to Telegram" plate); `href` makes it a link */
+export type BriefNotice = { icon: "paperclip" | "card"; text: string; href?: string };
 
-export type BriefStep = { id: string; number: string; title: string; hint: string; fields: BriefField[]; notice?: BriefNotice };
+export type BriefStep = {
+  id: string;
+  number: string;
+  title: string;
+  hint: string;
+  fields: BriefField[];
+  notice?: BriefNotice;
+  /** Its required fields must be filled in before the brief is sent */
+  blocking?: boolean;
+};
 
 const yesNo = ["Так", "Ні"] as const;
-export const NOTHING_YET = "Поки нічого немає, хочу проєкт під ключ";
+export const NOTHING_YET = "Поки нічого немає";
+export const TURNKEY = "Хочу проєкт під ключ";
 
 export const briefSteps: BriefStep[] = [
   {
@@ -60,7 +86,6 @@ export const briefSteps: BriefStep[] = [
         type: "siteContacts",
         label: "Контактна інформація для майбутнього сайту",
         required: true,
-        hint: "Якщо певних контактів поки немає, напишіть “Надамо пізніше” або поставте прочерк.",
       },
       {
         key: "form_fields",
@@ -105,17 +130,19 @@ export const briefSteps: BriefStep[] = [
         type: "textarea",
         label: "Види послуг або продуктів, які ви надаєте",
         required: true,
-        hint: "Перерахуйте основні послуги або товари через кому.",
+        hint: "Перерахуйте основні послуги або товари через кому",
       },
       {
         key: "business",
         type: "textarea",
-        label: "Опишіть напрямок вашого бізнесу: чим займається ваша компанія, скільки років на ринку та в чому ваш досвід",
+        label: "Опишіть напрямок вашого бізнесу",
+        hint: "Чим займається ваша компанія, скільки років на ринку та в чому ваш досвід",
       },
       {
         key: "geography",
         type: "text",
-        label: "У якому місті, області або країні ви надаєте послуги чи продаєте товари?",
+        label: "Географія вашої діяльності",
+        hint: "У якому місті, області або країні ви надаєте послуги чи продаєте товари?",
         required: true,
         placeholder: "Наприклад: Київ або вся Україна",
       },
@@ -201,15 +228,17 @@ export const briefSteps: BriefStep[] = [
     number: "06",
     title: "Матеріали та побажання",
     hint: "Що вже готово для сайту.",
-    notice: { icon: "paperclip", text: "Матеріали можна буде надіслати окремо в наш Telegram після заповнення брифу." },
+    notice: { icon: "paperclip", text: "Матеріали можна буде надіслати окремо в наш Telegram після заповнення брифу.", href: socialLinks.telegram },
     fields: [
       {
         key: "materials",
         type: "multi",
         label: "Що у вас уже є для сайту?",
         required: true,
-        options: ["Логотип", "Фотографії, відео або зображення", "Готові тексти", "Інші матеріали", NOTHING_YET],
+        options: ["Логотип", "Фотографії, відео або зображення", "Готові тексти", "Інші матеріали", NOTHING_YET, TURNKEY],
+        // "nothing yet" excludes real materials; "turnkey" goes with anything
         exclusive: NOTHING_YET,
+        independent: [TURNKEY],
       },
       { key: "materials_other", type: "text", label: "Які саме матеріали у вас є?", showIf: { key: "materials", values: ["Інші матеріали"] } },
       {
@@ -225,13 +254,15 @@ export const briefSteps: BriefStep[] = [
     number: "07",
     title: "Бюджет і терміни",
     hint: "Орієнтири, щоб запропонувати реалістичне рішення.",
+    // same wording as the "Гнучка оплата частинами" note in the main page pricing; no terms — they're discussed on a call
+    notice: { icon: "card", text: "У MIROFORM доступна гнучка оплата частинами — деталі обговоримо на консультації." },
     fields: [
       {
         key: "budget",
         type: "choice",
         label: "Орієнтовний бюджет проєкту",
         required: true,
-        options: ["$500–1 500", "$1 500–3 000", "Понад $3 000", "Потрібна консультація"],
+        options: ["$500–1 500", "$1 500–3 000", "Понад $5 000", "Потрібна оплата частинами", "Потрібна консультація"],
         default: "$500–1 500",
       },
       {
@@ -261,6 +292,7 @@ export const briefSteps: BriefStep[] = [
     number: "08",
     title: "Ваші контакти",
     hint: "Як і коли з вами зручно зв’язатися.",
+    blocking: true,
     fields: [
       { key: "name", type: "text", label: "Ваше ім’я", required: true, autoComplete: "name", placeholder: "Як до вас звертатися" },
       { key: "contact", type: "contact", label: "Телефон або Telegram", required: true, placeholder: "+380 або @username" },
@@ -290,7 +322,7 @@ export const DEFAULT_LINKS = 2;
 export const MAX_LINKS = 6;
 export const MAX_SOCIALS = 6;
 
-export const emptySiteContacts = (): BriefSiteContacts => ({ phone: "", email: "", socials: [{ name: "", url: "" }] });
+export const emptySiteContacts = (): BriefSiteContacts => ({ phone: "", email: "", socials: [] });
 
 /** Initial answers: the preselected options from the schema. */
 export function defaultAnswers(): BriefAnswers {
@@ -317,7 +349,7 @@ const filled = (s: unknown) => typeof s === "string" && s.trim().length > 0;
 export function hasAnswer(value: BriefValue | undefined) {
   if (value === undefined) return false;
   if (typeof value === "string") return filled(value);
-  if (!Array.isArray(value)) return filled(value.phone) || filled(value.email) || value.socials.some((s) => filled(s.name) || filled(s.url));
+  if (!Array.isArray(value)) return filled(value.phone) || filled(value.email) || value.socials.some((s) => filled(s.url) || filled(s.name));
   return (value as unknown[]).some((v) => (typeof v === "string" ? filled(v) : filled((v as BriefLink).url) || filled((v as BriefLink).note)));
 }
 
@@ -341,7 +373,7 @@ export function fieldError(field: BriefField, answers: BriefAnswers): string | u
     case "multi":
       return Array.isArray(value) && value.length ? undefined : "Оберіть хоча б один варіант";
     case "siteContacts":
-      return hasAnswer(value) ? undefined : "Вкажіть хоча б один контакт або напишіть “Надамо пізніше”";
+      return hasAnswer(value) ? undefined : "Вкажіть хоча б один контакт";
     case "links":
       return hasAnswer(value) ? undefined : "Додайте хоча б одне посилання";
     default: {
@@ -351,6 +383,19 @@ export function fieldError(field: BriefField, answers: BriefAnswers): string | u
       return field.skip ? "Опишіть побажання або оберіть «Поки не маю побажань»" : "Заповніть, будь ласка, це поле";
     }
   }
+}
+
+/**
+ * What stops the brief from being sent: the required fields (incl. the phone / Telegram format)
+ * of the blocking step "Ваші контакти". Stars on other steps are hints only.
+ */
+export function sendErrors(answers: BriefAnswers): { step: number; errors: Record<string, string> } | null {
+  for (const [i, s] of briefSteps.entries()) {
+    if (!s.blocking) continue;
+    const errors = stepErrors(s, answers);
+    if (Object.keys(errors).length) return { step: i, errors };
+  }
+  return null;
 }
 
 /** Errors of one step's shown fields, keyed by field key. */
