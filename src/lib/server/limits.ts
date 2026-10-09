@@ -1,9 +1,8 @@
 /**
  * Rate limiting and duplicate protection.
  *
- * Primary store: Upstash Redis over its REST API. The Vercel integration is connected with the
- * "STORAGE" prefix (STORAGE_REST_API_URL / STORAGE_REST_API_TOKEN); the default "KV" prefix and
- * Upstash's own names are accepted too, in case the integration is reconnected.
+ * Primary store: Upstash Redis over its REST API, configured by the Vercel integration as
+ * <PREFIX>_REST_API_URL / <PREFIX>_REST_API_TOKEN (any prefix) or UPSTASH_REDIS_REST_URL / _TOKEN.
  * Without it — or if Redis is unreachable — a per-instance in-memory fallback is used, which is
  * weaker on serverless (several instances) but keeps the forms working.
  */
@@ -14,23 +13,10 @@ const tokenName = urlName.endsWith("_REST_API_URL") ? urlName.replace(/_URL$/, "
 const redisUrl = process.env[urlName];
 const redisToken = process.env[tokenName];
 
-/** TEMP diagnostics: names (never values) of Redis-looking env vars. */
-export const redisEnvNames = Object.keys(process.env)
-  .filter((k) => /REST_API|REDIS|^KV_|STORAGE|UPSTASH/.test(k))
-  .sort()
-  .join(",");
-
 type RedisResult = { result?: unknown; error?: string };
 
-/** TEMP diagnostics: which store answered the last check (exposed as a response header for verification). */
-export let lastStore: "redis" | "memory" | "none" = "none";
-
 async function redis(commands: (string | number)[][]): Promise<RedisResult[] | null> {
-  lastStore = "memory";
-  if (!redisUrl || !redisToken) {
-    lastStore = "none";
-    return null;
-  }
+  if (!redisUrl || !redisToken) return null;
   try {
     const res = await fetch(`${redisUrl}/pipeline`, {
       method: "POST",
@@ -49,7 +35,6 @@ async function redis(commands: (string | number)[][]): Promise<RedisResult[] | n
       console.warn("[limits] redis command error, using memory fallback");
       return null;
     }
-    lastStore = "redis";
     return data;
   } catch (err) {
     console.warn(`[limits] redis unavailable (${(err as Error).name}), using memory fallback`);

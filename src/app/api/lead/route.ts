@@ -1,6 +1,6 @@
 import { budgets, directions, projectTypes } from "@/data/leads";
 import { customPlan, plans } from "@/data/pricing";
-import { claimOnce, lastStore, redisEnvNames, releaseClaim, withinRateLimit } from "@/lib/server/limits";
+import { claimOnce, releaseClaim, withinRateLimit } from "@/lib/server/limits";
 import { sendToTelegram, telegramConfigured } from "@/lib/server/telegram";
 import { HttpError, assertSameOrigin, clientKey, isContact, isRecord, kyivTime, looksAutomated, readJson, reply, sha256, text } from "@/lib/server/http";
 
@@ -71,24 +71,17 @@ function format(lead: Lead) {
     .join("\n\n");
 }
 
-/** TEMP: shows whether the rate limit used Redis ("redis"), failed over ("memory") or has no config ("none"). */
-const tag = (res: Response) => {
-  res.headers.set("x-rl-store", lastStore);
-  res.headers.set("x-rl-env", redisEnvNames || "-");
-  return res;
-};
-
 export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
-    if (!(await withinRateLimit("lead", clientKey(request), 5, 600))) return tag(reply(429));
+    if (!(await withinRateLimit("lead", clientKey(request), 5, 600))) return reply(429);
 
     const body = await readJson(request, MAX_BODY);
     if (!isRecord(body)) return reply(400);
     if (looksAutomated(body)) return reply(200); // silently dropped
 
     const lead = parse(body);
-    if (!lead) return tag(reply(400));
+    if (!lead) return reply(400);
     if (!telegramConfigured()) {
       console.error("[lead] Telegram is not configured — lead not delivered");
       return reply(503);
