@@ -10,14 +10,23 @@ import { inputBase } from "@/components/ui/formStyles";
 import {
   DEFAULT_LINKS,
   MAX_LINKS,
+  MAX_SOCIALS,
   briefSteps,
-  contactFieldError,
+  defaultAnswers,
+  emptySiteContacts,
   hasAnswer,
   isShown,
+  skipKey,
+  stepErrors,
   type BriefAnswers,
   type BriefField,
   type BriefLink,
+  type BriefNotice,
+  type BriefSiteContacts,
 } from "@/data/brief";
+
+/** field key → message */
+type Errors = Record<string, string>;
 
 const LAST = briefSteps.length - 1;
 /** "10–15 хвилин" never breaks inside the range */
@@ -32,15 +41,23 @@ const FILL_TIME = (
 /* ------------------------------------------------------------------ */
 
 const labelClass = "font-display text-[14px] leading-[1.35] font-medium text-white md:text-[15px]";
+const subLabelClass = "text-[12px] leading-[1.3] font-[350] text-white/55";
 const hintClass = "text-[12px] leading-[1.5] font-[350] text-white/50 md:text-[13px]";
 const fieldClass = `${inputBase} h-[54px] px-5 [color-scheme:dark] md:h-[56px] md:px-6`;
-const areaClass = `${inputBase} block min-h-[104px] resize-y border-white/14 px-5 pt-[15px] md:px-6`;
+const areaClass = `${inputBase} block min-h-[104px] resize-y px-5 pt-[15px] md:px-6`;
+const border = (error?: string) => (error ? "border-orange/80" : "border-white/14");
 
 function Label({ field, htmlFor, id, extra }: { field: BriefField; htmlFor?: string; id?: string; extra?: string }) {
   const Tag = htmlFor ? "label" : "p";
   return (
     <Tag htmlFor={htmlFor} id={id} className={labelClass}>
       {field.label}
+      {field.required && (
+        <span className="text-lime" aria-hidden="true">
+          {" "}*
+        </span>
+      )}
+      {field.required && <span className="sr-only"> (обов’язкове поле)</span>}
       {extra && <span className="ml-2 font-body text-[12px] font-[350] text-white/40">{extra}</span>}
     </Tag>
   );
@@ -50,46 +67,102 @@ function Hint({ text }: { text?: string }) {
   return text ? <p className={`-mt-1 ${hintClass}`}>{text}</p> : null;
 }
 
+function ErrorText({ id, text }: { id: string; text?: string }) {
+  return text ? (
+    <p id={id} className="pl-1 text-[12px] text-orange">
+      {text}
+    </p>
+  ) : null;
+}
+
+function Chip({ on, multi, onClick, children }: { on: boolean; multi?: boolean; onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      role={multi ? "checkbox" : "radio"}
+      aria-checked={on}
+      onClick={onClick}
+      className={`flex min-h-11 items-center gap-2 rounded-full border px-[18px] py-2 text-left text-[14px] leading-[1.3] transition-[background-color,border-color,color] duration-300 ${
+        on ? "border-lime bg-lime text-ink-2" : "border-white/18 bg-white/4 text-white hover:border-white/35 hover:bg-white/8"
+      }`}
+    >
+      {multi && (
+        <span aria-hidden="true" className={`grid size-4 shrink-0 place-items-center rounded-[5px] border ${on ? "border-ink-2 bg-ink-2" : "border-white/40"}`}>
+          {on && (
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <path d="M2 5.2l2 2L8 3" stroke="#AEEE05" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </span>
+      )}
+      {children}
+    </button>
+  );
+}
+
 /** Chips with radio / checkbox semantics — the site's form chip look. */
-function Chips({ field, value, onChange }: { field: Extract<BriefField, { type: "choice" | "multi" }>; value: string | string[] | undefined; onChange: (v: string | string[]) => void }) {
+function Chips({
+  field,
+  value,
+  onChange,
+  error,
+}: {
+  field: Extract<BriefField, { type: "choice" | "multi" }>;
+  value: string | string[] | undefined;
+  onChange: (v: string | string[]) => void;
+  error?: string;
+}) {
   const id = useId();
   const multi = field.type === "multi";
+  const exclusive = field.type === "multi" ? field.exclusive : undefined;
   const list = Array.isArray(value) ? value : [];
   const isOn = (v: string) => (multi ? list.includes(v) : value === v);
-  const toggle = (v: string) => onChange(multi ? (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]) : value === v ? "" : v);
+  const toggle = (v: string) => {
+    if (!multi) return onChange(value === v ? "" : v);
+    if (list.includes(v)) return onChange(list.filter((x) => x !== v));
+    // "nothing yet" can't be combined with real materials, and vice versa
+    if (exclusive) return onChange(v === exclusive ? [v] : [...list.filter((x) => x !== exclusive), v]);
+    onChange([...list, v]);
+  };
 
   return (
-    <div role="group" aria-labelledby={id} className="flex min-w-0 flex-col gap-3">
+    <div role="group" aria-labelledby={id} aria-describedby={error ? `brief-${field.key}-error` : undefined} className="flex min-w-0 flex-col gap-3">
       <Label field={field} id={id} extra={multi ? "можна кілька" : undefined} />
       <Hint text={field.hint} />
       <div className="flex flex-wrap gap-2">
         {field.options.map((v) => (
-          <button
-            key={v}
-            type="button"
-            role={multi ? "checkbox" : "radio"}
-            aria-checked={isOn(v)}
-            onClick={() => toggle(v)}
-            className={`flex min-h-11 items-center gap-2 rounded-full border px-[18px] py-2 text-left text-[14px] leading-[1.3] transition-[background-color,border-color,color] duration-300 ${
-              isOn(v) ? "border-lime bg-lime text-ink-2" : "border-white/18 bg-white/4 text-white hover:border-white/35 hover:bg-white/8"
-            }`}
-          >
-            {multi && (
-              <span aria-hidden="true" className={`grid size-4 shrink-0 place-items-center rounded-[5px] border ${isOn(v) ? "border-ink-2 bg-ink-2" : "border-white/40"}`}>
-                {isOn(v) && (
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                    <path d="M2 5.2l2 2L8 3" stroke="#AEEE05" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-              </span>
-            )}
+          <Chip key={v} on={isOn(v)} multi={multi} onClick={() => toggle(v)}>
             {v}
-          </button>
+          </Chip>
         ))}
       </div>
+      <ErrorText id={`brief-${field.key}-error`} text={error} />
     </div>
   );
 }
+
+const RemoveButton = ({ label, onClick }: { label: string; onClick: () => void }) => (
+  <button
+    type="button"
+    aria-label={label}
+    onClick={onClick}
+    className="grid size-11 shrink-0 place-items-center justify-self-end rounded-full border border-white/14 bg-white/4 transition-colors hover:bg-white/10"
+  >
+    <svg width="10" height="10" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+      <path d="M4.5 4.5l9 9M13.5 4.5l-9 9" stroke="white" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  </button>
+);
+
+const AddButton = ({ children, onClick }: { children: string; onClick: () => void }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="self-start rounded-full px-1 text-[14px] leading-[1.3] text-white/60 underline decoration-white/25 underline-offset-4 transition-colors hover:text-lime hover:decoration-lime/60"
+  >
+    {children}
+  </button>
+);
 
 const emptyLink = (): BriefLink => ({ url: "", note: "" });
 
@@ -123,43 +196,135 @@ function Links({ field, value, onChange }: { field: Extract<BriefField, { type: 
               className={`${fieldClass} border-white/14`}
             />
             {i >= DEFAULT_LINKS ? (
-              <button
-                type="button"
-                aria-label={`Прибрати посилання ${i + 1}`}
-                onClick={() => onChange(rows.filter((_, j) => j !== i))}
-                className="grid size-11 place-items-center justify-self-end rounded-full border border-white/14 bg-white/4 transition-colors hover:bg-white/10"
-              >
-                <svg width="10" height="10" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-                  <path d="M4.5 4.5l9 9M13.5 4.5l-9 9" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              </button>
+              <RemoveButton label={`Прибрати посилання ${i + 1}`} onClick={() => onChange(rows.filter((_, j) => j !== i))} />
             ) : (
               <span className="max-md:hidden" />
             )}
           </li>
         ))}
       </ul>
-      {rows.length < MAX_LINKS && (
-        <button
-          type="button"
-          onClick={() => onChange([...rows, emptyLink()])}
-          className="self-start rounded-full px-1 text-[14px] leading-[1.3] text-white/60 underline decoration-white/25 underline-offset-4 transition-colors hover:text-lime hover:decoration-lime/60"
-        >
-          + Додати посилання
-        </button>
-      )}
+      {rows.length < MAX_LINKS && <AddButton onClick={() => onChange([...rows, emptyLink()])}>+ Додати посилання</AddButton>}
+    </div>
+  );
+}
+
+/** Company contacts for the future site: phone, email and "network + link" rows. */
+function SiteContacts({
+  field,
+  value,
+  onChange,
+  error,
+}: {
+  field: Extract<BriefField, { type: "siteContacts" }>;
+  value: BriefSiteContacts | undefined;
+  onChange: (v: BriefSiteContacts) => void;
+  error?: string;
+}) {
+  const id = useId();
+  const v = value ?? emptySiteContacts();
+  const socials = v.socials.length ? v.socials : [{ name: "", url: "" }];
+  const setSocial = (i: number, patch: Partial<BriefSiteContacts["socials"][number]>) =>
+    onChange({ ...v, socials: socials.map((s, j) => (j === i ? { ...s, ...patch } : s)) });
+
+  return (
+    <div role="group" aria-labelledby={id} aria-describedby={error ? `brief-${field.key}-error` : undefined} className="flex min-w-0 flex-col gap-3">
+      <Label field={field} id={id} />
+      <Hint text={field.hint} />
+      <div className={`flex flex-col gap-4 rounded-[20px] border bg-white/[0.02] p-4 md:p-5 ${error ? "border-orange/60" : "border-white/10"}`}>
+        <div className="grid gap-3 md:grid-cols-2">
+          <label className="flex min-w-0 flex-col gap-1.5">
+            <span className={subLabelClass}>Телефон</span>
+            <input
+              type="text"
+              inputMode="tel"
+              autoComplete="off"
+              placeholder="+380 або “Надамо пізніше”"
+              value={v.phone}
+              onChange={(e) => onChange({ ...v, phone: e.target.value })}
+              className={`${fieldClass} border-white/14`}
+            />
+          </label>
+          <label className="flex min-w-0 flex-col gap-1.5">
+            <span className={subLabelClass}>Email</span>
+            <input
+              type="text"
+              inputMode="email"
+              autoComplete="off"
+              placeholder="info@company.com"
+              value={v.email}
+              onChange={(e) => onChange({ ...v, email: e.target.value })}
+              className={`${fieldClass} border-white/14`}
+            />
+          </label>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <span className={subLabelClass}>Соціальні мережі</span>
+          <ul className="flex flex-col gap-2.5">
+            {socials.map((s, i) => (
+              <li key={i} className="grid grid-cols-[minmax(0,1fr)_44px] gap-2 md:grid-cols-[minmax(0,0.65fr)_minmax(0,1.35fr)_44px] md:items-center">
+                <input
+                  aria-label={`Соціальна мережа ${i + 1} — назва`}
+                  placeholder="Instagram, Facebook…"
+                  value={s.name}
+                  onChange={(e) => setSocial(i, { name: e.target.value })}
+                  className={`${fieldClass} border-white/14 max-md:col-span-2`}
+                />
+                <input
+                  aria-label={`Соціальна мережа ${i + 1} — посилання`}
+                  inputMode="url"
+                  placeholder="https://"
+                  value={s.url}
+                  onChange={(e) => setSocial(i, { url: e.target.value })}
+                  className={`${fieldClass} border-white/14 ${i === 0 ? "max-md:col-span-2" : ""}`}
+                />
+                {i > 0 ? (
+                  <RemoveButton label={`Прибрати соціальну мережу ${i + 1}`} onClick={() => onChange({ ...v, socials: socials.filter((_, j) => j !== i) })} />
+                ) : (
+                  <span className="max-md:hidden" />
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+        {socials.length < MAX_SOCIALS && (
+          <AddButton onClick={() => onChange({ ...v, socials: [...socials, { name: "", url: "" }] })}>+ Додати соціальну мережу</AddButton>
+        )}
+      </div>
+      <ErrorText id={`brief-${field.key}-error`} text={error} />
     </div>
   );
 }
 
 /** Conditional field wrapper: opens smoothly, removed from the tab order while closed. */
-function Reveal({ show, children }: { show: boolean; children: ReactNode }) {
+function Reveal({ show, children, flush }: { show: boolean; children: ReactNode; flush?: boolean }) {
   return (
     <div
-      className={`grid transition-[grid-template-rows,opacity,margin] duration-500 ease-(--ease-smooth) ${show ? "grid-rows-[1fr] opacity-100" : "-mt-6 grid-rows-[0fr] opacity-0 md:-mt-7"}`}
+      className={`grid transition-[grid-template-rows,opacity,margin] duration-500 ease-(--ease-smooth) ${
+        show ? "grid-rows-[1fr] opacity-100" : `grid-rows-[0fr] opacity-0 ${flush ? "" : "-mt-6 md:-mt-7"}`
+      }`}
       inert={!show}
     >
       <div className="min-w-0 overflow-hidden">{children}</div>
+    </div>
+  );
+}
+
+/** Lime "paperclip" plate: compact, outlined, not a full-width fill. */
+function Notice({ notice }: { notice: BriefNotice }) {
+  return (
+    <div className="flex items-center gap-3.5 rounded-[18px] border border-lime/35 bg-lime/[0.06] py-3 pr-4 pl-3 md:gap-4 md:pr-5">
+      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-lime text-ink-2" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M20.5 11.2l-8.1 8.1a5.2 5.2 0 01-7.4-7.4l8.1-8.1a3.5 3.5 0 015 5l-8.2 8.1a1.7 1.7 0 01-2.4-2.4l7.5-7.5"
+            stroke="currentColor"
+            strokeWidth="1.9"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </span>
+      <p className="text-[13px] leading-[1.45] text-white/85 md:text-[14px]">{notice.text}</p>
     </div>
   );
 }
@@ -197,10 +362,9 @@ const ClockIcon = () => (
 /* ------------------------------------------------------------------ */
 
 export function BriefForm() {
-  const [answers, setAnswers] = useState<BriefAnswers>({});
+  const [answers, setAnswers] = useState<BriefAnswers>(defaultAnswers);
   const [step, setStep] = useState(0);
-  const [contactError, setContactError] = useState<string>();
-  const [emptyError, setEmptyError] = useState(false);
+  const [errors, setErrors] = useState<Errors>({});
   const [status, setStatus] = useState<"idle" | "sending" | "error" | "sent">("idle");
   const sending = useRef(false);
   const topRef = useRef<HTMLDivElement>(null);
@@ -211,10 +375,15 @@ export function BriefForm() {
   const current = briefSteps[step];
   const str = (k: string) => (typeof answers[k] === "string" ? (answers[k] as string) : "");
 
-  const set = (key: string, value: BriefAnswers[string]) => {
+  /** Edits an answer; the error of that field disappears as soon as it is edited. */
+  const set = (key: string, value: BriefAnswers[string], errorKey = key) => {
     setAnswers((a) => ({ ...a, [key]: value }));
-    setEmptyError(false);
-    if (key === "contact") setContactError(undefined);
+    setErrors((e) => {
+      if (!(errorKey in e)) return e;
+      const next = { ...e };
+      delete next[errorKey];
+      return next;
+    });
   };
 
   // On every step change: bring the wizard top into view, move focus to the step title, play a short entrance
@@ -237,35 +406,62 @@ export function BriefForm() {
     }
   }, [step, status]);
 
-  // every question is optional: moving between steps is never blocked
-  const goTo = (i: number) => setStep(Math.max(0, Math.min(LAST, i)));
+  const goTo = (i: number) => {
+    setErrors({});
+    setStep(Math.max(0, Math.min(LAST, i)));
+  };
+
+  /** First step that still has an unanswered required field (the side list can't jump past it). */
+  const firstUnfinished = briefSteps.findIndex((s) => Object.keys(stepErrors(s, answers)).length > 0);
+  const reachable = (i: number) => firstUnfinished === -1 || i <= firstUnfinished;
+
+  /** Shows the errors and moves focus to the first field that needs an answer. */
+  const showErrors = (found: Errors) => {
+    setErrors(found);
+    const first = Object.keys(found)[0];
+    requestAnimationFrame(() => {
+      const box = document.querySelector<HTMLElement>(`[data-field="${first}"]`);
+      box?.scrollIntoView({ behavior: "smooth", block: "center" });
+      box?.querySelector<HTMLElement>("input, textarea, button")?.focus({ preventScroll: true });
+    });
+  };
+
+  /** "Далі": only when the required fields of this step are answered. */
+  const goNext = () => {
+    const found = stepErrors(current, answers);
+    if (Object.keys(found).length) return showErrors(found);
+    goTo(step + 1);
+  };
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     // Enter in a field on steps 1–7 means "next", not "send"
-    if (step < LAST) return goTo(step + 1);
+    if (step < LAST) return goNext();
     if (sending.current) return;
 
     const trap = readHoneypot(e.currentTarget);
+    if (firstUnfinished !== -1) {
+      const found = stepErrors(briefSteps[firstUnfinished], answers);
+      if (firstUnfinished !== step) setStep(firstUnfinished);
+      return showErrors(found);
+    }
 
-    // only answers that are visible and filled in
+    // only answers of shown fields that are filled in
     const payload: BriefAnswers = {};
     for (const s of briefSteps) {
       for (const f of s.fields) {
+        if (!isShown(f, answers)) continue;
         let v = answers[f.key];
         if (f.type === "links" && Array.isArray(v)) v = (v as BriefLink[]).filter((l) => l.url.trim() || l.note.trim());
-        if (isShown(f, answers) && hasAnswer(v)) payload[f.key] = v!;
+        if (f.type === "siteContacts" && v && !Array.isArray(v) && typeof v === "object")
+          v = { ...v, socials: v.socials.filter((x) => x.name.trim() || x.url.trim()) };
+        if (f.type !== "siteContacts" && f.type !== "links" && "skip" in f && f.skip && answers[skipKey(f)] === "1") {
+          payload[skipKey(f)] = "1";
+          continue; // "no wishes yet" replaces the text
+        }
+        if (hasAnswer(v)) payload[f.key] = v!;
       }
     }
-
-    // the contact is optional, but when it is filled in it must be a valid phone / Telegram
-    const badContact = contactFieldError(payload);
-    if (badContact) {
-      setContactError(badContact);
-      document.getElementById("brief-contact")?.focus();
-      return;
-    }
-    if (!Object.keys(payload).length) return setEmptyError(true);
 
     sending.current = true;
     setStatus("sending");
@@ -307,22 +503,46 @@ export function BriefForm() {
 
   const renderField = (f: BriefField) => {
     const inputId = `brief-${f.key}`;
+    const error = errors[f.key];
+    const describedBy = error ? `${inputId}-error` : undefined;
     switch (f.type) {
       case "choice":
       case "multi":
-        return <Chips field={f} value={answers[f.key] as string | string[] | undefined} onChange={(v) => set(f.key, v)} />;
+        return <Chips field={f} value={answers[f.key] as string | string[] | undefined} onChange={(v) => set(f.key, v)} error={error} />;
       case "links":
         return <Links field={f} value={answers[f.key] as BriefLink[] | undefined} onChange={(v) => set(f.key, v)} />;
-      case "textarea":
+      case "siteContacts":
+        return <SiteContacts field={f} value={answers[f.key] as BriefSiteContacts | undefined} onChange={(v) => set(f.key, v)} error={error} />;
+      case "textarea": {
+        const skipped = !!f.skip && answers[skipKey(f)] === "1";
         return (
           <div className="flex min-w-0 flex-col gap-2.5">
             <Label field={f} htmlFor={inputId} />
             <Hint text={f.hint} />
-            <textarea id={inputId} name={f.key} placeholder={f.placeholder} value={str(f.key)} onChange={(e) => set(f.key, e.target.value)} className={areaClass} />
+            {f.skip && (
+              <div className="flex flex-wrap">
+                <Chip on={skipped} multi onClick={() => set(skipKey(f), skipped ? "" : "1", f.key)}>
+                  {f.skip}
+                </Chip>
+              </div>
+            )}
+            <Reveal show={!skipped} flush>
+              <textarea
+                id={inputId}
+                name={f.key}
+                placeholder={f.placeholder}
+                value={str(f.key)}
+                onChange={(e) => set(f.key, e.target.value)}
+                aria-invalid={!!error}
+                aria-describedby={describedBy}
+                className={`${areaClass} ${border(error)}`}
+              />
+            </Reveal>
+            <ErrorText id={`${inputId}-error`} text={error} />
           </div>
         );
-      default: {
-        const error = f.type === "contact" ? contactError : undefined;
+      }
+      default:
         return (
           <div className="flex min-w-0 flex-col gap-2.5">
             <Label field={f} htmlFor={inputId} />
@@ -336,17 +556,12 @@ export function BriefForm() {
               value={str(f.key)}
               onChange={(e) => set(f.key, e.target.value)}
               aria-invalid={!!error}
-              aria-describedby={error ? `${inputId}-error` : undefined}
-              className={`${fieldClass} ${error ? "border-orange/80" : "border-white/14"}`}
+              aria-describedby={describedBy}
+              className={`${fieldClass} ${border(error)}`}
             />
-            {error && (
-              <p id={`${inputId}-error`} className="pl-1 text-[12px] text-orange">
-                {error}
-              </p>
-            )}
+            <ErrorText id={`${inputId}-error`} text={error} />
           </div>
         );
-      }
     }
   };
 
@@ -387,13 +602,16 @@ export function BriefForm() {
             </header>
 
             <div className="mt-7 flex flex-col gap-6 md:mt-9 md:gap-7">
+              {current.notice && <Notice notice={current.notice} />}
               {current.fields.map((f) =>
                 f.showIf ? (
                   <Reveal key={f.key} show={isShown(f, answers)}>
-                    {renderField(f)}
+                    <div data-field={f.key}>{renderField(f)}</div>
                   </Reveal>
                 ) : (
-                  <div key={f.key}>{renderField(f)}</div>
+                  <div key={f.key} data-field={f.key}>
+                    {renderField(f)}
+                  </div>
                 ),
               )}
             </div>
@@ -443,11 +661,6 @@ export function BriefForm() {
             </button>
           </div>
 
-          {emptyError && step === LAST && (
-            <p className="mt-4 text-[13px] leading-[1.5] text-orange" role="alert">
-              Бриф порожній — дайте відповідь хоча б на кілька питань, щоб ми могли зрозуміти ваш проєкт.
-            </p>
-          )}
           {status === "error" && step === LAST && (
             <p className="mt-4 text-[13px] leading-[1.5] text-orange" role="alert">
               Не вдалося надіслати бриф. Ваші відповіді збережені — спробуйте ще раз або{" "}
@@ -476,21 +689,23 @@ export function BriefForm() {
           <ol className="flex flex-col gap-0.5 border-t border-white/8 pt-3">
             {briefSteps.map((s, i) => {
               const active = i === step;
-              const filled = s.fields.some((f) => isShown(f, answers) && hasAnswer(answers[f.key]));
+              const locked = !reachable(i);
+              const done = !active && i < step && Object.keys(stepErrors(s, answers)).length === 0;
               return (
                 <li key={s.id}>
                   <button
                     type="button"
                     onClick={() => goTo(i)}
+                    disabled={locked}
                     aria-current={active ? "step" : undefined}
                     className={`flex w-full items-center gap-3 rounded-full px-4 py-2.5 text-left text-[14px] leading-[1.3] transition-colors duration-300 ${
-                      active ? "bg-white/8 text-white" : "text-white/50 hover:text-white"
+                      active ? "bg-white/8 text-white" : locked ? "cursor-default text-white/30" : "text-white/50 hover:text-white"
                     }`}
                   >
                     <span className={`font-pixel text-[10px] ${active ? "text-lime" : "text-white/35"}`}>{s.number}</span>
                     <span className="min-w-0 flex-1">{s.title}</span>
-                    {filled && !active && (
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-label="є відповіді">
+                    {done && (
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-label="пройдено">
                         <path d="M3.5 8.3l2.8 2.8L12.5 5" stroke="#AEEE05" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     )}
@@ -499,7 +714,9 @@ export function BriefForm() {
               );
             })}
           </ol>
-          <p className="mt-3 border-t border-white/8 px-4 pt-3 text-[12px] leading-[1.5] text-white/40">Усі питання необов’язкові — пропускайте ті, на які поки немає відповіді.</p>
+          <p className="mt-3 border-t border-white/8 px-4 pt-3 text-[12px] leading-[1.5] text-white/45">
+            Поля із зірочкою <span className="text-lime">*</span> обов’язкові. Інші запитання можна пропускати, якщо поки немає відповіді.
+          </p>
         </div>
       </aside>
     </form>

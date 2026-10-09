@@ -1,14 +1,16 @@
 /**
- * The /brief questionnaire: 8 steps, their fields and when conditional fields appear.
+ * The /brief questionnaire: 8 steps, their fields, defaults and when conditional fields appear.
  * One source of truth for the wizard UI (components/brief/BriefForm) and the server (/api/brief):
- * the server accepts only these keys/options and formats the Telegram message in this order.
- * Every field is optional — a client can skip any question; only the contact format is checked when filled in.
+ * the server accepts only these keys/options, applies the same required-field rules
+ * and formats the Telegram message in this order.
  */
 
 import { contactError } from "@/lib/contact";
 
 export type BriefLink = { url: string; note: string };
-export type BriefValue = string | string[] | BriefLink[];
+export type BriefSocial = { name: string; url: string };
+export type BriefSiteContacts = { phone: string; email: string; socials: BriefSocial[] };
+export type BriefValue = string | string[] | BriefLink[] | BriefSiteContacts;
 export type BriefAnswers = Record<string, BriefValue>;
 
 /** Show a field only when another answer equals / includes one of `values`. */
@@ -18,18 +20,32 @@ type Base = {
   key: string;
   label: string;
   hint?: string;
+  /** Marked with * and checked before "Далі" (only while the field is shown) */
+  required?: boolean;
   showIf?: ShowIf;
 };
 
 export type BriefField =
-  | (Base & { type: "text" | "textarea"; placeholder?: string; autoComplete?: string })
-  | (Base & { type: "choice" | "multi"; options: readonly string[] })
+  | (Base & {
+      type: "text" | "textarea";
+      placeholder?: string;
+      autoComplete?: string;
+      /** A one-click alternative that counts as an answer ("Поки не маю побажань…"), stored under `${key}_skip` */
+      skip?: string;
+    })
+  | (Base & { type: "choice"; options: readonly string[]; default?: string })
+  | (Base & { type: "multi"; options: readonly string[]; default?: readonly string[]; exclusive?: string })
   | (Base & { type: "links"; notePlaceholder: string })
+  | (Base & { type: "siteContacts" })
   | (Base & { type: "contact"; placeholder?: string });
 
-export type BriefStep = { id: string; number: string; title: string; hint: string; fields: BriefField[] };
+/** A visual note inside a step (the paperclip "send materials to Telegram" plate) */
+export type BriefNotice = { icon: "paperclip"; text: string };
+
+export type BriefStep = { id: string; number: string; title: string; hint: string; fields: BriefField[]; notice?: BriefNotice };
 
 const yesNo = ["Так", "Ні"] as const;
+export const NOTHING_YET = "Поки нічого немає, хочу проєкт під ключ";
 
 export const briefSteps: BriefStep[] = [
   {
@@ -38,17 +54,19 @@ export const briefSteps: BriefStep[] = [
     title: "Загальна інформація",
     hint: "Кілька слів про компанію та контакти для сайту.",
     fields: [
-      { key: "company", type: "text", label: "Повна назва компанії", autoComplete: "organization" },
+      { key: "company", type: "text", label: "Повна назва компанії", required: true, autoComplete: "organization" },
       {
         key: "site_contacts",
-        type: "textarea",
+        type: "siteContacts",
         label: "Контактна інформація для майбутнього сайту",
-        hint: "Телефон, email, соцмережі або інші контакти компанії, які потрібно розмістити на сайті.",
+        required: true,
+        hint: "Якщо певних контактів поки немає, напишіть “Надамо пізніше” або поставте прочерк.",
       },
       {
         key: "form_fields",
         type: "text",
         label: "Які дані має залишити клієнт у формі на сайті?",
+        required: true,
         hint: "Наприклад, ім’я, телефон, email або додаткова інформація. Перерахуйте через кому.",
       },
     ],
@@ -63,6 +81,7 @@ export const briefSteps: BriefStep[] = [
         key: "project_type",
         type: "choice",
         label: "Який сайт вам потрібен?",
+        required: true,
         options: ["Односторінковий сайт (лендінг)", "Багатосторінковий сайт", "Інтернет-магазин", "Поки не знаю, потрібна консультація", "Інше"],
       },
       { key: "project_type_other", type: "text", label: "Що саме потрібно?", showIf: { key: "project_type", values: ["Інше"] } },
@@ -78,21 +97,45 @@ export const briefSteps: BriefStep[] = [
   {
     id: "business",
     number: "03",
-    title: "Послуги та бізнес",
+    title: "Детальніше про проєкт",
     hint: "Що ви пропонуєте і як працюєте з клієнтами.",
     fields: [
-      { key: "services", type: "textarea", label: "Які послуги або товари ви пропонуєте?", hint: "Перерахуйте основні послуги або товари через кому." },
+      {
+        key: "services",
+        type: "textarea",
+        label: "Види послуг або продуктів, які ви надаєте",
+        required: true,
+        hint: "Перерахуйте основні послуги або товари через кому.",
+      },
       {
         key: "business",
         type: "textarea",
-        label: "Опишіть напрямок вашого бізнесу",
-        hint: "Коротко розкажіть, чим займається ваша компанія, скільки років на ринку та в чому ваш досвід.",
+        label: "Опишіть напрямок вашого бізнесу: чим займається ваша компанія, скільки років на ринку та в чому ваш досвід",
       },
-      { key: "geography", type: "text", label: "Географія роботи", placeholder: "Місто, область або країна" },
-      { key: "prices", type: "choice", label: "Чи потрібно вказувати ціни на сайті?", options: ["Так", "Ні", "Лише для деяких послуг або товарів"] },
+      {
+        key: "geography",
+        type: "text",
+        label: "У якому місті, області або країні ви надаєте послуги чи продаєте товари?",
+        required: true,
+        placeholder: "Наприклад: Київ або вся Україна",
+      },
+      { key: "prices", type: "choice", label: "Чи потрібно вказувати ціни на сайті?", options: ["Так", "Ні", "Лише для деяких послуг або товарів"], default: "Ні" },
+      {
+        key: "prices_details",
+        type: "textarea",
+        label: "Які саме ціни потрібно вказати на сайті?",
+        hint: "Перерахуйте послуги або товари та, якщо відомо, їхні ціни. Наприклад: консультація — 1000 грн, послуга А — від 2000 грн.",
+        showIf: { key: "prices", values: ["Так", "Лише для деяких послуг або товарів"] },
+      },
       { key: "advantage", type: "textarea", label: "Ваші основні переваги" },
-      { key: "process", type: "text", label: "Як зазвичай відбувається замовлення або надання послуги?", placeholder: "Наприклад: заявка → консультація → оплата" },
-      { key: "promo", type: "choice", label: "Чи є акції або спеціальні пропозиції?", options: yesNo },
+      {
+        key: "process",
+        type: "text",
+        label: "Як зазвичай відбувається замовлення або надання послуги?",
+        required: true,
+        hint: "Наприклад, заявка, консультація, узгодження деталей, оплата.",
+      },
+      { key: "promo", type: "choice", label: "Чи є акції або спеціальні пропозиції?", options: yesNo, default: "Ні" },
       { key: "promo_details", type: "textarea", label: "Опишіть акції або пропозиції", showIf: { key: "promo", values: ["Так"] } },
       { key: "payment", type: "text", label: "Як клієнти можуть оплачувати товари або послуги?", hint: "Наприклад, готівкою, безготівково або онлайн." },
     ],
@@ -107,18 +150,20 @@ export const briefSteps: BriefStep[] = [
         key: "goals",
         type: "multi",
         label: "Яка головна мета сайту?",
+        required: true,
         options: ["Отримувати заявки від клієнтів", "Продавати товари або послуги", "Презентувати компанію та її послуги", "Показувати портфоліо або виконані роботи", "Інше"],
+        default: ["Отримувати заявки від клієнтів"],
       },
       { key: "goals_other", type: "text", label: "Уточніть мету", showIf: { key: "goals", values: ["Інше"] } },
       {
         key: "features",
         type: "multi",
         label: "Які функції потрібні на сайті?",
-        options: ["Форма заявки", "Каталог товарів або послуг", "Фільтри", "Кошик", "Онлайн-оплата", "Кілька мов", "Блог або новини", "Інше"],
+        options: ["Кілька мов", "Форма заявки", "Блог або новини", "Квіз", "Каталог товарів або послуг", "Онлайн-оплата", "Фотогалерея", "Інше"],
       },
       { key: "languages", type: "text", label: "Які мови?", placeholder: "Наприклад: українська, англійська", showIf: { key: "features", values: ["Кілька мов"] } },
       { key: "features_other", type: "text", label: "Які ще функції потрібні?", showIf: { key: "features", values: ["Інше"] } },
-      { key: "support", type: "choice", label: "Чи потрібна підтримка сайту після запуску?", options: ["Так", "Ні", "Потрібна консультація"] },
+      { key: "support", type: "choice", label: "Чи потрібна підтримка сайту після запуску?", options: ["Так", "Ні", "Потрібна консультація"], default: "Потрібна консультація" },
     ],
   },
   {
@@ -141,26 +186,37 @@ export const briefSteps: BriefStep[] = [
         hint: "Сайти з будь-якої сфери, дизайн або рішення яких вам не підходять.",
         notePlaceholder: "Що саме не підходить",
       },
-      { key: "design_wishes", type: "textarea", label: "Побажання щодо дизайну", placeholder: "Кольори, настрій, стиль — наприклад: мінімалізм, темна тема" },
+      {
+        key: "design_wishes",
+        type: "textarea",
+        label: "Побажання щодо дизайну",
+        required: true,
+        placeholder: "Кольори, настрій, стиль — наприклад: мінімалізм, темна тема",
+        skip: "Поки не маю побажань — запропонуйте свій варіант",
+      },
     ],
   },
   {
     id: "materials",
     number: "06",
     title: "Матеріали та побажання",
-    hint: "Що вже готово для сайту. Самі файли можна буде надіслати окремо.",
+    hint: "Що вже готово для сайту.",
+    notice: { icon: "paperclip", text: "Матеріали можна буде надіслати окремо в наш Telegram після заповнення брифу." },
     fields: [
       {
         key: "materials",
         type: "multi",
         label: "Що у вас уже є для сайту?",
-        options: ["Логотип", "Фотографії, відео або зображення", "Готові тексти", "Інші матеріали", "Поки нічого немає"],
+        required: true,
+        options: ["Логотип", "Фотографії, відео або зображення", "Готові тексти", "Інші матеріали", NOTHING_YET],
+        exclusive: NOTHING_YET,
       },
+      { key: "materials_other", type: "text", label: "Які саме матеріали у вас є?", showIf: { key: "materials", values: ["Інші матеріали"] } },
       {
         key: "materials_wishes",
         type: "textarea",
         label: "Побажання щодо матеріалів",
-        hint: "Наприклад: з чим потрібна допомога — тексти, фото, логотип — або які матеріали ще будуть.",
+        hint: "Наприклад, які тексти, фотографії або логотипи потрібно підготувати, яких матеріалів ще бракує.",
       },
     ],
   },
@@ -173,10 +229,18 @@ export const briefSteps: BriefStep[] = [
       {
         key: "budget",
         type: "choice",
-        label: "Орієнтовний бюджет",
-        options: ["До $500", "$500–1 500", "$1 500–3 000", "$3 000–5 000", "Понад $5 000", "Потрібна консультація"],
+        label: "Орієнтовний бюджет проєкту",
+        required: true,
+        options: ["$500–1 500", "$1 500–3 000", "Понад $3 000", "Потрібна консультація"],
+        default: "$500–1 500",
       },
-      { key: "deadline", type: "choice", label: "Бажаний термін запуску", options: ["До 7 днів", "До 14 днів", "Протягом місяця", "1–3 місяці", "До конкретної дати"] },
+      {
+        key: "deadline",
+        type: "choice",
+        label: "Бажаний термін запуску",
+        required: true,
+        options: ["До 7 днів", "До 14 днів", "Протягом місяця", "1–3 місяці", "До конкретної дати"],
+      },
       {
         key: "deadline_date",
         type: "text",
@@ -184,17 +248,39 @@ export const briefSteps: BriefStep[] = [
         placeholder: "Наприклад: до 1 грудня або до відкриття магазину",
         showIf: { key: "deadline", values: ["До конкретної дати"] },
       },
-      { key: "extra", type: "textarea", label: "Що нам ще варто знати про ваш проєкт?" },
+      {
+        key: "extra",
+        type: "textarea",
+        label: "Що нам ще варто знати про ваш проєкт?",
+        hint: "Укажіть усе, що, на вашу думку, допоможе нам краще зрозуміти завдання та врахувати важливі деталі під час розробки сайту.",
+      },
     ],
   },
   {
     id: "contacts",
     number: "08",
     title: "Ваші контакти",
-    hint: "Як з вами зв’язатися щодо брифу.",
+    hint: "Як і коли з вами зручно зв’язатися.",
     fields: [
-      { key: "name", type: "text", label: "Ваше ім’я", autoComplete: "name", placeholder: "Як до вас звертатися" },
-      { key: "contact", type: "contact", label: "Телефон або Telegram", placeholder: "+380 або @username" },
+      { key: "name", type: "text", label: "Ваше ім’я", required: true, autoComplete: "name", placeholder: "Як до вас звертатися" },
+      { key: "contact", type: "contact", label: "Телефон або Telegram", required: true, placeholder: "+380 або @username" },
+      { key: "contact_method", type: "choice", label: "Зручний спосіб зв’язку", required: true, options: ["Телефонний дзвінок", "Telegram", "WhatsApp", "Інший спосіб"] },
+      {
+        key: "contact_handle",
+        type: "text",
+        label: "Username або посилання",
+        hint: "Лише якщо відрізняється від контакту, вказаного вище.",
+        showIf: { key: "contact_method", values: ["Telegram", "WhatsApp"] },
+      },
+      { key: "contact_method_other", type: "text", label: "Який саме спосіб?", showIf: { key: "contact_method", values: ["Інший спосіб"] } },
+      { key: "contact_time", type: "choice", label: "Коли з вами зручно зв’язатися?", required: true, options: ["Якнайшвидше", "Сьогодні", "Завтра", "В інший день"] },
+      {
+        key: "contact_time_other",
+        type: "text",
+        label: "Дата та бажаний час",
+        placeholder: "Наприклад: 15 жовтня після 14:00",
+        showIf: { key: "contact_time", values: ["В інший день"] },
+      },
     ],
   },
 ];
@@ -202,6 +288,20 @@ export const briefSteps: BriefStep[] = [
 /** Link rows shown by default and the most a client can add */
 export const DEFAULT_LINKS = 2;
 export const MAX_LINKS = 6;
+export const MAX_SOCIALS = 6;
+
+export const emptySiteContacts = (): BriefSiteContacts => ({ phone: "", email: "", socials: [{ name: "", url: "" }] });
+
+/** Initial answers: the preselected options from the schema. */
+export function defaultAnswers(): BriefAnswers {
+  const answers: BriefAnswers = {};
+  for (const step of briefSteps)
+    for (const f of step.fields) {
+      if (f.type === "choice" && f.default) answers[f.key] = f.default;
+      if (f.type === "multi" && f.default) answers[f.key] = [...f.default];
+    }
+  return answers;
+}
 
 /** Whether a conditional field is currently shown (hidden answers are neither validated nor sent). */
 export function isShown(field: BriefField, answers: BriefAnswers) {
@@ -211,18 +311,55 @@ export function isShown(field: BriefField, answers: BriefAnswers) {
   return field.showIf.values.some((v) => picked.includes(v));
 }
 
+const filled = (s: unknown) => typeof s === "string" && s.trim().length > 0;
+
 /** True when the answer has some content (step checkmarks, what is sent to Telegram). */
 export function hasAnswer(value: BriefValue | undefined) {
   if (value === undefined) return false;
-  if (typeof value === "string") return value.trim().length > 0;
-  return value.some((v) => (typeof v === "string" ? v.trim() : v.url.trim() || v.note.trim()));
+  if (typeof value === "string") return filled(value);
+  if (!Array.isArray(value)) return filled(value.phone) || filled(value.email) || value.socials.some((s) => filled(s.name) || filled(s.url));
+  return (value as unknown[]).some((v) => (typeof v === "string" ? filled(v) : filled((v as BriefLink).url) || filled((v as BriefLink).note)));
 }
 
+/** Key that stores the one-click alternative of a text field ("Поки не маю побажань…"). */
+export const skipKey = (field: BriefField) => `${field.key}_skip`;
+
 /**
- * Every field is optional; the only check is the contact format when it is filled in
- * (same rule as the main site forms). Shared by the wizard and /api/brief.
+ * Why a shown field is not answered correctly (undefined = fine). Optional fields only have
+ * the contact format check. Shared by the wizard ("Далі" / send) and /api/brief.
  */
-export function contactFieldError(answers: BriefAnswers): string | undefined {
-  const contact = answers.contact;
-  return typeof contact === "string" && contact.trim() ? contactError(contact) : undefined;
+export function fieldError(field: BriefField, answers: BriefAnswers): string | undefined {
+  const value = answers[field.key];
+  if (field.type === "contact") {
+    if (!filled(value) && !field.required) return undefined;
+    return contactError(typeof value === "string" ? value : "");
+  }
+  if (!field.required) return undefined;
+  switch (field.type) {
+    case "choice":
+      return filled(value) ? undefined : "Оберіть один із варіантів";
+    case "multi":
+      return Array.isArray(value) && value.length ? undefined : "Оберіть хоча б один варіант";
+    case "siteContacts":
+      return hasAnswer(value) ? undefined : "Вкажіть хоча б один контакт або напишіть “Надамо пізніше”";
+    case "links":
+      return hasAnswer(value) ? undefined : "Додайте хоча б одне посилання";
+    default: {
+      if (field.skip && answers[skipKey(field)] === "1") return undefined;
+      if (field.key === "name") return typeof value === "string" && value.trim().length >= 2 ? undefined : "Вкажіть, будь ласка, ваше ім’я";
+      if (filled(value)) return undefined;
+      return field.skip ? "Опишіть побажання або оберіть «Поки не маю побажань»" : "Заповніть, будь ласка, це поле";
+    }
+  }
+}
+
+/** Errors of one step's shown fields, keyed by field key. */
+export function stepErrors(step: BriefStep, answers: BriefAnswers): Record<string, string> {
+  const errors: Record<string, string> = {};
+  for (const f of step.fields) {
+    if (!isShown(f, answers)) continue;
+    const error = fieldError(f, answers);
+    if (error) errors[f.key] = error;
+  }
+  return errors;
 }

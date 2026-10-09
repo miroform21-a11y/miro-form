@@ -15,16 +15,10 @@ const pad = "px-5 md:px-8 lg:px-[clamp(40px,6.25vw,90px)]";
 export default function BriefPage() {
   return (
     <main className="relative isolate overflow-hidden bg-ink">
-      {/* Background: hero glow on a clean dark background (no dot pattern on the brief page) */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[1100px]">
-        <Image
-          src="/images/glow.png"
-          alt=""
-          width={1470}
-          height={1176}
-          priority
-          className="absolute top-[-420px] left-[calc(50%-120px)] h-[1100px] w-[1380px] max-w-none object-cover opacity-55 [mask-image:url(/images/glow-mask.svg)] [mask-size:100%_100%] max-md:top-[-260px] max-md:left-[-40%] max-md:h-[760px] max-md:w-[900px]"
-        />
+      {/* Background: clean dark page with a faint brand-lime glow in the top-right corner (no blue glow, no dot pattern) */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[1100px] overflow-hidden">
+        <div className="absolute top-[-420px] right-[-260px] h-[980px] w-[1180px] bg-[radial-gradient(closest-side,rgba(174,238,5,0.11),rgba(174,238,5,0.04)_48%,rgba(174,238,5,0)_100%)] max-md:top-[-300px] max-md:right-[-340px] max-md:h-[640px] max-md:w-[760px]" />
+        <div className="absolute top-[120px] left-[-380px] h-[620px] w-[760px] bg-[radial-gradient(closest-side,rgba(174,238,5,0.035),rgba(174,238,5,0)_100%)] max-md:hidden" />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,5,5,0)_45%,#050505_100%)]" />
       </div>
 

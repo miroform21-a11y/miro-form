@@ -1,12 +1,12 @@
-import { MAX_LINKS, briefSteps, contactFieldError, isShown, type BriefAnswers, type BriefField } from "@/data/brief";
+import { MAX_LINKS, MAX_SOCIALS, briefSteps, isShown, skipKey, stepErrors, type BriefAnswers, type BriefField, type BriefSiteContacts, type BriefValue } from "@/data/brief";
 import { claimOnce, releaseClaim, withinRateLimit } from "@/lib/server/limits";
 import { sendToTelegram, telegramConfigured } from "@/lib/server/telegram";
 import { HttpError, assertSameOrigin, clientKey, isRecord, kyivTime, looksAutomated, readJson, reply, sha256, text } from "@/lib/server/http";
 
 /**
  * The /brief wizard → validated against the same schema as the form (data/brief.ts) → Telegram.
- * Only known keys and listed options are accepted; hidden conditional answers are dropped.
- * Every question is optional; a filled-in contact must be a valid phone / Telegram, and an empty brief is refused.
+ * Only known keys and listed options are accepted; hidden conditional answers are dropped;
+ * required fields and the contact format are checked with the same rules as in the form.
  * Nothing is stored except short-lived hashed rate-limit / duplicate keys.
  */
 
@@ -14,7 +14,7 @@ const MAX_BODY = 32 * 1024;
 const fields = briefSteps.flatMap((s) => s.fields);
 
 /** One answer, or null when it does not fit the field (→ 400). Empty answers become undefined. */
-function parseValue(field: BriefField, raw: unknown): string | string[] | { url: string; note: string }[] | undefined | null {
+function parseValue(field: BriefField, raw: unknown): BriefValue | undefined | null {
   if (raw === undefined || raw === null || raw === "") return undefined;
   switch (field.type) {
     case "text":
@@ -25,10 +25,13 @@ function parseValue(field: BriefField, raw: unknown): string | string[] | { url:
     }
     case "choice":
       return typeof raw === "string" && field.options.includes(raw) ? raw : null;
-    case "multi":
+    case "multi": {
       if (!Array.isArray(raw) || raw.length > field.options.length) return null;
       if (!raw.every((v) => typeof v === "string" && field.options.includes(v))) return null;
-      return raw.length ? [...new Set(raw as string[])] : undefined;
+      const list = [...new Set(raw as string[])];
+      if (field.exclusive && list.includes(field.exclusive) && list.length > 1) return null; // "nothing yet" + materials
+      return list.length ? list : undefined;
+    }
     case "links": {
       if (!Array.isArray(raw) || raw.length > MAX_LINKS) return null;
       const links = [];
@@ -41,6 +44,21 @@ function parseValue(field: BriefField, raw: unknown): string | string[] | { url:
       }
       return links.length ? links : undefined;
     }
+    case "siteContacts": {
+      if (!isRecord(raw) || !Array.isArray(raw.socials) || raw.socials.length > MAX_SOCIALS) return null;
+      const phone = text(raw.phone, 100);
+      const email = text(raw.email, 200);
+      if (phone === null || email === null) return null;
+      const socials = [];
+      for (const item of raw.socials) {
+        if (!isRecord(item)) return null;
+        const name = text(item.name, 60);
+        const url = text(item.url, 300);
+        if (name === null || url === null) return null;
+        if (name || url) socials.push({ name, url });
+      }
+      return phone || email || socials.length ? { phone, email, socials } : undefined;
+    }
   }
 }
 
@@ -51,39 +69,48 @@ function parse(body: Record<string, unknown>): BriefAnswers | null {
     const value = parseValue(field, body.answers[field.key]);
     if (value === null) return null;
     if (value !== undefined) answers[field.key] = value;
+    // one-click alternative ("Поки не маю побажань…")
+    if ("skip" in field && field.skip && body.answers[skipKey(field)] === "1") answers[skipKey(field)] = "1";
   }
   // conditional answers whose trigger is not selected are dropped (they are hidden in the form)
   for (const field of fields) if (!isShown(field, answers)) delete answers[field.key];
 
-  if (!Object.keys(answers).length) return null; // nothing answered at all
-  if (contactFieldError(answers)) return null; // same rule as the form and the main site forms
+  // required fields and the contact format — exactly as the form checks them before "Далі"
+  if (briefSteps.some((s) => Object.keys(stepErrors(s, answers)).length > 0)) return null;
   return answers;
 }
 
+function formatValue(field: BriefField, answers: BriefAnswers): string | null {
+  if ("skip" in field && field.skip && answers[skipKey(field)] === "1") return field.skip;
+  const v = answers[field.key];
+  if (v === undefined) return null;
+  if (field.type === "links") {
+    return "\n" + (v as { url: string; note: string }[]).map((l) => `   • ${[l.url, l.note].filter(Boolean).join(" — ")}`).join("\n");
+  }
+  if (field.type === "siteContacts") {
+    const c = v as BriefSiteContacts;
+    const lines = [c.phone && `   Телефон: ${c.phone}`, c.email && `   Email: ${c.email}`, ...c.socials.map((s) => `   ${s.name || "Соцмережа"}: ${s.url || "—"}`)];
+    return "\n" + lines.filter(Boolean).join("\n");
+  }
+  const value = Array.isArray(v) ? (v as string[]).join(", ") : (v as string);
+  return value.includes("\n") ? `\n${value}` : value;
+}
+
 function format(answers: BriefAnswers) {
-  const blocks = briefSteps
-    .filter((s) => s.id !== "contacts")
-    .map((s) => {
-      const lines = s.fields
-        .filter((f) => answers[f.key] !== undefined)
-        .map((f) => {
-          const v = answers[f.key];
-          const label = f.label.replace(/\?$/, ""); // "Тип сайту?: …" reads badly
-          if (f.type === "links") {
-            const items = (v as { url: string; note: string }[]).map((l) => `   • ${[l.url, l.note].filter(Boolean).join(" — ")}`);
-            return `▪️ ${label}:\n${items.join("\n")}`;
-          }
-          const value = Array.isArray(v) ? (v as string[]).join(", ") : (v as string);
-          return `▪️ ${label}: ${value.includes("\n") ? `\n${value}` : value}`;
-        });
-      return lines.length ? `${s.number} · ${s.title}\n${lines.join("\n")}` : "";
-    })
-    .filter(Boolean);
+  const blocks = briefSteps.map((s) => {
+    const lines = s.fields
+      .map((f) => {
+        const value = formatValue(f, answers);
+        return value === null ? "" : `▪️ ${f.label.replace(/\?$/, "")}: ${value}`; // "…сайт?: …" reads badly
+      })
+      .filter(Boolean);
+    return lines.length ? `${s.number} · ${s.title}\n${lines.join("\n")}` : "";
+  });
 
   return [
     "📋 Новий бриф з сайту MIROFORM",
-    `👤 ${answers.name ?? "ім’я не вказано"}\n📞 ${answers.contact ?? "контакт не вказано"}`,
-    ...blocks,
+    `👤 ${answers.name}\n📞 ${answers.contact}\n💬 ${answers.contact_method} · ${answers.contact_time}`,
+    ...blocks.filter(Boolean),
     `🕒 ${kyivTime()} (Київ)`,
   ].join("\n\n");
 }
