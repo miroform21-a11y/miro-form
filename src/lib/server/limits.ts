@@ -8,9 +8,17 @@
  * weaker on serverless (several instances) but keeps the forms working.
  */
 
-const env = (...names: string[]) => names.map((n) => process.env[n]).find(Boolean);
-const redisUrl = env("STORAGE_REST_API_URL", "STORAGE_KV_REST_API_URL", "KV_REST_API_URL", "UPSTASH_REDIS_REST_URL");
-const redisToken = env("STORAGE_REST_API_TOKEN", "STORAGE_KV_REST_API_TOKEN", "KV_REST_API_TOKEN", "UPSTASH_REDIS_REST_TOKEN");
+// whatever prefix the integration used: <PREFIX>_REST_API_URL + <PREFIX>_REST_API_TOKEN (or Upstash's own names)
+const urlName = Object.keys(process.env).find((k) => /(^|_)REST_API_URL$/.test(k)) ?? "UPSTASH_REDIS_REST_URL";
+const tokenName = urlName.endsWith("_REST_API_URL") ? urlName.replace(/_URL$/, "_TOKEN") : "UPSTASH_REDIS_REST_TOKEN";
+const redisUrl = process.env[urlName];
+const redisToken = process.env[tokenName];
+
+/** TEMP diagnostics: names (never values) of Redis-looking env vars. */
+export const redisEnvNames = Object.keys(process.env)
+  .filter((k) => /REST_API|REDIS|^KV_|STORAGE|UPSTASH/.test(k))
+  .sort()
+  .join(",");
 
 type RedisResult = { result?: unknown; error?: string };
 

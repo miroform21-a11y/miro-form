@@ -1,6 +1,6 @@
 import { budgets, directions, projectTypes } from "@/data/leads";
 import { customPlan, plans } from "@/data/pricing";
-import { claimOnce, lastStore, releaseClaim, withinRateLimit } from "@/lib/server/limits";
+import { claimOnce, lastStore, redisEnvNames, releaseClaim, withinRateLimit } from "@/lib/server/limits";
 import { sendToTelegram, telegramConfigured } from "@/lib/server/telegram";
 import { HttpError, assertSameOrigin, clientKey, isContact, isRecord, kyivTime, looksAutomated, readJson, reply, sha256, text } from "@/lib/server/http";
 
@@ -74,6 +74,7 @@ function format(lead: Lead) {
 /** TEMP: shows whether the rate limit used Redis ("redis"), failed over ("memory") or has no config ("none"). */
 const tag = (res: Response) => {
   res.headers.set("x-rl-store", lastStore);
+  res.headers.set("x-rl-env", redisEnvNames || "-");
   return res;
 };
 
