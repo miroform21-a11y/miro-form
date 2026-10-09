@@ -2,12 +2,14 @@
 
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { submitBrief } from "@/lib/submitBrief";
+import { FormSubmitError } from "@/lib/submitLead";
 import { socialLinks } from "@/data/navigation";
 import { ArrowShot } from "@/components/ui/ArrowShot";
 import { PillButton } from "@/components/ui/PillButton";
 import { Honeypot, readHoneypot } from "@/components/ui/Honeypot";
 import { inputBase } from "@/components/ui/formStyles";
 import {
+  BRIEF_LIMITS,
   DEFAULT_LINKS,
   MAX_LINKS,
   MAX_SOCIALS,
@@ -191,12 +193,14 @@ function Links({ field, value, onChange }: { field: Extract<BriefField, { type: 
               inputMode="url"
               aria-label={`${field.label} — посилання ${i + 1}`}
               placeholder="https://"
+              maxLength={BRIEF_LIMITS.link}
               value={row.url}
               onChange={(e) => update(i, { url: e.target.value })}
               className={`${fieldClass} border-white/14`}
             />
             <input
               aria-label={`${field.label} — коментар ${i + 1}`}
+              maxLength={BRIEF_LIMITS.link}
               placeholder={field.notePlaceholder}
               value={row.note}
               onChange={(e) => update(i, { note: e.target.value })}
@@ -343,6 +347,7 @@ function SiteContacts({
               inputMode="email"
               autoComplete="off"
               placeholder="info@company.com"
+              maxLength={BRIEF_LIMITS.email}
               value={v.email}
               onChange={(e) => onChange({ ...v, email: e.target.value })}
               className={`${fieldClass} border-white/14`}
@@ -385,6 +390,7 @@ function SiteContacts({
                       <input
                         aria-label={`Соціальна мережа ${i + 1} — назва`}
                         placeholder="Назва соціальної мережі"
+                        maxLength={BRIEF_LIMITS.socialName}
                         value={s.name}
                         onChange={(e) => setSocial(i, { name: e.target.value })}
                         className={`${fieldClass} col-span-2 border-white/14 md:col-span-1 md:col-start-2 md:row-start-1`}
@@ -395,6 +401,7 @@ function SiteContacts({
                       inputMode="url"
                       aria-label={`${rowName} — посилання на профіль`}
                       placeholder="Посилання на профіль"
+                      maxLength={BRIEF_LIMITS.link}
                       value={s.url}
                       onChange={(e) => setSocial(i, { url: e.target.value })}
                       className={`${fieldClass} col-span-2 min-w-0 border-white/14 md:col-span-1 md:col-start-2 ${other ? "md:row-start-2" : "md:row-start-1"}`}
@@ -523,7 +530,7 @@ export function BriefForm() {
   /** Furthest step opened so far — the steps before it are marked as passed in the side list */
   const [furthest, setFurthest] = useState(0);
   const [errors, setErrors] = useState<Errors>({});
-  const [status, setStatus] = useState<"idle" | "sending" | "error" | "sent">("idle");
+  const [status, setStatus] = useState<"idle" | "sending" | "error" | "limited" | "sent">("idle");
   const sending = useRef(false);
   const topRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -621,9 +628,10 @@ export function BriefForm() {
     try {
       await submitBrief(payload, trap);
       setStatus("sent");
-    } catch {
+    } catch (err) {
       sending.current = false;
-      setStatus("error"); // every answer stays in the form
+      // every answer stays in the form
+      setStatus(err instanceof FormSubmitError && err.status === 429 ? "limited" : "error");
     }
   };
 
@@ -682,6 +690,7 @@ export function BriefForm() {
             <Reveal show={!skipped} flush>
               <textarea
                 id={inputId}
+                maxLength={BRIEF_LIMITS.textarea}
                 name={f.key}
                 placeholder={f.placeholder}
                 value={str(f.key)}
@@ -705,6 +714,7 @@ export function BriefForm() {
               name={f.key}
               type="text"
               autoComplete={f.type === "contact" ? "tel" : (f.autoComplete ?? "off")}
+              maxLength={BRIEF_LIMITS.text}
               placeholder={f.placeholder}
               value={str(f.key)}
               onChange={(e) => set(f.key, e.target.value)}
@@ -814,6 +824,15 @@ export function BriefForm() {
             </button>
           </div>
 
+          {status === "limited" && step === LAST && (
+            <p className="mt-4 text-[13px] leading-[1.5] text-orange" role="alert">
+              Забагато спроб за короткий час. Ваші відповіді збережені — спробуйте ще раз за кілька хвилин або{" "}
+              <a href={socialLinks.telegram} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+                напишіть нам у Telegram
+              </a>
+              .
+            </p>
+          )}
           {status === "error" && step === LAST && (
             <p className="mt-4 text-[13px] leading-[1.5] text-orange" role="alert">
               Не вдалося надіслати бриф. Ваші відповіді збережені — спробуйте ще раз або{" "}

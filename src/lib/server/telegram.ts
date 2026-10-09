@@ -83,9 +83,19 @@ export async function sendTelegramHtml(messages: string[]): Promise<boolean> {
       cache: "no-store",
     });
 
-  for (const html of messages) {
+  const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  for (const [i, html] of messages.entries()) {
     try {
+      // Telegram allows about one message per second in a chat — space out the parts of a long brief
+      if (i > 0) await pause(400);
       let res = await post({ text: html, parse_mode: "HTML" });
+      if (res.status === 429) {
+        // "Too Many Requests": wait as long as Telegram asks (capped) and try this part once more
+        const data = (await res.json().catch(() => null)) as { parameters?: { retry_after?: number } } | null;
+        await pause(Math.min(data?.parameters?.retry_after ?? 2, 10) * 1000);
+        res = await post({ text: html, parse_mode: "HTML" });
+      }
       if (res.status === 400) {
         console.error("[telegram] HTML message refused, resending as plain text");
         res = await post({ text: htmlToPlain(html) });

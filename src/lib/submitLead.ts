@@ -18,6 +18,13 @@ const loadedAt = Date.now();
 /** Bot signals sent along with every form: time on page + the hidden honeypot field (must stay empty). */
 export const botSignals = (trap = "") => ({ t: Date.now() - loadedAt, trap });
 
+/** A refused submit; `status` lets a form tell "too many attempts" (429) from other failures. */
+export class FormSubmitError extends Error {
+  constructor(public status: number) {
+    super(`Form submit failed (${status})`);
+  }
+}
+
 /** POSTs to a same-site API route; throws on any failure so the form shows its error state. */
 export async function postForm(url: string, payload: object): Promise<void> {
   const res = await fetch(url, {
@@ -27,7 +34,7 @@ export async function postForm(url: string, payload: object): Promise<void> {
     signal: AbortSignal.timeout(15000),
   });
   const data = (await res.json().catch(() => null)) as { ok?: boolean } | null;
-  if (!res.ok || !data?.ok) throw new Error(`Form submit failed (${res.status})`);
+  if (!res.ok || !data?.ok) throw new FormSubmitError(res.status);
 }
 
 /** Sends a lead from the contact form / popups to /api/lead (delivered to Telegram on the server). */

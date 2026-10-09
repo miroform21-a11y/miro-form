@@ -1,4 +1,4 @@
-import { MAX_LINKS, MAX_SOCIALS, OTHER_NETWORK, SOCIAL_NETWORKS, briefSteps, isShown, sendErrors, skipKey, type BriefAnswers, type BriefField, type BriefValue } from "@/data/brief";
+import { BRIEF_LIMITS, MAX_LINKS, MAX_SOCIALS, OTHER_NETWORK, SOCIAL_NETWORKS, briefSteps, isShown, sendErrors, skipKey, type BriefAnswers, type BriefField, type BriefValue } from "@/data/brief";
 import { claimOnce, releaseClaim, withinRateLimit } from "@/lib/server/limits";
 import { sendTelegramHtml, telegramConfigured } from "@/lib/server/telegram";
 import { buildBriefMessages } from "@/lib/server/briefMessage";
@@ -11,7 +11,8 @@ import { HttpError, assertSameOrigin, clientKey, isRecord, kyivTime, looksAutoma
  * Nothing is stored except short-lived hashed rate-limit / duplicate keys.
  */
 
-const MAX_BODY = 32 * 1024;
+// generous: a detailed brief in Cyrillic (2 bytes per letter) easily passes 32 KB
+const MAX_BODY = 256 * 1024;
 const fields = briefSteps.flatMap((s) => s.fields);
 
 /** One answer, or null when it does not fit the field (→ 400). Empty answers become undefined. */
@@ -21,7 +22,7 @@ function parseValue(field: BriefField, raw: unknown): BriefValue | undefined | n
     case "text":
     case "contact":
     case "textarea": {
-      const v = text(raw, field.type === "textarea" ? 3000 : 300);
+      const v = text(raw, field.type === "textarea" ? BRIEF_LIMITS.textarea : BRIEF_LIMITS.text);
       return v === null ? null : v || undefined;
     }
     case "choice":
@@ -40,8 +41,8 @@ function parseValue(field: BriefField, raw: unknown): BriefValue | undefined | n
       const links = [];
       for (const item of raw) {
         if (!isRecord(item)) return null;
-        const url = text(item.url, 300);
-        const note = text(item.note, 300);
+        const url = text(item.url, BRIEF_LIMITS.link);
+        const note = text(item.note, BRIEF_LIMITS.link);
         if (url === null || note === null) return null;
         if (url || note) links.push({ url, note });
       }
@@ -49,14 +50,14 @@ function parseValue(field: BriefField, raw: unknown): BriefValue | undefined | n
     }
     case "siteContacts": {
       if (!isRecord(raw) || !Array.isArray(raw.socials) || raw.socials.length > MAX_SOCIALS) return null;
-      const phone = text(raw.phone, 100);
-      const email = text(raw.email, 200);
+      const phone = text(raw.phone, BRIEF_LIMITS.phone);
+      const email = text(raw.email, BRIEF_LIMITS.email);
       if (phone === null || email === null) return null;
       const socials = [];
       for (const item of raw.socials) {
         if (!isRecord(item) || typeof item.network !== "string" || !(SOCIAL_NETWORKS as readonly string[]).includes(item.network)) return null;
-        const name = item.network === OTHER_NETWORK ? text(item.name, 60) : ""; // a custom name only for "Інше"
-        const url = text(item.url, 300);
+        const name = item.network === OTHER_NETWORK ? text(item.name, BRIEF_LIMITS.socialName) : ""; // a custom name only for "Інше"
+        const url = text(item.url, BRIEF_LIMITS.link);
         if (name === null || url === null) return null;
         if (name || url) socials.push({ network: item.network, name, url });
       }
@@ -84,10 +85,13 @@ function parse(body: Record<string, unknown>): BriefAnswers | null {
   return answers;
 }
 
+/** A very long brief goes out as several spaced-out Telegram messages — give it time to finish. */
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
-    if (!(await withinRateLimit("brief", clientKey(request), 3, 600))) return reply(429);
+    if (!(await withinRateLimit("brief", clientKey(request), 5, 600))) return reply(429);
 
     const body = await readJson(request, MAX_BODY);
     if (!isRecord(body)) return reply(400);

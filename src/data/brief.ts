@@ -328,6 +328,12 @@ export const DEFAULT_LINKS = 2;
 export const MAX_LINKS = 6;
 export const MAX_SOCIALS = 6;
 
+/**
+ * Character limits shared by the form (maxLength) and /api/brief, so a detailed answer can never be
+ * accepted by the form and refused by the server.
+ */
+export const BRIEF_LIMITS = { text: 1000, textarea: 5000, link: 1000, socialName: 100, phone: 100, email: 200 } as const;
+
 /** The first social network row is ready with Instagram (an empty link isn't sent). */
 export const emptySiteContacts = (): BriefSiteContacts => ({ phone: "", email: "", socials: [{ network: "Instagram", name: "", url: "" }] });
 

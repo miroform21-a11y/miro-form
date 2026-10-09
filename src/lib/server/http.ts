@@ -12,8 +12,13 @@ export class HttpError extends Error {
 /** Every response is the same tiny shape — no internal details leave the server. */
 export const reply = (status: number) => Response.json({ ok: status < 300 }, { status, headers: { "Cache-Control": "no-store" } });
 
+// the site itself plus this project's own Vercel addresses (deployment, branch and production aliases)
 const allowedOrigins = new Set(
-  [new URL(siteUrl).origin, "https://miro-form.com", process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`].filter(Boolean) as string[],
+  [
+    new URL(siteUrl).origin,
+    "https://miro-form.com",
+    ...[process.env.VERCEL_URL, process.env.VERCEL_BRANCH_URL, process.env.VERCEL_PROJECT_PRODUCTION_URL].filter(Boolean).map((host) => `https://${host}`),
+  ],
 );
 
 /** Browsers always send Origin on POST; anything else (other sites, bare scripts without it) is refused. Not a spam filter on its own. */
