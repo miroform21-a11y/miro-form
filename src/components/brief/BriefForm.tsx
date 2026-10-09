@@ -228,17 +228,16 @@ function formatPhone(input: string): string {
   return `+38${op ? ` (${op}` : ""}${a ? `) ${a}` : ""}${b ? ` ${b}` : ""}${c ? ` ${c}` : ""}`;
 }
 
-const socialPlaceholder: Record<string, string> = {
-  Instagram: "https://instagram.com/…",
-  Telegram: "https://t.me/… або @username",
-  YouTube: "https://youtube.com/@…",
-  Viber: "Номер або посилання",
-  WhatsApp: "Номер або https://wa.me/…",
-  TikTok: "https://tiktok.com/@…",
-};
-
-/** "+ Додати соціальну мережу" with a compact dropdown of networks. */
-function AddSocialMenu({ onPick }: { onPick: (network: string) => void }) {
+/** Dropdown of social networks; `trigger` renders the button that opens it. */
+function NetworkMenu({
+  onPick,
+  trigger,
+  align = "left",
+}: {
+  onPick: (network: string) => void;
+  trigger: (props: { open: boolean; toggle: () => void; menuId: string }) => ReactNode;
+  align?: "left" | "right";
+}) {
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
@@ -257,25 +256,13 @@ function AddSocialMenu({ onPick }: { onPick: (network: string) => void }) {
   }, [open]);
 
   return (
-    <div ref={boxRef} className="relative self-start">
-      <button
-        type="button"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-controls={menuId}
-        onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1.5 rounded-full px-1 text-[14px] leading-[1.3] text-white/60 underline decoration-white/25 underline-offset-4 transition-colors hover:text-lime hover:decoration-lime/60"
-      >
-        + Додати соціальну мережу
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true" className={`transition-transform duration-300 ${open ? "rotate-180" : ""}`}>
-          <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
+    <div ref={boxRef} className="relative min-w-0">
+      {trigger({ open, toggle: () => setOpen((o) => !o), menuId })}
       {open && (
         <ul
           id={menuId}
           role="menu"
-          className="absolute top-[calc(100%+8px)] left-0 z-20 grid w-[230px] gap-0.5 rounded-[18px] border border-white/12 bg-[#111] p-1.5 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.8)]"
+          className={`absolute top-[calc(100%+8px)] z-20 grid w-[230px] gap-0.5 rounded-[18px] border border-white/12 bg-[#111] p-1.5 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.8)] ${align === "right" ? "right-0" : "left-0"}`}
         >
           {SOCIAL_NETWORKS.map((n) => (
             <li key={n} role="none">
@@ -298,7 +285,13 @@ function AddSocialMenu({ onPick }: { onPick: (network: string) => void }) {
   );
 }
 
-/** Company contacts for the future site: phone (masked), email and the chosen social networks. */
+const Chevron = ({ open }: { open: boolean }) => (
+  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true" className={`shrink-0 transition-transform duration-300 ${open ? "rotate-180" : ""}`}>
+    <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+/** Company contacts for the future site: phone (masked), email and social networks (Instagram by default). */
 function SiteContacts({
   field,
   value,
@@ -332,11 +325,12 @@ function SiteContacts({
         <div className="grid gap-3 md:grid-cols-2">
           <label className="flex min-w-0 flex-col gap-1.5">
             <span className={subLabelClass}>Телефон</span>
+            {/* an example of the format (our own number) — only a placeholder, never sent as an answer */}
             <input
               type="tel"
               inputMode="tel"
               autoComplete="off"
-              placeholder="+38 (0__) ___ __ __"
+              placeholder="+38 073 021 77 21"
               value={v.phone}
               onChange={(e) => onChange({ ...v, phone: formatPhone(e.target.value) })}
               className={`${fieldClass} border-white/14`}
@@ -361,29 +355,49 @@ function SiteContacts({
             <ul ref={listRef} className="flex flex-col gap-2.5">
               {socials.map((s, i) => {
                 const other = s.network === OTHER_NETWORK;
+                const rowName = other ? s.name || "Соціальна мережа" : s.network;
                 return (
-                  <li key={i} className="grid grid-cols-[minmax(0,1fr)_44px] gap-2 md:grid-cols-[180px_minmax(0,1fr)_44px] md:items-center">
-                    {other ? (
+                  // phones: [network | ×] then full-width inputs; desktop: [network | link (+ name for "Інше") | ×]
+                  <li key={i} className="grid grid-cols-[minmax(0,1fr)_44px] items-center gap-2 md:grid-cols-[180px_minmax(0,1fr)_44px]">
+                    <div className="col-start-1 row-start-1">
+                      <NetworkMenu
+                        onPick={(network) => setSocial(i, { network, name: network === OTHER_NETWORK ? s.name : "" })}
+                        trigger={({ open, toggle, menuId }) => (
+                          <button
+                            type="button"
+                            aria-haspopup="menu"
+                            aria-expanded={open}
+                            aria-controls={menuId}
+                            aria-label={`Соціальна мережа ${i + 1}: ${s.network}. Змінити`}
+                            onClick={toggle}
+                            className={`${fieldClass} flex w-full items-center justify-between gap-2 border-white/14 bg-white/6 text-left text-white`}
+                          >
+                            <span className="truncate">{s.network}</span>
+                            <Chevron open={open} />
+                          </button>
+                        )}
+                      />
+                    </div>
+                    <div className="col-start-2 row-start-1 md:col-start-3">
+                      <RemoveButton label={`Прибрати ${rowName}`} onClick={() => onChange({ ...v, socials: socials.filter((_, j) => j !== i) })} />
+                    </div>
+                    {other && (
                       <input
                         aria-label={`Соціальна мережа ${i + 1} — назва`}
                         placeholder="Назва соціальної мережі"
                         value={s.name}
                         onChange={(e) => setSocial(i, { name: e.target.value })}
-                        className={`${fieldClass} border-white/14`}
+                        className={`${fieldClass} col-span-2 border-white/14 md:col-span-1 md:col-start-2 md:row-start-1`}
                       />
-                    ) : (
-                      <span className="flex h-[54px] items-center rounded-[16px] border border-white/14 bg-white/6 px-5 text-[15px] leading-none text-white md:h-[56px]">
-                        {s.network}
-                      </span>
                     )}
-                    <RemoveButton label={`Прибрати ${other ? s.name || "соціальну мережу" : s.network}`} onClick={() => onChange({ ...v, socials: socials.filter((_, j) => j !== i) })} />
                     <input
-                      aria-label={`${other ? s.name || "Соціальна мережа" : s.network} — посилання`}
+                      type="url"
                       inputMode="url"
-                      placeholder={other ? "Посилання" : socialPlaceholder[s.network]}
+                      aria-label={`${rowName} — посилання на профіль`}
+                      placeholder="Посилання на профіль"
                       value={s.url}
                       onChange={(e) => setSocial(i, { url: e.target.value })}
-                      className={`${fieldClass} border-white/14 col-span-2 md:order-2 md:col-span-1`}
+                      className={`${fieldClass} col-span-2 min-w-0 border-white/14 md:col-span-1 md:col-start-2 ${other ? "md:row-start-2" : "md:row-start-1"}`}
                     />
                   </li>
                 );
@@ -391,7 +405,25 @@ function SiteContacts({
             </ul>
           )}
         </div>
-        {socials.length < MAX_SOCIALS && <AddSocialMenu onPick={addSocial} />}
+        {socials.length < MAX_SOCIALS && (
+          <NetworkMenu
+            onPick={addSocial}
+            trigger={({ open, toggle, menuId }) => (
+              <button
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded={open}
+                aria-controls={menuId}
+                onClick={toggle}
+                // phones: a full-width one-line button; desktop: a compact pill under the list
+                className="flex w-full items-center justify-center gap-1.5 rounded-full border border-lime/45 bg-lime/[0.07] px-3 py-3 font-display text-[12px] leading-none font-medium whitespace-nowrap text-lime transition-[background-color,border-color] duration-300 hover:border-lime hover:bg-lime/[0.14] md:w-auto md:gap-2 md:px-4 md:py-2.5 md:text-[14px]"
+              >
+                + Додати соціальну мережу
+                <Chevron open={open} />
+              </button>
+            )}
+          />
+        )}
       </div>
       <ErrorText id={`brief-${field.key}-error`} text={error} />
     </div>

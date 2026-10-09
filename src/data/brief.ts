@@ -268,7 +268,7 @@ export const briefSteps: BriefStep[] = [
         type: "choice",
         label: "Орієнтовний бюджет проєкту",
         required: true,
-        options: ["$500–1 500", "$1 500–3 000", "$3 000–5 000", "Потрібна оплата частинами", "Потрібна консультація"],
+        options: ["$500–1 500", "$1 500–3 000", "$3 000–5 000", "Оплата частинами", "Потрібна консультація"],
         default: "$500–1 500",
       },
       {
@@ -328,7 +328,8 @@ export const DEFAULT_LINKS = 2;
 export const MAX_LINKS = 6;
 export const MAX_SOCIALS = 6;
 
-export const emptySiteContacts = (): BriefSiteContacts => ({ phone: "", email: "", socials: [] });
+/** The first social network row is ready with Instagram (an empty link isn't sent). */
+export const emptySiteContacts = (): BriefSiteContacts => ({ phone: "", email: "", socials: [{ network: "Instagram", name: "", url: "" }] });
 
 /** Initial answers: the preselected options from the schema. */
 export function defaultAnswers(): BriefAnswers {
