@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
 import { submitBrief } from "@/lib/submitBrief";
-import { phoneError } from "@/lib/contact";
+import { contactError } from "@/lib/contact";
 import { socialLinks } from "@/data/navigation";
 import { ArrowShot } from "@/components/ui/ArrowShot";
+import { PillButton } from "@/components/ui/PillButton";
+import { Honeypot, readHoneypot } from "@/components/ui/Honeypot";
 import { inputBase } from "@/components/ui/formStyles";
-import { briefSections, options } from "@/data/brief";
+import { MAX_LINKS, briefSteps, hasAnswer, isShown, type BriefAnswers, type BriefField, type BriefLink } from "@/data/brief";
 
-type Answers = Record<string, string | string[]>;
-type Errors = Partial<Record<"name" | "contact" | "email" | "phone", string>>;
+type Errors = Partial<Record<"name" | "contact", string>>;
+
+const LAST = briefSteps.length - 1;
 
 /* ------------------------------------------------------------------ */
 /* Building blocks                                                     */
@@ -18,39 +20,56 @@ type Errors = Partial<Record<"name" | "contact" | "email" | "phone", string>>;
 
 const labelClass = "font-display text-[14px] leading-[1.35] font-medium text-white md:text-[15px]";
 const hintClass = "text-[13px] leading-[1.5] font-[350] text-white/50";
+const fieldClass = `${inputBase} h-[54px] border-white/14 px-5 [color-scheme:dark] md:h-[56px] md:px-6`;
+const areaClass = `${inputBase} block min-h-[104px] resize-y border-white/14 px-5 pt-[15px] md:px-6`;
 
-function Field({ label, hint, htmlFor, wide, children, error }: { label: string; hint?: string; htmlFor?: string; wide?: boolean; children: ReactNode; error?: string }) {
+function Label({ field, htmlFor, id, extra }: { field: BriefField; htmlFor?: string; id?: string; extra?: string }) {
+  const Tag = htmlFor ? "label" : "p";
   return (
-    <div className={`flex min-w-0 flex-col gap-2.5 ${wide ? "md:col-span-2" : ""}`}>
-      <label htmlFor={htmlFor} className={labelClass}>
-        {label}
-      </label>
-      {hint && <p className={`-mt-1 ${hintClass}`}>{hint}</p>}
-      {children}
-      {error && <p className="pl-1 text-[12px] text-orange">{error}</p>}
-    </div>
+    <Tag htmlFor={htmlFor} id={id} className={labelClass}>
+      {field.label}
+      {field.required ? (
+        <span className="text-lime"> *</span>
+      ) : (
+        <span className="ml-2 font-body text-[12px] font-[350] text-white/40">необов’язково</span>
+      )}
+      {extra && <span className="ml-2 font-body text-[12px] font-[350] text-white/40">· {extra}</span>}
+    </Tag>
   );
 }
 
-/** Group of selectable chips (radio or checkbox semantics), same look as the site's form chips. */
-function Choice({ label, hint, values, selected, onToggle, multi, wide = true }: { label: string; hint?: string; values: readonly string[]; selected: string | string[] | undefined; onToggle: (v: string) => void; multi?: boolean; wide?: boolean }) {
+function Hint({ text }: { text?: string }) {
+  return text ? <p className={`-mt-1 ${hintClass}`}>{text}</p> : null;
+}
+
+function ErrorText({ id, text }: { id: string; text?: string }) {
+  return text ? (
+    <p id={id} className="pl-1 text-[12px] text-orange">
+      {text}
+    </p>
+  ) : null;
+}
+
+/** Chips with radio / checkbox semantics — the site's form chip look. */
+function Chips({ field, value, onChange }: { field: Extract<BriefField, { type: "choice" | "multi" }>; value: string | string[] | undefined; onChange: (v: string | string[]) => void }) {
   const id = useId();
-  const isOn = (v: string) => (Array.isArray(selected) ? selected.includes(v) : selected === v);
+  const multi = field.type === "multi";
+  const list = Array.isArray(value) ? value : [];
+  const isOn = (v: string) => (multi ? list.includes(v) : value === v);
+  const toggle = (v: string) => onChange(multi ? (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]) : value === v ? "" : v);
+
   return (
-    <div role="group" aria-labelledby={id} className={`flex min-w-0 flex-col gap-3 ${wide ? "md:col-span-2" : ""}`}>
-      <p id={id} className={labelClass}>
-        {label}
-        {multi && <span className="ml-2 font-body text-[12px] font-[350] text-white/40">можна кілька</span>}
-      </p>
-      {hint && <p className={`-mt-1.5 ${hintClass}`}>{hint}</p>}
+    <div role="group" aria-labelledby={id} className="flex min-w-0 flex-col gap-3">
+      <Label field={field} id={id} extra={multi ? "можна кілька" : undefined} />
+      <Hint text={field.hint} />
       <div className="flex flex-wrap gap-2">
-        {values.map((v) => (
+        {field.options.map((v) => (
           <button
             key={v}
             type="button"
             role={multi ? "checkbox" : "radio"}
             aria-checked={isOn(v)}
-            onClick={() => onToggle(v)}
+            onClick={() => toggle(v)}
             className={`flex min-h-11 items-center gap-2 rounded-full border px-[18px] py-2 text-left text-[14px] leading-[1.3] transition-[background-color,border-color,color] duration-300 ${
               isOn(v) ? "border-lime bg-lime text-ink-2" : "border-white/18 bg-white/4 text-white hover:border-white/35 hover:bg-white/8"
             }`}
@@ -72,451 +91,386 @@ function Choice({ label, hint, values, selected, onToggle, multi, wide = true }:
   );
 }
 
-/** Small reveal wrapper for fields that appear after a choice */
-function Reveal({ show, children }: { show: boolean; children: ReactNode }) {
-  return (
-    <div className={`grid transition-[grid-template-rows,opacity] duration-500 ease-(--ease-smooth) md:col-span-2 ${show ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`} inert={!show}>
-      <div className="min-w-0 overflow-hidden">
-        <div className="grid gap-5 pt-0.5 md:grid-cols-2">{children}</div>
-      </div>
-    </div>
-  );
-}
-
-function Files({ label, files, onChange }: { label: string; files: File[]; onChange: (f: File[]) => void }) {
+/** Up to MAX_LINKS "link + what about it" rows; the next row appears on demand. */
+function Links({ field, value, onChange }: { field: Extract<BriefField, { type: "links" }>; value: BriefLink[] | undefined; onChange: (v: BriefLink[]) => void }) {
   const id = useId();
+  const rows = value?.length ? value : [{ url: "", note: "" }];
+  const update = (i: number, patch: Partial<BriefLink>) => onChange(rows.map((r, j) => (j === i ? { ...r, ...patch } : r)));
+
   return (
-    <div className="flex min-w-0 flex-col gap-3 md:col-span-2">
-      <p className={labelClass}>{label}</p>
-      <label
-        htmlFor={id}
-        className="group/drop flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[20px] border border-dashed border-white/20 bg-white/3 px-5 py-7 text-center transition-colors duration-300 hover:border-lime/60 hover:bg-white/5"
-      >
-        <span className="grid size-11 place-items-center rounded-full bg-lime text-ink-2" aria-hidden="true">
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-            <path d="M9 13V4M5 8l4-4 4 4M3 14.5h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </span>
-        <span className="font-display text-[14px] font-medium text-white">Додати файли</span>
-        <span className={hintClass}>Логотип, брендбук, фото, PDF — до 20 МБ кожен</span>
-        <input
-          id={id}
-          type="file"
-          multiple
-          accept="image/*,.pdf,.zip,.rar,.ai,.eps,.psd,.fig,.svg,.doc,.docx,.ppt,.pptx"
-          className="sr-only"
-          onChange={(e) => {
-            const picked = [...(e.target.files ?? [])].filter((f) => f.size <= 20 * 1024 * 1024);
-            onChange([...files, ...picked]);
-            e.target.value = "";
-          }}
-        />
-      </label>
-      {files.length > 0 && (
-        <ul className="flex flex-wrap gap-2">
-          {files.map((f, i) => (
-            <li key={`${f.name}-${i}`} className="flex max-w-full items-center gap-2 rounded-full border border-white/14 bg-white/5 py-1.5 pr-1.5 pl-4 text-[13px] text-white/80">
-              <span className="truncate">{f.name}</span>
+    <div role="group" aria-labelledby={id} className="flex min-w-0 flex-col gap-3">
+      <Label field={field} id={id} />
+      <ul className="flex flex-col gap-2.5">
+        {rows.map((row, i) => (
+          <li key={i} className="grid gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-center">
+            <input
+              type="url"
+              inputMode="url"
+              aria-label={`${field.label} — посилання ${i + 1}`}
+              placeholder="https://"
+              value={row.url}
+              onChange={(e) => update(i, { url: e.target.value })}
+              className={fieldClass}
+            />
+            <input
+              aria-label={`${field.label} — коментар ${i + 1}`}
+              placeholder={field.notePlaceholder}
+              value={row.note}
+              onChange={(e) => update(i, { note: e.target.value })}
+              className={fieldClass}
+            />
+            {rows.length > 1 && (
               <button
                 type="button"
-                aria-label={`Прибрати ${f.name}`}
-                onClick={() => onChange(files.filter((_, j) => j !== i))}
-                className="grid size-7 shrink-0 place-items-center rounded-full bg-white/8 transition-colors hover:bg-white/16"
+                aria-label={`Прибрати посилання ${i + 1}`}
+                onClick={() => onChange(rows.filter((_, j) => j !== i))}
+                className="grid size-11 place-items-center justify-self-end rounded-full border border-white/14 bg-white/4 transition-colors hover:bg-white/10"
               >
                 <svg width="10" height="10" viewBox="0 0 18 18" fill="none" aria-hidden="true">
                   <path d="M4.5 4.5l9 9M13.5 4.5l-9 9" stroke="white" strokeWidth="2" strokeLinecap="round" />
                 </svg>
               </button>
-            </li>
-          ))}
-        </ul>
+            )}
+          </li>
+        ))}
+      </ul>
+      {rows.length < MAX_LINKS && (
+        <button
+          type="button"
+          onClick={() => onChange([...rows, { url: "", note: "" }])}
+          className="self-start rounded-full px-1 text-[14px] leading-[1.3] text-white/60 underline decoration-white/25 underline-offset-4 transition-colors hover:text-lime hover:decoration-lime/60"
+        >
+          + Додати ще посилання
+        </button>
       )}
     </div>
   );
 }
 
-function Section({ index, children }: { index: number; children: ReactNode }) {
-  const s = briefSections[index];
+/** Conditional field wrapper: opens smoothly, removed from the tab order while closed. */
+function Reveal({ show, children }: { show: boolean; children: ReactNode }) {
   return (
-    <section id={s.id} aria-labelledby={`${s.id}-title`} className="scroll-mt-6 rounded-[28px] border border-white/8 bg-white/[0.03] p-5 backdrop-blur-[20px] md:rounded-[36px] md:p-10 xl:p-12">
-      <header className="mb-7 flex items-start gap-4 md:mb-10 md:gap-6">
-        <span className="font-pixel text-[13px] leading-[1.9] text-lime md:text-[16px] md:leading-[2.2]">{s.number}</span>
-        <h2 id={`${s.id}-title`} className="font-display text-[24px] leading-[1.15] font-semibold tracking-[-0.03em] text-white md:text-[36px]">
-          {s.title}
-        </h2>
-      </header>
-      <div className="grid gap-x-6 gap-y-7 md:grid-cols-2 md:gap-y-8">{children}</div>
-    </section>
-  );
-}
-
-/** Visual sub-group inside a section (e.g. "Ваші контакти" vs "Контакти компанії для сайту") */
-function Group({ title, note, children, accent }: { title: string; note?: string; children: ReactNode; accent?: boolean }) {
-  return (
-    <div className={`grid gap-x-6 gap-y-6 rounded-[22px] border p-4 md:col-span-2 md:grid-cols-2 md:p-7 ${accent ? "border-lime/30 bg-lime/[0.04]" : "border-white/10 bg-white/[0.02]"}`}>
-      <div className="md:col-span-2">
-        <h3 className="font-display text-[16px] leading-[1.3] font-semibold text-white md:text-[18px]">{title}</h3>
-        {note && <p className={`mt-1.5 ${hintClass}`}>{note}</p>}
-      </div>
-      {children}
+    <div
+      className={`grid transition-[grid-template-rows,opacity,margin] duration-500 ease-(--ease-smooth) ${show ? "grid-rows-[1fr] opacity-100" : "-mt-6 grid-rows-[0fr] opacity-0 md:-mt-7"}`}
+      inert={!show}
+    >
+      <div className="min-w-0 overflow-hidden">{children}</div>
     </div>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/* Form                                                                */
+/* Wizard                                                              */
 /* ------------------------------------------------------------------ */
 
 export function BriefForm() {
-  const router = useRouter();
-  const [answers, setAnswers] = useState<Answers>({ mobile: "Так" });
-  const [brandFiles, setBrandFiles] = useState<File[]>([]);
-  const [extraFiles, setExtraFiles] = useState<File[]>([]);
+  const [answers, setAnswers] = useState<BriefAnswers>({});
+  const [step, setStep] = useState(0);
   const [errors, setErrors] = useState<Errors>({});
-  const [status, setStatus] = useState<"idle" | "sending" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "sending" | "error" | "sent">("idle");
   const sending = useRef(false);
-  const [active, setActive] = useState<string>(briefSections[0].id);
+  const topRef = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const firstRender = useRef(true);
 
+  const current = briefSteps[step];
   const str = (k: string) => (typeof answers[k] === "string" ? (answers[k] as string) : "");
-  const set = (k: string, v: string) => {
-    setAnswers((a) => ({ ...a, [k]: v }));
-    // an error disappears as soon as the field it points to is filled in
-    setErrors((e) => {
-      if (!e.name && !e.contact && !e.email && !e.phone) return e;
-      const next = { ...e };
-      if (k === "name") delete next.name;
-      if (k === "email") delete next.email;
-      if (k === "phone") delete next.phone;
-      if ((k === "phone" || k === "telegram" || k === "email") && v.trim()) delete next.contact;
-      return next;
-    });
+
+  const set = (key: string, value: BriefAnswers[string]) => {
+    setAnswers((a) => ({ ...a, [key]: value }));
+    if (key === "name" || key === "contact") setErrors((e) => ({ ...e, [key]: undefined }));
   };
-  const pick = (k: string) => (v: string) => setAnswers((a) => ({ ...a, [k]: a[k] === v ? "" : v }));
-  const toggle = (k: string) => (v: string) =>
-    setAnswers((a) => {
-      const list = Array.isArray(a[k]) ? (a[k] as string[]) : [];
-      return { ...a, [k]: list.includes(v) ? list.filter((x) => x !== v) : [...list, v] };
-    });
-  const has = (k: string, v: string) => (Array.isArray(answers[k]) ? (answers[k] as string[]).includes(v) : answers[k] === v);
 
-  // text input / textarea bound to an answer key
-  const input = (k: string, props: { placeholder?: string; type?: string; autoComplete?: string; inputMode?: "tel" | "email" | "url" } = {}) => (
-    <input
-      id={`brief-${k}`}
-      name={k}
-      type={props.type ?? "text"}
-      autoComplete={props.autoComplete ?? "off"}
-      inputMode={props.inputMode}
-      placeholder={props.placeholder}
-      value={str(k)}
-      onChange={(e) => set(k, e.target.value)}
-      className={`${inputBase} h-[54px] border-white/14 px-5 [color-scheme:dark] md:h-[58px] md:px-6`}
-    />
-  );
-  const area = (k: string, placeholder?: string, tall?: boolean) => (
-    <textarea
-      id={`brief-${k}`}
-      name={k}
-      placeholder={placeholder}
-      value={str(k)}
-      onChange={(e) => set(k, e.target.value)}
-      className={`${inputBase} block resize-y border-white/14 px-5 pt-[16px] md:px-6 ${tall ? "min-h-[180px]" : "min-h-[110px]"}`}
-    />
-  );
-
-  // highlight the section in view in the side navigation
+  // On every step change: bring the wizard top into view, move focus to the step title, play a short entrance
   useEffect(() => {
-    const els = briefSections.map((s) => document.getElementById(s.id)).filter(Boolean) as HTMLElement[];
-    const io = new IntersectionObserver(
-      (entries) => entries.forEach((e) => e.isIntersecting && setActive(e.target.id)),
-      { rootMargin: "-35% 0px -60% 0px" },
-    );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  }, []);
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    const top = topRef.current;
+    if (top && top.getBoundingClientRect().top < 0) top.scrollIntoView({ behavior: "smooth", block: "start" });
+    headingRef.current?.focus({ preventScroll: true });
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      bodyRef.current?.animate(
+        [
+          { opacity: 0, transform: "translateY(10px)" },
+          { opacity: 1, transform: "none" },
+        ],
+        { duration: 420, easing: "cubic-bezier(0.22, 1, 0.36, 1)" },
+      );
+    }
+  }, [step, status]);
 
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (sending.current) return;
+  const goTo = (i: number) => setStep(Math.max(0, Math.min(LAST, i)));
 
+  const validateContacts = (): Errors => {
     const found: Errors = {};
     if (str("name").trim().length < 2) found.name = "Вкажіть, будь ласка, ваше ім’я";
-    if (!str("phone").trim() && !str("telegram").trim() && !str("email").trim()) found.contact = "Залиште хоча б один спосіб зв’язку: телефон, Telegram або email";
-    if (str("email").trim() && !/^\S+@\S+\.\S+$/.test(str("email").trim())) found.email = "Перевірте, будь ласка, email";
-    const phoneProblem = phoneError(str("phone"));
-    if (phoneProblem) found.phone = phoneProblem;
+    const problem = contactError(str("contact"));
+    if (problem) found.contact = problem;
+    return found;
+  };
+
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    // Enter in a field on steps 1–7 means "next", not "send"
+    if (step < LAST) return goTo(step + 1);
+    if (sending.current) return;
+
+    const trap = readHoneypot(e.currentTarget);
+    const found = validateContacts();
     setErrors(found);
-    if (Object.keys(found).length) {
-      const first = document.getElementById(found.name ? "brief-name" : found.phone || found.contact ? "brief-phone" : "brief-email");
-      first?.scrollIntoView({ behavior: "smooth", block: "center" });
-      first?.focus({ preventScroll: true });
+    if (found.name || found.contact) {
+      document.getElementById(found.name ? "brief-name" : "brief-contact")?.focus();
       return;
+    }
+
+    // only answers that are visible and filled in
+    const payload: BriefAnswers = {};
+    for (const s of briefSteps) {
+      for (const f of s.fields) {
+        let v = answers[f.key];
+        if (f.type === "links" && Array.isArray(v)) v = (v as BriefLink[]).filter((l) => l.url.trim() || l.note.trim());
+        if (isShown(f, answers) && hasAnswer(v)) payload[f.key] = v!;
+      }
     }
 
     sending.current = true;
     setStatus("sending");
     try {
-      // only non-empty answers
-      const filled = Object.fromEntries(Object.entries(answers).filter(([, v]) => (Array.isArray(v) ? v.length : String(v).trim())));
-      await submitBrief({ answers: filled, files: [...brandFiles, ...extraFiles] });
-      router.push("/thank-you");
+      await submitBrief(payload, trap);
+      setStatus("sent");
     } catch {
       sending.current = false;
-      setStatus("error"); // everything typed stays in the form
+      setStatus("error"); // every answer stays in the form
     }
   };
 
-  return (
-    <form noValidate onSubmit={onSubmit} aria-label="Бриф" className="grid gap-8 lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-12 xl:grid-cols-[260px_minmax(0,1fr)]">
-      {/* Section navigation (desktop) */}
-      <nav aria-label="Розділи брифу" className="hidden lg:block">
-        <ol className="sticky top-8 flex flex-col gap-1">
-          {briefSections.map((s) => (
-            <li key={s.id}>
-              <a
-                href={`#${s.id}`}
-                className={`flex items-baseline gap-3 rounded-full px-4 py-2.5 text-[14px] leading-[1.3] transition-colors duration-300 ${
-                  active === s.id ? "bg-white/8 text-white" : "text-white/50 hover:text-white"
-                }`}
-              >
-                <span className={`font-pixel text-[10px] ${active === s.id ? "text-lime" : "text-white/35"}`}>{s.number}</span>
-                {s.title}
-              </a>
-            </li>
-          ))}
-        </ol>
-      </nav>
-
-      <div className="flex min-w-0 flex-col gap-4 md:gap-6">
-        {/* 01 */}
-        <Section index={0}>
-          <Group title="Ваші контакти" note="Як нам з вами зв’язатися. Достатньо одного способу зв’язку." accent>
-            <Field label="Ваше ім’я *" htmlFor="brief-name" error={errors.name} wide>
-              {input("name", { autoComplete: "name", placeholder: "Як до вас звертатися" })}
-            </Field>
-            <Field label="Телефон" htmlFor="brief-phone" error={errors.phone}>
-              {input("phone", { type: "tel", inputMode: "tel", autoComplete: "tel", placeholder: "+380" })}
-            </Field>
-            <Field label="Telegram" htmlFor="brief-telegram">
-              {input("telegram", { placeholder: "@username" })}
-            </Field>
-            <Field label="Email" htmlFor="brief-email" error={errors.email}>
-              {input("email", { type: "email", inputMode: "email", autoComplete: "email", placeholder: "name@company.com" })}
-            </Field>
-            {errors.contact && <p className="self-end pb-4 text-[12px] text-orange md:pl-1">{errors.contact}</p>}
-          </Group>
-
-          <Group title="Контактна інформація, яка має бути на сайті" note="Контакти компанії, які побачать відвідувачі майбутнього сайту.">
-            <Field label="Телефон" htmlFor="brief-site_phone">
-              {input("site_phone", { type: "tel", inputMode: "tel" })}
-            </Field>
-            <Field label="Email" htmlFor="brief-site_email">
-              {input("site_email", { type: "email", inputMode: "email" })}
-            </Field>
-            <Field label="Соціальні мережі" htmlFor="brief-site_socials" wide>
-              {input("site_socials", { placeholder: "Instagram, Facebook, TikTok — посилання або нікнейми" })}
-            </Field>
-            <Field label="Додаткова контактна інформація" htmlFor="brief-site_extra" wide>
-              {area("site_extra", "Адреса, графік роботи, інші контакти")}
-            </Field>
-          </Group>
-
-          <Field label="Повна назва компанії" htmlFor="brief-company" wide>
-            {input("company", { autoComplete: "organization" })}
-          </Field>
-        </Section>
-
-        {/* 02 */}
-        <Section index={1}>
-          <Choice label="Який тип проєкту вам потрібен?" values={options.projectType} selected={answers.project_type} onToggle={toggle("project_type")} multi />
-          <Choice label="Скільки сторінок або розділів потрібно?" values={options.pages} selected={answers.pages} onToggle={pick("pages")} />
-          <Field label="Сфера бізнесу: що ви продаєте або яку послугу надаєте?" htmlFor="brief-business" wide>
-            {input("business", { placeholder: "Наприклад: приватний садочок, модульні будинки, оренда автомобілів" })}
-          </Field>
-          <Field label="Географія бренду / продукту" hint="Вкажіть місто, область або країну, на яку орієнтований бізнес." htmlFor="brief-geography">
-            {input("geography")}
-          </Field>
-          <Field label="Які основні послуги або продукти ви надаєте?" hint="Перерахуйте через кому." htmlFor="brief-services">
-            {input("services")}
-          </Field>
-          <Field label="Опишіть послугу або продукт, для якого створюється сайт" htmlFor="brief-product" wide>
-            {area("product")}
-          </Field>
-          <Choice label="Чи потрібно вказувати ціни на сайті?" values={options.yesNo} selected={answers.prices} onToggle={pick("prices")} />
-          <Reveal show={has("prices", "Так")}>
-            <Field label="Вкажіть ціни або ціновий діапазон" htmlFor="brief-prices_details" wide>
-              {area("prices_details")}
-            </Field>
-          </Reveal>
-          <Field label="У чому головна перевага вашої послуги або продукту?" htmlFor="brief-advantage" wide>
-            {area("advantage")}
-          </Field>
-          <Field label="Як відбувається надання послуги або продаж продукту?" hint="Опишіть основні етапи роботи з клієнтом." htmlFor="brief-process" wide>
-            {area("process")}
-          </Field>
-          <Choice label="Чи будуть на сайті акції або спеціальні пропозиції?" values={options.yesNo} selected={answers.promo} onToggle={pick("promo")} />
-          <Reveal show={has("promo", "Так")}>
-            <Field label="Опишіть акції та пропозиції, які потрібно показати." htmlFor="brief-promo_details" wide>
-              {area("promo_details")}
-            </Field>
-          </Reveal>
-          <Field label="Розкажіть коротко про компанію" hint="Скільки років ви на ринку, чим займаєтесь, у чому ваша спеціалізація тощо." htmlFor="brief-about" wide>
-            {area("about")}
-          </Field>
-          <Choice label="Як клієнти можуть оплачувати ваші послуги або продукти?" values={options.payment} selected={answers.payment} onToggle={toggle("payment")} multi />
-          <Reveal show={has("payment", "Інше")}>
-            <Field label="Який ще спосіб оплати?" htmlFor="brief-payment_other">
-              {input("payment_other")}
-            </Field>
-          </Reveal>
-        </Section>
-
-        {/* 03 */}
-        <Section index={2}>
-          <Field label="Назвіть основні цілі створення сайту" htmlFor="brief-goals" wide>
-            {area("goals")}
-          </Field>
-          <Choice label="Яку дію має виконати відвідувач сайту?" values={options.actions} selected={answers.actions} onToggle={toggle("actions")} multi />
-          <Reveal show={has("actions", "Інше")}>
-            <Field label="Яку саме дію?" htmlFor="brief-actions_other">
-              {input("actions_other")}
-            </Field>
-          </Reveal>
-          <Field label="Перерахуйте ваших прямих та непрямих конкурентів" hint="За бажанням" htmlFor="brief-competitors" wide>
-            {area("competitors")}
-          </Field>
-          <Field label="Структура сайту: перерахуйте основні пункти навігаційного меню" hint="Наприклад: Головна / Про нас / Послуги / Переваги / Проєкти / Відгуки / FAQ / Контакти" htmlFor="brief-menu" wide>
-            {area("menu")}
-          </Field>
-        </Section>
-
-        {/* 04 */}
-        <Section index={3}>
-          <Choice label="Що має бути на сайті?" values={options.features} selected={answers.features} onToggle={toggle("features")} multi />
-          <Reveal show={has("features", "Кілька мов")}>
-            <Field label="Які мови потрібні?" htmlFor="brief-languages">
-              {input("languages", { placeholder: "Наприклад: українська, англійська" })}
-            </Field>
-          </Reveal>
-          <Reveal show={has("features", "Інше")}>
-            <Field label="Що ще потрібно на сайті?" htmlFor="brief-features_other" wide>
-              {input("features_other")}
-            </Field>
-          </Reveal>
-          <Choice label="Чи потрібна адаптація сайту під мобільні пристрої?" hint="Рекомендуємо: більшість відвідувачів заходять з телефону." values={options.yesNo} selected={answers.mobile} onToggle={pick("mobile")} />
-          <Choice label="Підтримка сайту: чи потрібна подальша підтримка?" values={options.support} selected={answers.support} onToggle={toggle("support")} multi />
-          <Reveal show={has("support", "Інше")}>
-            <Field label="Яка саме підтримка?" htmlFor="brief-support_other">
-              {input("support_other")}
-            </Field>
-          </Reveal>
-        </Section>
-
-        {/* 05 */}
-        <Section index={4}>
-          <Choice label="У якому стані матеріали для сайту?" values={options.content} selected={answers.content} onToggle={pick("content")} />
-          <Field label="Що саме вже підготовлено?" hint="Тексти, фото, відео, логотип тощо." htmlFor="brief-content_ready" wide>
-            {area("content_ready")}
-          </Field>
-
-          <Group title="Приклади сайтів, які вам подобаються" note="Можна навести сайти з будь-якої сфери — нам важливі стиль, подача та логіка.">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="grid gap-3 md:col-span-2 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-                <Field label={`Посилання ${i}`} htmlFor={`brief-like_${i}`}>
-                  {input(`like_${i}`, { type: "url", inputMode: "url", placeholder: "https://" })}
-                </Field>
-                <Field label="Що саме вам подобається?" htmlFor={`brief-like_${i}_why`}>
-                  {input(`like_${i}_why`)}
-                </Field>
-              </div>
-            ))}
-          </Group>
-
-          <Group title="Приклади сайтів, які вам не подобаються" note="Можна навести сайти з будь-якої сфери — нам важливо зрозуміти, що саме вас відштовхує у стилі або логіці.">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="grid gap-3 md:col-span-2 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-                <Field label={`Посилання ${i}`} htmlFor={`brief-dislike_${i}`}>
-                  {input(`dislike_${i}`, { type: "url", inputMode: "url", placeholder: "https://" })}
-                </Field>
-                <Field label="Що саме вам не подобається?" htmlFor={`brief-dislike_${i}_why`}>
-                  {input(`dislike_${i}_why`)}
-                </Field>
-              </div>
-            ))}
-          </Group>
-        </Section>
-
-        {/* 06 */}
-        <Section index={5}>
-          <Choice label="Чи є у вашої компанії фірмовий стиль, логотип та рекламні матеріали?" values={options.brand} selected={answers.brand} onToggle={toggle("brand")} multi />
-          <Files label="За можливості прикладіть логотип, брендбук та інші матеріали." files={brandFiles} onChange={setBrandFiles} />
-          <Choice label="Домен та хостинг" values={options.domain} selected={answers.domain} onToggle={pick("domain")} />
-          <Reveal show={!!str("domain") && str("domain") !== "Нічого немає"}>
-            <Field label="Домен або посилання на діючий сайт" htmlFor="brief-domain_url">
-              {input("domain_url", { inputMode: "url", placeholder: "example.com" })}
-            </Field>
-          </Reveal>
-        </Section>
-
-        {/* 07 */}
-        <Section index={6}>
-          <Choice label="Коли потрібен результат?" values={options.deadline} selected={answers.deadline} onToggle={pick("deadline")} />
-          <Reveal show={has("deadline", "До конкретної дати")}>
-            <Field label="Оберіть дату" htmlFor="brief-deadline_date">
-              {input("deadline_date", { type: "date" })}
-            </Field>
-          </Reveal>
-          <Choice label="Орієнтовний бюджет" values={options.budget} selected={answers.budget} onToggle={pick("budget")} />
-          <Reveal show={has("budget", "Інший бюджет")}>
-            <Field label="Вкажіть бюджет" htmlFor="brief-budget_other">
-              {input("budget_other")}
-            </Field>
-          </Reveal>
-        </Section>
-
-        {/* 08 */}
-        <Section index={7}>
-          <Field label="Що ще нам варто знати?" hint="Вкажіть усе, що, на вашу думку, може додатково допомогти нам краще зрозуміти ваш проєкт." htmlFor="brief-extra" wide>
-            {area("extra", undefined, true)}
-          </Field>
-          <Files label="За необхідності додайте додаткові матеріали до брифу." files={extraFiles} onChange={setExtraFiles} />
-        </Section>
-
-        {/* Submit */}
-        <div className="flex flex-col items-start gap-4 rounded-[28px] border border-lime/25 bg-lime/[0.04] p-5 md:flex-row md:flex-wrap md:items-center md:justify-between md:rounded-[36px] md:p-10">
-          <p className="max-w-[460px] text-[14px] leading-[1.55] font-[350] text-white/70 md:text-[15px]">
-            Перевірте контакти — ми зв’яжемося з вами, щойно вивчимо бриф. Натискаючи кнопку, ви погоджуєтесь з{" "}
-            <a href={socialLinks.privacy} className="text-white/85 underline decoration-white/45 underline-offset-2 transition-colors hover:text-white hover:decoration-white">
-              політикою конфіденційності
-            </a>
-            .
+  if (status === "sent") {
+    return (
+      <div ref={topRef} className="scroll-mt-6">
+        <div
+          ref={bodyRef}
+          role="status"
+          className="mx-auto flex max-w-[640px] flex-col items-center gap-5 rounded-[28px] border border-lime/25 bg-white/[0.03] px-6 py-12 text-center backdrop-blur-[20px] md:rounded-[36px] md:px-12 md:py-16"
+        >
+          <span className="grid size-16 place-items-center rounded-full bg-lime">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 12.5l4.5 4.5L19 7.5" stroke="#0A0A0A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+          <h2 ref={headingRef} tabIndex={-1} className="font-display text-[26px] leading-[1.15] font-semibold tracking-[-0.03em] text-white outline-none md:text-[32px]">
+            Бриф отримано
+          </h2>
+          <p className="max-w-[440px] text-[15px] leading-[1.6] font-[350] text-white/70">
+            Дякуємо! Ми уважно вивчимо відповіді та зв’яжемося з вами найближчим часом.
           </p>
-          <button
-            type="submit"
-            disabled={status === "sending"}
-            className="pop-trigger flex h-16 w-full shrink-0 items-center justify-between gap-6 rounded-full bg-lime pr-2 pl-7 font-display text-[16px] leading-none font-medium text-ink-2 transition-[translate,box-shadow,opacity] duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_-10px_rgba(174,238,5,0.55)] disabled:opacity-70 md:h-[72px] md:w-auto md:min-w-[320px] md:pl-9 md:text-[18px]"
-          >
-            {status === "sending" ? "Надсилаємо бриф…" : "Надіслати бриф"}
-            <span className="relative grid size-12 place-items-center overflow-hidden rounded-full bg-ink-2 md:size-14">
-              {status === "sending" ? (
-                <span className="size-5 animate-spin rounded-full border-2 border-lime border-t-transparent" aria-hidden="true" />
-              ) : (
-                <ArrowShot color="#AEEE05" size={20} />
-              )}
-            </span>
-          </button>
-          {status === "error" && (
-            <p className="text-[13px] text-orange md:basis-full" role="alert">
-              Не вдалося надіслати бриф. Ваші відповіді збережені — спробуйте ще раз або напишіть нам у Telegram.
-            </p>
-          )}
-          {(errors.name || errors.contact || errors.email || errors.phone) && (
-            <p className="text-[13px] text-orange md:basis-full" role="alert">
-              Заповніть, будь ласка, ім’я та хоча б один спосіб зв’язку в розділі «Загальна інформація».
-            </p>
-          )}
+          <PillButton href="/" circleSize={44} gap={18} className="mt-3 h-[60px] pr-2 pl-[28px]">
+            Повернутися на сайт
+          </PillButton>
         </div>
       </div>
+    );
+  }
+
+  const renderField = (f: BriefField) => {
+    const inputId = `brief-${f.key}`;
+    switch (f.type) {
+      case "choice":
+      case "multi":
+        return <Chips field={f} value={answers[f.key] as string | string[] | undefined} onChange={(v) => set(f.key, v)} />;
+      case "links":
+        return <Links field={f} value={answers[f.key] as BriefLink[] | undefined} onChange={(v) => set(f.key, v)} />;
+      case "textarea":
+        return (
+          <div className="flex min-w-0 flex-col gap-2.5">
+            <Label field={f} htmlFor={inputId} />
+            <Hint text={f.hint} />
+            <textarea id={inputId} name={f.key} placeholder={f.placeholder} value={str(f.key)} onChange={(e) => set(f.key, e.target.value)} className={areaClass} />
+          </div>
+        );
+      default: {
+        const error = f.key === "name" || f.key === "contact" ? errors[f.key] : undefined;
+        return (
+          <div className="flex min-w-0 flex-col gap-2.5">
+            <Label field={f} htmlFor={inputId} />
+            <Hint text={f.hint} />
+            <input
+              id={inputId}
+              name={f.key}
+              type={f.type === "date" ? "date" : "text"}
+              inputMode={f.type === "contact" ? "text" : undefined}
+              autoComplete={f.type === "contact" ? "tel" : f.type === "text" ? (f.autoComplete ?? "off") : "off"}
+              placeholder={f.type === "date" ? undefined : f.placeholder}
+              value={str(f.key)}
+              onChange={(e) => set(f.key, e.target.value)}
+              aria-invalid={!!error}
+              aria-describedby={error ? `${inputId}-error` : undefined}
+              className={`${fieldClass} ${error ? "border-orange/80" : ""}`}
+            />
+            <ErrorText id={`${inputId}-error`} text={error} />
+          </div>
+        );
+      }
+    }
+  };
+
+  const progress = ((step + 1) / briefSteps.length) * 100;
+
+  return (
+    <form noValidate onSubmit={onSubmit} aria-label="Бриф" className="relative grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-8 xl:grid-cols-[minmax(0,1fr)_300px]">
+      <Honeypot />
+
+      {/* ---------- Active step ---------- */}
+      <div ref={topRef} className="min-w-0 scroll-mt-6">
+        <section
+          aria-labelledby="brief-step-title"
+          className="rounded-[28px] border border-white/8 bg-white/[0.03] p-4 backdrop-blur-[20px] min-[400px]:p-5 md:rounded-[36px] md:p-10 xl:p-12"
+        >
+          {/* Progress */}
+          <div className="flex items-center justify-between gap-4 text-[13px] leading-none">
+            <p className="font-display font-medium text-white/80" aria-live="polite">
+              Крок <span className="text-lime">{step + 1}</span> із {briefSteps.length}
+            </p>
+            <p className="flex items-center gap-1.5 text-white/45">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <circle cx="8" cy="8" r="6.3" stroke="currentColor" strokeWidth="1.4" />
+                <path d="M8 4.8V8l2.2 1.4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
+              ≈ 5 хвилин
+            </p>
+          </div>
+          <div
+            className="mt-3 h-1 overflow-hidden rounded-full bg-white/10"
+            role="progressbar"
+            aria-label="Прогрес заповнення брифу"
+            aria-valuemin={1}
+            aria-valuemax={briefSteps.length}
+            aria-valuenow={step + 1}
+          >
+            <div className="h-full rounded-full bg-lime transition-[width] duration-500 ease-(--ease-smooth)" style={{ width: `${progress}%` }} />
+          </div>
+
+          <div ref={bodyRef}>
+            {/* Step title */}
+            <header className="mt-8 flex items-start gap-4 md:mt-10 md:gap-5">
+              <span className="font-pixel text-[12px] leading-[2.1] text-lime md:text-[14px] md:leading-[2.3]">{current.number}</span>
+              <div className="flex min-w-0 flex-col gap-1.5">
+                <h2
+                  id="brief-step-title"
+                  ref={headingRef}
+                  tabIndex={-1}
+                  className="font-display text-[22px] leading-[1.2] font-semibold tracking-[-0.03em] text-white outline-none md:text-[28px]"
+                >
+                  {current.title}
+                </h2>
+                <p className={hintClass}>{current.hint}</p>
+              </div>
+            </header>
+
+            {/* Fields */}
+            <div className="mt-7 flex flex-col gap-6 md:mt-9 md:gap-7">
+              {current.fields.map((f) =>
+                f.showIf ? (
+                  <Reveal key={f.key} show={isShown(f, answers)}>
+                    {renderField(f)}
+                  </Reveal>
+                ) : (
+                  <div key={f.key}>{renderField(f)}</div>
+                ),
+              )}
+            </div>
+
+            {step === LAST && (
+              <p className="mt-7 text-[13px] leading-[1.55] font-[350] text-white/55">
+                Перевірте відповіді — до будь-якого кроку можна повернутися. Натискаючи кнопку, ви погоджуєтесь з{" "}
+                <a href={socialLinks.privacy} className="text-white/80 underline decoration-white/40 underline-offset-2 transition-colors hover:text-white">
+                  політикою конфіденційності
+                </a>
+                .
+              </p>
+            )}
+          </div>
+
+          {/* Navigation */}
+          <div className="mt-8 flex items-center justify-between gap-2 border-t border-white/8 pt-6 md:mt-10 md:pt-8">
+            {step > 0 ? (
+              <button
+                type="button"
+                onClick={() => goTo(step - 1)}
+                className="flex h-[52px] shrink-0 items-center justify-center gap-2.5 rounded-full border border-white/14 bg-white/4 font-display text-[14px] font-medium text-white transition-colors duration-300 hover:border-white/30 hover:bg-white/8 max-sm:size-12 sm:pr-6 sm:pl-5 md:h-[56px] md:text-[15px]"
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {/* phones: arrow only, the label stays for screen readers */}
+                <span className="max-sm:sr-only">Назад</span>
+              </button>
+            ) : (
+              <span />
+            )}
+
+            <button
+              type="submit"
+              disabled={status === "sending"}
+              className="pop-trigger flex h-[52px] items-center justify-between gap-3 rounded-full bg-lime pr-1.5 pl-4 font-display text-[14px] sm:h-[56px] sm:text-[15px] leading-none font-medium whitespace-nowrap text-ink-2 sm:gap-5 sm:pl-6 transition-[translate,box-shadow,opacity] duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_-10px_rgba(174,238,5,0.55)] disabled:opacity-70 md:h-[60px] md:pl-7"
+            >
+              {step < LAST ? "Далі" : status === "sending" ? "Надсилаємо…" : "Надіслати бриф"}
+              <span className="relative grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-ink-2 sm:size-11 md:size-12">
+                {status === "sending" ? (
+                  <span className="size-5 animate-spin rounded-full border-2 border-lime border-t-transparent" aria-hidden="true" />
+                ) : (
+                  <ArrowShot color="#AEEE05" size={18} />
+                )}
+              </span>
+            </button>
+          </div>
+
+          {status === "error" && step === LAST && (
+            <p className="mt-4 text-[13px] leading-[1.5] text-orange" role="alert">
+              Не вдалося надіслати бриф. Ваші відповіді збережені — спробуйте ще раз або{" "}
+              <a href={socialLinks.telegram} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+                напишіть нам у Telegram
+              </a>
+              .
+            </p>
+          )}
+        </section>
+      </div>
+
+      {/* ---------- Steps list (desktop) ---------- */}
+      <aside aria-label="Кроки брифу" className="hidden lg:block">
+        <div className="sticky top-8 rounded-[28px] border border-white/8 bg-white/[0.03] p-4 backdrop-blur-[20px]">
+          <ol className="flex flex-col gap-0.5">
+            {briefSteps.map((s, i) => {
+              const active = i === step;
+              const filled = s.fields.some((f) => isShown(f, answers) && hasAnswer(answers[f.key]));
+              return (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    onClick={() => goTo(i)}
+                    aria-current={active ? "step" : undefined}
+                    className={`flex w-full items-center gap-3 rounded-full px-4 py-2.5 text-left text-[14px] leading-[1.3] transition-colors duration-300 ${
+                      active ? "bg-white/8 text-white" : "text-white/50 hover:text-white"
+                    }`}
+                  >
+                    <span className={`font-pixel text-[10px] ${active ? "text-lime" : "text-white/35"}`}>{s.number}</span>
+                    <span className="min-w-0 flex-1">{s.title}</span>
+                    {filled && !active && (
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-label="заповнено">
+                        <path d="M3.5 8.3l2.8 2.8L12.5 5" stroke="#AEEE05" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+          <p className="mt-3 border-t border-white/8 px-4 pt-3 text-[12px] leading-[1.5] text-white/40">Обов’язкові лише ім’я та контакт — решту заповнюйте за бажанням.</p>
+        </div>
+      </aside>
     </form>
   );
 }

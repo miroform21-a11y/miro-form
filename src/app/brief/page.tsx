@@ -47,28 +47,25 @@ export default function BriefPage() {
           </PillButton>
         </div>
 
-        {/* Intro */}
-        <header className="grid gap-8 pt-14 pb-12 md:pt-20 md:pb-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,560px)] lg:items-end lg:gap-16 lg:pt-24 lg:pb-20">
-          <div className="flex flex-col gap-5 md:gap-7">
-            <p className="font-pixel text-[11px] leading-pixel text-white/60 xl:text-[13px]">Make the right decision</p>
-            <h1 className="font-display text-[80px] leading-[0.9] font-bold tracking-[-0.05em] text-white md:text-[140px] xl:text-[180px]">
+        {/* Intro: compact title + description on the left, privacy note on the right */}
+        <header className="grid gap-6 pt-10 pb-8 md:pt-14 md:pb-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)] lg:items-end lg:gap-12 lg:pt-16 lg:pb-12">
+          <div className="flex flex-col gap-4 md:gap-5">
+            <p className="font-pixel text-[11px] leading-pixel text-white/60 xl:text-[12px]">Make the right decision</p>
+            <h1 className="font-display text-[48px] leading-[0.95] font-bold tracking-[-0.05em] text-white md:text-[64px] xl:text-[72px]">
               Бриф<span className="text-lime">.</span>
             </h1>
+            <div className="flex max-w-[600px] flex-col gap-2.5 text-[14px] leading-[1.6] font-[350] text-white/65 md:text-[15px]">
+              <p>Кілька запитань про ваш проєкт — це займе близько 5 хвилин. Обов’язкові лише ім’я та контакт, решту заповнюйте за бажанням.</p>
+              <p>Якщо якесь питання здасться складним — пропустіть його або напишіть нам, ми підкажемо.</p>
+            </div>
           </div>
-          <div className="flex flex-col gap-4 text-[15px] leading-[1.6] font-[350] text-white/75 md:text-[17px]">
-            <p>
-              Щоб чітко визначити цілі, які стоять перед майбутнім проєктом, необхідно заповнити анкету максимально детально. Це допоможе нам
-              побачити повну та точну картину проєкту.
-            </p>
-            <p>Якщо деякі питання анкети здадуться складними, будь ласка, зверніться до нас за роз’ясненнями.</p>
-            <p className="flex items-start gap-3 rounded-[20px] border border-lime/25 bg-lime/[0.05] px-5 py-4 text-white/85">
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true" className="mt-1 shrink-0">
-                <rect x="3" y="8" width="12" height="8" rx="2" stroke="#AEEE05" strokeWidth="1.6" />
-                <path d="M5.5 8V6a3.5 3.5 0 0 1 7 0v2" stroke="#AEEE05" strokeWidth="1.6" />
-              </svg>
-              Ми гарантуємо повну конфіденційність наданої інформації про вас та вашу діяльність.
-            </p>
-          </div>
+          <p className="flex items-start gap-2.5 rounded-[16px] border border-lime/25 bg-lime/[0.05] px-4 py-3 text-[13px] leading-[1.5] text-white/80 md:text-[15px] lg:justify-self-end">
+            <svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden="true" className="mt-0.5 shrink-0">
+              <rect x="3" y="8" width="12" height="8" rx="2" stroke="#AEEE05" strokeWidth="1.6" />
+              <path d="M5.5 8V6a3.5 3.5 0 0 1 7 0v2" stroke="#AEEE05" strokeWidth="1.6" />
+            </svg>
+            Ми гарантуємо повну конфіденційність наданої інформації про вас та вашу діяльність.
+          </p>
         </header>
 
         <BriefForm />
