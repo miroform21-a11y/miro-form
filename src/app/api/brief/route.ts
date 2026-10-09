@@ -1,6 +1,7 @@
-import { MAX_LINKS, MAX_SOCIALS, briefSteps, isShown, skipKey, stepErrors, type BriefAnswers, type BriefField, type BriefSiteContacts, type BriefValue } from "@/data/brief";
+import { MAX_LINKS, MAX_SOCIALS, briefSteps, isShown, skipKey, stepErrors, type BriefAnswers, type BriefField, type BriefValue } from "@/data/brief";
 import { claimOnce, releaseClaim, withinRateLimit } from "@/lib/server/limits";
-import { sendToTelegram, telegramConfigured } from "@/lib/server/telegram";
+import { sendTelegramHtml, telegramConfigured } from "@/lib/server/telegram";
+import { buildBriefMessages } from "@/lib/server/briefMessage";
 import { HttpError, assertSameOrigin, clientKey, isRecord, kyivTime, looksAutomated, readJson, reply, sha256, text } from "@/lib/server/http";
 
 /**
@@ -80,41 +81,6 @@ function parse(body: Record<string, unknown>): BriefAnswers | null {
   return answers;
 }
 
-function formatValue(field: BriefField, answers: BriefAnswers): string | null {
-  if ("skip" in field && field.skip && answers[skipKey(field)] === "1") return field.skip;
-  const v = answers[field.key];
-  if (v === undefined) return null;
-  if (field.type === "links") {
-    return "\n" + (v as { url: string; note: string }[]).map((l) => `   • ${[l.url, l.note].filter(Boolean).join(" — ")}`).join("\n");
-  }
-  if (field.type === "siteContacts") {
-    const c = v as BriefSiteContacts;
-    const lines = [c.phone && `   Телефон: ${c.phone}`, c.email && `   Email: ${c.email}`, ...c.socials.map((s) => `   ${s.name || "Соцмережа"}: ${s.url || "—"}`)];
-    return "\n" + lines.filter(Boolean).join("\n");
-  }
-  const value = Array.isArray(v) ? (v as string[]).join(", ") : (v as string);
-  return value.includes("\n") ? `\n${value}` : value;
-}
-
-function format(answers: BriefAnswers) {
-  const blocks = briefSteps.map((s) => {
-    const lines = s.fields
-      .map((f) => {
-        const value = formatValue(f, answers);
-        return value === null ? "" : `▪️ ${f.label.replace(/\?$/, "")}: ${value}`; // "…сайт?: …" reads badly
-      })
-      .filter(Boolean);
-    return lines.length ? `${s.number} · ${s.title}\n${lines.join("\n")}` : "";
-  });
-
-  return [
-    "📋 Новий бриф з сайту MIROFORM",
-    `👤 ${answers.name}\n📞 ${answers.contact}\n💬 ${answers.contact_method} · ${answers.contact_time}`,
-    ...blocks.filter(Boolean),
-    `🕒 ${kyivTime()} (Київ)`,
-  ].join("\n\n");
-}
-
 export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
@@ -135,7 +101,7 @@ export async function POST(request: Request) {
     const fingerprint = sha256(JSON.stringify(["brief", answers]));
     if (!(await claimOnce(fingerprint, 600))) return reply(200);
 
-    if (!(await sendToTelegram(format(answers)))) {
+    if (!(await sendTelegramHtml(buildBriefMessages(answers, `${kyivTime()} (Київ)`)))) {
       await releaseClaim(fingerprint);
       return reply(502);
     }

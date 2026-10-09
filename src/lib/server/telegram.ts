@@ -55,3 +55,51 @@ export async function sendToTelegram(message: string): Promise<boolean> {
   }
   return true;
 }
+
+/** Plain-text fallback of an HTML message: tags removed, entities restored. */
+const htmlToPlain = (html: string) =>
+  html.replace(/<[^>]+>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+
+/**
+ * Sends ready-made messages with Telegram HTML formatting (parse_mode "HTML"), in order.
+ * Every message must already fit the limit and contain escaped user text.
+ * If Telegram ever refuses the markup, the same message is sent once more as plain text,
+ * so a brief is never lost because of formatting.
+ */
+export async function sendTelegramHtml(messages: string[]): Promise<boolean> {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) {
+    console.error("[telegram] TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID are not configured");
+    return false;
+  }
+
+  const post = (body: Record<string, unknown>) =>
+    fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, disable_web_page_preview: true, ...body }),
+      signal: AbortSignal.timeout(8000),
+      cache: "no-store",
+    });
+
+  for (const html of messages) {
+    try {
+      let res = await post({ text: html, parse_mode: "HTML" });
+      if (res.status === 400) {
+        console.error("[telegram] HTML message refused, resending as plain text");
+        res = await post({ text: htmlToPlain(html) });
+      }
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { description?: string } | null;
+        console.error(`[telegram] sendMessage failed: ${res.status} ${data?.description ?? ""}`.trim());
+        return false;
+      }
+    } catch (err) {
+      // never log the error object itself — its message/cause may contain the request URL
+      console.error(`[telegram] sendMessage error: ${(err as Error).name}`);
+      return false;
+    }
+  }
+  return true;
+}
