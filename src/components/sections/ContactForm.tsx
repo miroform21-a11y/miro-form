@@ -7,6 +7,7 @@ import { socialLinks } from "@/data/navigation";
 import { submitLead } from "@/lib/submitLead";
 import { ArrowShot } from "@/components/ui/ArrowShot";
 import { inputBase, legendClass } from "@/components/ui/formStyles";
+import { Honeypot, readHoneypot } from "@/components/ui/Honeypot";
 
 type Errors = Partial<Record<"name" | "contact" | "message", string>>;
 
@@ -112,6 +113,7 @@ export function ContactForm({ variant = "section", preset = { direction: "web" }
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (sending.current) return;
+    const trap = readHoneypot(e.currentTarget as HTMLFormElement);
     const found = validate(name, contact, question, message);
     setErrors(found);
     if (Object.keys(found).length) return;
@@ -125,6 +127,7 @@ export function ContactForm({ variant = "section", preset = { direction: "web" }
           : section
             ? { kind: "lead", name: name.trim(), contact: contact.trim(), option: projectType, budget, message: message.trim() }
             : { kind: "lead", name: name.trim(), contact: contact.trim(), direction: title, option, message: message.trim() },
+        trap,
       );
       setStatus("sent");
       // only after the request succeeded
@@ -196,6 +199,7 @@ export function ContactForm({ variant = "section", preset = { direction: "web" }
 
   return (
     <form noValidate onSubmit={onSubmit} className={`${box} gap-3.5 md:gap-4`} aria-label={title}>
+      <Honeypot />
       {section ? (
         <h3 className="font-display text-[20px] leading-display font-semibold tracking-[-0.01em] text-white md:text-[24px]">{title}</h3>
       ) : (
