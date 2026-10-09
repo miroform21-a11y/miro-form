@@ -10,6 +10,16 @@ import { Faq } from "@/components/sections/Faq";
 import { Contact } from "@/components/sections/Contact";
 import { Footer } from "@/components/sections/Footer";
 import { LeadModal } from "@/components/sections/LeadModal";
+import { JsonLd } from "@/components/ui/JsonLd";
+import { faq } from "@/data/faq";
+import { faqJsonLd, pageMetadata } from "@/lib/seo";
+
+export const metadata = pageMetadata({
+  title: "Розробка сайтів під ключ в Україні — MIROFORM",
+  description:
+    "Створення сайтів, лендінгів, корпоративних сайтів та інтернет-магазинів під ключ. Вебдизайн, Telegram-боти й AI-автоматизація для бізнесу по всій Україні.",
+  path: "/",
+});
 
 export default function Home() {
   return (
@@ -28,6 +38,7 @@ export default function Home() {
       </main>
       <Footer />
       <LeadModal />
+      <JsonLd data={{ "@context": "https://schema.org", ...faqJsonLd(faq) }} />
     </>
   );
 }

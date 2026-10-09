@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { contacts } from "@/data/navigation";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Політика конфіденційності — MIROFORM",
   description: "Як MIROFORM збирає, використовує та захищає персональні дані відвідувачів сайту.",
-  robots: { index: true, follow: true },
-};
+  path: "/privacy",
+});
 
 /**
  * Template privacy policy. The wording is a standard template based on the site's contact data —
