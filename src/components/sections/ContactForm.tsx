@@ -8,6 +8,7 @@ import { submitLead } from "@/lib/submitLead";
 import { ArrowShot } from "@/components/ui/ArrowShot";
 import { inputBase, legendClass } from "@/components/ui/formStyles";
 import { Honeypot, readHoneypot } from "@/components/ui/Honeypot";
+import { contactError } from "@/lib/contact";
 
 type Errors = Partial<Record<"name" | "contact" | "message", string>>;
 
@@ -15,10 +16,8 @@ function validate(name: string, contact: string, question: boolean, message: str
   const errors: Errors = {};
   if (!question && name.trim().length < 2) errors.name = "Вкажіть, будь ласка, ваше ім’я";
   if (question && message.trim().length < 3) errors.message = "Напишіть, будь ласка, ваше питання";
-  const value = contact.trim();
-  const isTelegram = /^@[\w\d_]{4,}$/.test(value);
-  const isPhone = value.replace(/[^\d]/g, "").length >= 9 && /^[+\d\s()-]+$/.test(value);
-  if (!isTelegram && !isPhone) errors.contact = "Вкажіть номер телефону або @нікнейм у Telegram";
+  const contactProblem = contactError(contact);
+  if (contactProblem) errors.contact = contactProblem;
   return errors;
 }
 

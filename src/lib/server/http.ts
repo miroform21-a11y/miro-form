@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { siteUrl } from "@/lib/seo";
+import { checkContact } from "@/lib/contact";
 
 /** Request rejected before it reaches Telegram; `status` goes to the client, never the reason. */
 export class HttpError extends Error {
@@ -73,8 +74,8 @@ export function text(value: unknown, max: number): string | null {
   return clean.length > max ? null : clean;
 }
 
-/** Same rule as the site forms: a phone number or a Telegram @username. */
-export const isContact = (v: string) => /^@[\w\d_]{4,32}$/.test(v) || (/^[+\d\s()-]{9,24}$/.test(v) && v.replace(/\D/g, "").length >= 9);
+/** Same rule as the site forms (src/lib/contact.ts): a phone number with 10+ digits or a Telegram username. */
+export const isContact = (v: string) => checkContact(v) === "ok";
 
 /**
  * Cheap bot signals sent by the form: a hidden honeypot field and the time since the page loaded.

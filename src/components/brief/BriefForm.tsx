@@ -3,13 +3,14 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { submitBrief } from "@/lib/submitBrief";
+import { phoneError } from "@/lib/contact";
 import { socialLinks } from "@/data/navigation";
 import { ArrowShot } from "@/components/ui/ArrowShot";
 import { inputBase } from "@/components/ui/formStyles";
 import { briefSections, options } from "@/data/brief";
 
 type Answers = Record<string, string | string[]>;
-type Errors = Partial<Record<"name" | "contact" | "email", string>>;
+type Errors = Partial<Record<"name" | "contact" | "email" | "phone", string>>;
 
 /* ------------------------------------------------------------------ */
 /* Building blocks                                                     */
@@ -181,10 +182,11 @@ export function BriefForm() {
     setAnswers((a) => ({ ...a, [k]: v }));
     // an error disappears as soon as the field it points to is filled in
     setErrors((e) => {
-      if (!e.name && !e.contact && !e.email) return e;
+      if (!e.name && !e.contact && !e.email && !e.phone) return e;
       const next = { ...e };
       if (k === "name") delete next.name;
       if (k === "email") delete next.email;
+      if (k === "phone") delete next.phone;
       if ((k === "phone" || k === "telegram" || k === "email") && v.trim()) delete next.contact;
       return next;
     });
@@ -241,9 +243,11 @@ export function BriefForm() {
     if (str("name").trim().length < 2) found.name = "Вкажіть, будь ласка, ваше ім’я";
     if (!str("phone").trim() && !str("telegram").trim() && !str("email").trim()) found.contact = "Залиште хоча б один спосіб зв’язку: телефон, Telegram або email";
     if (str("email").trim() && !/^\S+@\S+\.\S+$/.test(str("email").trim())) found.email = "Перевірте, будь ласка, email";
+    const phoneProblem = phoneError(str("phone"));
+    if (phoneProblem) found.phone = phoneProblem;
     setErrors(found);
     if (Object.keys(found).length) {
-      const first = document.getElementById(found.name ? "brief-name" : found.contact ? "brief-phone" : "brief-email");
+      const first = document.getElementById(found.name ? "brief-name" : found.phone || found.contact ? "brief-phone" : "brief-email");
       first?.scrollIntoView({ behavior: "smooth", block: "center" });
       first?.focus({ preventScroll: true });
       return;
@@ -290,7 +294,7 @@ export function BriefForm() {
             <Field label="Ваше ім’я *" htmlFor="brief-name" error={errors.name} wide>
               {input("name", { autoComplete: "name", placeholder: "Як до вас звертатися" })}
             </Field>
-            <Field label="Телефон" htmlFor="brief-phone">
+            <Field label="Телефон" htmlFor="brief-phone" error={errors.phone}>
               {input("phone", { type: "tel", inputMode: "tel", autoComplete: "tel", placeholder: "+380" })}
             </Field>
             <Field label="Telegram" htmlFor="brief-telegram">
@@ -506,7 +510,7 @@ export function BriefForm() {
               Не вдалося надіслати бриф. Ваші відповіді збережені — спробуйте ще раз або напишіть нам у Telegram.
             </p>
           )}
-          {(errors.name || errors.contact || errors.email) && (
+          {(errors.name || errors.contact || errors.email || errors.phone) && (
             <p className="text-[13px] text-orange md:basis-full" role="alert">
               Заповніть, будь ласка, ім’я та хоча б один спосіб зв’язку в розділі «Загальна інформація».
             </p>
