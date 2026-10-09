@@ -366,7 +366,7 @@ export function BriefForm() {
             <ProgressBar step={step} className="mt-3" />
             <p className="mt-2.5 flex items-center gap-1.5 text-[12px] leading-[1.4] text-white/45">
               <ClockIcon />
-              {FILL_TIME}
+              <span>{FILL_TIME}</span>
             </p>
           </div>
 
@@ -470,7 +470,7 @@ export function BriefForm() {
               <span className="mt-px">
                 <ClockIcon />
               </span>
-              {FILL_TIME}
+              <span>{FILL_TIME}</span>
             </p>
           </div>
           <ol className="flex flex-col gap-0.5 border-t border-white/8 pt-3">
