@@ -1,14 +1,16 @@
 /**
  * Rate limiting and duplicate protection.
  *
- * Primary store: Upstash Redis over its REST API (env added by the Vercel Marketplace integration:
- * KV_REST_API_URL / KV_REST_API_TOKEN, or UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN).
+ * Primary store: Upstash Redis over its REST API. The Vercel integration is connected with the
+ * "STORAGE" prefix (STORAGE_REST_API_URL / STORAGE_REST_API_TOKEN); the default "KV" prefix and
+ * Upstash's own names are accepted too, in case the integration is reconnected.
  * Without it — or if Redis is unreachable — a per-instance in-memory fallback is used, which is
  * weaker on serverless (several instances) but keeps the forms working.
  */
 
-const redisUrl = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
-const redisToken = process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN;
+const env = (...names: string[]) => names.map((n) => process.env[n]).find(Boolean);
+const redisUrl = env("STORAGE_REST_API_URL", "STORAGE_KV_REST_API_URL", "KV_REST_API_URL", "UPSTASH_REDIS_REST_URL");
+const redisToken = env("STORAGE_REST_API_TOKEN", "STORAGE_KV_REST_API_TOKEN", "KV_REST_API_TOKEN", "UPSTASH_REDIS_REST_TOKEN");
 
 type RedisResult = { result?: unknown; error?: string };
 
