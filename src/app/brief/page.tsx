@@ -15,7 +15,7 @@ const pad = "px-5 md:px-8 lg:px-[clamp(40px,6.25vw,90px)]";
 export default function BriefPage() {
   return (
     <main className="relative isolate overflow-hidden bg-ink">
-      {/* Background: hero glow + dot grid */}
+      {/* Background: hero glow on a clean dark background (no dot pattern on the brief page) */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[1100px]">
         <Image
           src="/images/glow.png"
@@ -25,7 +25,6 @@ export default function BriefPage() {
           priority
           className="absolute top-[-420px] left-[calc(50%-120px)] h-[1100px] w-[1380px] max-w-none object-cover opacity-55 [mask-image:url(/images/glow-mask.svg)] [mask-size:100%_100%] max-md:top-[-260px] max-md:left-[-40%] max-md:h-[760px] max-md:w-[900px]"
         />
-        <img src="/images/hero/dot-grid.svg" alt="" className="absolute top-[110px] left-1/2 h-[642px] w-[1302px] max-w-none -translate-x-1/2 opacity-70" />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,5,5,0)_45%,#050505_100%)]" />
       </div>
 
@@ -54,17 +53,20 @@ export default function BriefPage() {
             <h1 className="font-display text-[48px] leading-[0.95] font-bold tracking-[-0.05em] text-white md:text-[64px] xl:text-[72px]">
               Бриф<span className="text-lime">.</span>
             </h1>
-            <div className="flex max-w-[600px] flex-col gap-2.5 text-[14px] leading-[1.6] font-[350] text-white/65 md:text-[15px]">
-              <p>Кілька запитань про ваш проєкт — це займе близько 5 хвилин. Обов’язкові лише ім’я та контакт, решту заповнюйте за бажанням.</p>
-              <p>Якщо якесь питання здасться складним — пропустіть його або напишіть нам, ми підкажемо.</p>
+            <div className="flex flex-col gap-2.5 text-[14px] leading-[1.6] font-[350] text-white/65 md:text-[15px]">
+              <p className="max-w-[640px]">
+                Бриф допоможе нам зрозуміти ваш проєкт: за відповідями ми продумаємо структуру, дизайн і функціонал майбутнього сайту.
+              </p>
+              {/* one line on desktop (from 1280px), wraps on smaller screens */}
+              <p className="xl:whitespace-nowrap">Якщо якесь питання здається складним, пропустіть його або напишіть нам — ми підкажемо.</p>
             </div>
           </div>
-          <p className="flex items-start gap-2.5 rounded-[16px] border border-lime/25 bg-lime/[0.05] px-4 py-3 text-[13px] leading-[1.5] text-white/80 md:text-[15px] lg:justify-self-end">
+          <p className="flex items-start gap-2.5 rounded-[16px] border border-lime/25 bg-lime/[0.05] px-4 py-3 text-[13px] leading-[1.5] text-white/80 md:text-[14px] lg:justify-self-end">
             <svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden="true" className="mt-0.5 shrink-0">
               <rect x="3" y="8" width="12" height="8" rx="2" stroke="#AEEE05" strokeWidth="1.6" />
               <path d="M5.5 8V6a3.5 3.5 0 0 1 7 0v2" stroke="#AEEE05" strokeWidth="1.6" />
             </svg>
-            Ми гарантуємо повну конфіденційність наданої інформації про вас та вашу діяльність.
+            Ми гарантуємо повну конфіденційність інформації про вас і вашу діяльність.
           </p>
         </header>
 

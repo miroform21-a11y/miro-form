@@ -1,11 +1,12 @@
-import { MAX_LINKS, briefSteps, isShown, type BriefAnswers, type BriefField } from "@/data/brief";
+import { MAX_LINKS, briefSteps, contactFieldError, isShown, type BriefAnswers, type BriefField } from "@/data/brief";
 import { claimOnce, releaseClaim, withinRateLimit } from "@/lib/server/limits";
 import { sendToTelegram, telegramConfigured } from "@/lib/server/telegram";
-import { HttpError, assertSameOrigin, clientKey, isContact, isRecord, kyivTime, looksAutomated, readJson, reply, sha256, text } from "@/lib/server/http";
+import { HttpError, assertSameOrigin, clientKey, isRecord, kyivTime, looksAutomated, readJson, reply, sha256, text } from "@/lib/server/http";
 
 /**
  * The /brief wizard → validated against the same schema as the form (data/brief.ts) → Telegram.
  * Only known keys and listed options are accepted; hidden conditional answers are dropped.
+ * Every question is optional; a filled-in contact must be a valid phone / Telegram, and an empty brief is refused.
  * Nothing is stored except short-lived hashed rate-limit / duplicate keys.
  */
 
@@ -21,10 +22,6 @@ function parseValue(field: BriefField, raw: unknown): string | string[] | { url:
     case "textarea": {
       const v = text(raw, field.type === "textarea" ? 3000 : 300);
       return v === null ? null : v || undefined;
-    }
-    case "date": {
-      const v = text(raw, 10);
-      return v === null || (v && !/^\d{4}-\d{2}-\d{2}$/.test(v)) ? null : v || undefined;
     }
     case "choice":
       return typeof raw === "string" && field.options.includes(raw) ? raw : null;
@@ -58,10 +55,8 @@ function parse(body: Record<string, unknown>): BriefAnswers | null {
   // conditional answers whose trigger is not selected are dropped (they are hidden in the form)
   for (const field of fields) if (!isShown(field, answers)) delete answers[field.key];
 
-  const name = answers.name;
-  const contact = answers.contact;
-  if (typeof name !== "string" || name.length < 2) return null;
-  if (typeof contact !== "string" || !isContact(contact)) return null;
+  if (!Object.keys(answers).length) return null; // nothing answered at all
+  if (contactFieldError(answers)) return null; // same rule as the form and the main site forms
   return answers;
 }
 
@@ -78,8 +73,7 @@ function format(answers: BriefAnswers) {
             const items = (v as { url: string; note: string }[]).map((l) => `   • ${[l.url, l.note].filter(Boolean).join(" — ")}`);
             return `▪️ ${label}:\n${items.join("\n")}`;
           }
-          let value = Array.isArray(v) ? (v as string[]).join(", ") : (v as string);
-          if (f.type === "date") value = value.split("-").reverse().join("."); // 2026-12-01 → 01.12.2026
+          const value = Array.isArray(v) ? (v as string[]).join(", ") : (v as string);
           return `▪️ ${label}: ${value.includes("\n") ? `\n${value}` : value}`;
         });
       return lines.length ? `${s.number} · ${s.title}\n${lines.join("\n")}` : "";
@@ -88,7 +82,7 @@ function format(answers: BriefAnswers) {
 
   return [
     "📋 Новий бриф з сайту MIROFORM",
-    `👤 ${answers.name}\n📞 ${answers.contact}`,
+    `👤 ${answers.name ?? "ім’я не вказано"}\n📞 ${answers.contact ?? "контакт не вказано"}`,
     ...blocks,
     `🕒 ${kyivTime()} (Київ)`,
   ].join("\n\n");
