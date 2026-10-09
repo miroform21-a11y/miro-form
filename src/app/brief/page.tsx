@@ -56,7 +56,7 @@ export default function BriefPage() {
             {/* pixel font (Press Start 2P — the preloader / eyebrow font) only for this heading */}
             <h1 className="font-pixel text-[38px] leading-[1.15] font-normal text-white md:text-[52px] xl:text-[60px]">
               {/* the monospace dot cell is wide — pull it to the word */}
-              Бриф<span className="-ml-[0.4em] text-lime">.</span>
+              Бриф<span className="-ml-[0.28em] text-lime">.</span>
             </h1>
             <div className="flex flex-col gap-2.5 text-[14px] leading-[1.6] font-[350] text-white/65 md:text-[15px]">
               <p className="max-w-[640px]">

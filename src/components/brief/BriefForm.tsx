@@ -414,12 +414,14 @@ function Reveal({ show, children, flush }: { show: boolean; children: ReactNode;
 
 /** Lime "paperclip" plate: compact, outlined, not a full-width fill. With `href` the whole plate opens it in a new tab. */
 function Notice({ notice }: { notice: BriefNotice }) {
+  // one plate, colour by screen width: blue (the background render colour) on phones, lime from md up
+  const blue = notice.mobileTone === "blue";
   const content = (
     <>
-      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-lime text-ink-2" aria-hidden="true">
+      <span className={`grid size-10 shrink-0 place-items-center rounded-full text-ink-2 ${blue ? "bg-[#2f6bff] md:bg-lime" : "bg-lime"}`} aria-hidden="true">
         {notice.icon === "card" ? (
-          // the same card icon as the "Гнучка оплата частинами" note in the main page pricing
-          <img src="/images/pricing/card-icon.svg" alt="" className="size-5" />
+          // the same card icon as the "Гнучка оплата частинами" note in the main page pricing (white on the blue circle)
+          <img src="/images/pricing/card-icon.svg" alt="" className={`size-5 ${blue ? "max-md:invert" : ""}`} />
         ) : (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
             <path
@@ -435,7 +437,8 @@ function Notice({ notice }: { notice: BriefNotice }) {
       <p className="text-[13px] leading-[1.45] text-white/85 md:text-[14px]">{notice.text}</p>
     </>
   );
-  const box = "flex items-center gap-3.5 rounded-[18px] border border-lime/35 bg-lime/[0.06] py-3 pr-4 pl-3 md:gap-4 md:pr-5";
+  const tone = blue ? "border-[#2f6bff]/45 bg-[#2f6bff]/[0.1] md:border-lime/35 md:bg-lime/[0.06]" : "border-lime/35 bg-lime/[0.06]";
+  const box = `flex items-center gap-3.5 rounded-[18px] border py-3 pr-4 pl-3 md:gap-4 md:pr-5 ${tone}`;
   if (!notice.href) return <div className={box}>{content}</div>;
   return (
     <a

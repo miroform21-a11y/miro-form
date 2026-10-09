@@ -56,7 +56,13 @@ export type BriefField =
   | (Base & { type: "contact"; placeholder?: string });
 
 /** A visual note inside a step (the paperclip "send materials to Telegram" plate); `href` makes it a link */
-export type BriefNotice = { icon: "paperclip" | "card"; text: string; href?: string };
+export type BriefNotice = {
+  icon: "paperclip" | "card";
+  text: string;
+  href?: string;
+  /** Colour on phones (below md); lime from md up */
+  mobileTone?: "blue";
+};
 
 export type BriefStep = {
   id: string;
@@ -107,7 +113,7 @@ export const briefSteps: BriefStep[] = [
         type: "choice",
         label: "Який сайт вам потрібен?",
         required: true,
-        options: ["Односторінковий сайт (лендінг)", "Багатосторінковий сайт", "Інтернет-магазин", "Поки не знаю, потрібна консультація", "Інше"],
+        options: ["Односторінковий сайт (лендінг)", "Багатосторінковий сайт", "Інтернет-магазин", "Інше", "Поки не знаю, потрібна консультація"],
       },
       { key: "project_type_other", type: "text", label: "Що саме потрібно?", showIf: { key: "project_type", values: ["Інше"] } },
       {
@@ -254,15 +260,15 @@ export const briefSteps: BriefStep[] = [
     number: "07",
     title: "Бюджет і терміни",
     hint: "Орієнтири, щоб запропонувати реалістичне рішення.",
-    // same wording as the "Гнучка оплата частинами" note in the main page pricing; no terms — they're discussed on a call
-    notice: { icon: "card", text: "У MIROFORM доступна гнучка оплата частинами — деталі обговоримо на консультації." },
+    // lime on desktop, blue (the colour of the background render) on phones
+    notice: { icon: "card", text: "У MIROFORM є гнучка оплата частинами до 12 місяців. Деталі на консультації.", mobileTone: "blue" },
     fields: [
       {
         key: "budget",
         type: "choice",
         label: "Орієнтовний бюджет проєкту",
         required: true,
-        options: ["$500–1 500", "$1 500–3 000", "Понад $5 000", "Потрібна оплата частинами", "Потрібна консультація"],
+        options: ["$500–1 500", "$1 500–3 000", "$3 000–5 000", "Потрібна оплата частинами", "Потрібна консультація"],
         default: "$500–1 500",
       },
       {
