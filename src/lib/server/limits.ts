@@ -14,13 +14,21 @@ const redisToken = env("STORAGE_REST_API_TOKEN", "STORAGE_KV_REST_API_TOKEN", "K
 
 type RedisResult = { result?: unknown; error?: string };
 
+/** TEMP diagnostics: which store answered the last check (exposed as a response header for verification). */
+export let lastStore: "redis" | "memory" | "none" = "none";
+
 async function redis(commands: (string | number)[][]): Promise<RedisResult[] | null> {
-  if (!redisUrl || !redisToken) return null;
+  lastStore = "memory";
+  if (!redisUrl || !redisToken) {
+    lastStore = "none";
+    return null;
+  }
   try {
     const res = await fetch(`${redisUrl}/pipeline`, {
       method: "POST",
       headers: { Authorization: `Bearer ${redisToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify(commands),
+      // every argument as a string, as the REST API documents
+      body: JSON.stringify(commands.map((c) => c.map(String))),
       signal: AbortSignal.timeout(2500),
       cache: "no-store",
     });
@@ -29,7 +37,12 @@ async function redis(commands: (string | number)[][]): Promise<RedisResult[] | n
       return null;
     }
     const data = (await res.json()) as RedisResult[];
-    return data.some((r) => r.error) ? null : data;
+    if (data.some((r) => r.error)) {
+      console.warn("[limits] redis command error, using memory fallback");
+      return null;
+    }
+    lastStore = "redis";
+    return data;
   } catch (err) {
     console.warn(`[limits] redis unavailable (${(err as Error).name}), using memory fallback`);
     return null;
