@@ -2,8 +2,8 @@
 
 import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { budgets, directionById, projectTypes, type Budget, type LeadPreset, type ProjectType } from "@/data/leads";
-import { socialLinks } from "@/data/navigation";
+import { directionByIdFor, leadOptions, type LeadPreset } from "@/data/leads";
+import { routes, type Locale } from "@/i18n/locale";
 import { submitLead } from "@/lib/submitLead";
 import { ArrowShot } from "@/components/ui/ArrowShot";
 import { inputBase, legendClass } from "@/components/ui/formStyles";
@@ -12,11 +12,64 @@ import { contactError } from "@/lib/contact";
 
 type Errors = Partial<Record<"name" | "contact" | "message", string>>;
 
-function validate(name: string, contact: string, question: boolean, message: string): Errors {
+const copy = {
+  uk: {
+    nameError: "Вкажіть, будь ласка, ваше ім’я",
+    messageError: "Напишіть, будь ласка, ваше питання",
+    popupNote: "Залиште свою заявку, і ми зв’яжемося з вами протягом 15 хвилин.",
+    sectionTitle: "Залиште заявку",
+    questionTitle: "Залишилися питання?",
+    questionNote: "Задайте їх тут — ми відповімо протягом 15 хвилин.",
+    sentQuestion: "Дякуємо! Питання отримано",
+    sentLead: "Дякуємо! Заявку отримано",
+    sentNote: "Відповімо протягом 15 хвилин у робочий час.",
+    name: "Ваше ім’я",
+    contact: "Телефон або @telegram",
+    contactQuestion: "Ваш Telegram або телефон",
+    option: "Оберіть, що саме вас цікавить",
+    projectType: "Тип проєкту",
+    budget: "Бюджет",
+    question: "Ваше питання",
+    message: "Коротко про проєкт",
+    sending: "Надсилаємо…",
+    sendQuestion: "Надіслати питання",
+    sendLead: "Надіслати заявку",
+    error: "Не вдалося надіслати. Спробуйте ще раз або напишіть нам у Telegram.",
+    consent: "Натискаючи кнопку, ви погоджуєтесь з",
+    privacy: "політикою конфіденційності",
+  },
+  en: {
+    nameError: "Please enter your name",
+    messageError: "Please type your question",
+    popupNote: "Leave a request and we’ll get back to you within 15 minutes.",
+    sectionTitle: "Send us a request",
+    questionTitle: "Still have questions?",
+    questionNote: "Ask them here — we’ll reply within 15 minutes.",
+    sentQuestion: "Thank you! Question received",
+    sentLead: "Thank you! Request received",
+    sentNote: "We’ll reply within 15 minutes during business hours.",
+    name: "Your name",
+    contact: "Phone or @telegram",
+    contactQuestion: "Your Telegram or phone",
+    option: "Choose what you’re interested in",
+    projectType: "Project type",
+    budget: "Budget",
+    question: "Your question",
+    message: "Tell us briefly about your project",
+    sending: "Sending…",
+    sendQuestion: "Send question",
+    sendLead: "Send request",
+    error: "Couldn’t send. Please try again or message us on Telegram.",
+    consent: "By clicking the button, you agree to our",
+    privacy: "privacy policy",
+  },
+} satisfies Record<Locale, Record<string, string>>;
+
+function validate(name: string, contact: string, question: boolean, message: string, locale: Locale): Errors {
   const errors: Errors = {};
-  if (!question && name.trim().length < 2) errors.name = "Вкажіть, будь ласка, ваше ім’я";
-  if (question && message.trim().length < 3) errors.message = "Напишіть, будь ласка, ваше питання";
-  const contactProblem = contactError(contact);
+  if (!question && name.trim().length < 2) errors.name = copy[locale].nameError;
+  if (question && message.trim().length < 3) errors.message = copy[locale].messageError;
+  const contactProblem = contactError(contact, locale);
   if (contactProblem) errors.contact = contactProblem;
   return errors;
 }
@@ -84,24 +137,25 @@ type ContactFormProps = {
   variant?: "section" | "modal" | "question";
   /** Popup: which service opened it (and an optional preselected option) */
   preset?: LeadPreset;
+  locale?: Locale;
 };
 
-const POPUP_NOTE = "Залиште свою заявку, і ми зв’яжемося з вами протягом 15 хвилин.";
-
-export function ContactForm({ variant = "section", preset = { direction: "web" } }: ContactFormProps) {
+export function ContactForm({ variant = "section", preset = { direction: "web" }, locale = "uk" }: ContactFormProps) {
+  const t = copy[locale];
+  const { projectTypes, budgets, defaultBudget } = leadOptions[locale];
   const section = variant === "section";
   const question = variant === "question";
   const id = section ? "lead" : `modal-${variant}`;
-  const service = directionById(preset.direction);
+  const service = directionByIdFor(locale, preset.direction);
 
-  const title = section ? "Залиште заявку" : question ? "Залишилися питання?" : (preset.title ?? service.popupTitle);
-  const note = question ? "Задайте їх тут — ми відповімо протягом 15 хвилин." : POPUP_NOTE;
+  const title = section ? t.sectionTitle : question ? t.questionTitle : (preset.title ?? service.popupTitle);
+  const note = question ? t.questionNote : t.popupNote;
 
   const [name, setName] = useState("");
   const [contact, setContact] = useState("");
-  const [projectType, setProjectType] = useState<ProjectType>("Лендінг");
+  const [projectType, setProjectType] = useState<string>(projectTypes[0]);
   const [option, setOption] = useState<string | undefined>(preset.option);
-  const [budget, setBudget] = useState<Budget>("$500–1500");
+  const [budget, setBudget] = useState<string>(defaultBudget);
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<Errors>({});
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
@@ -113,7 +167,7 @@ export function ContactForm({ variant = "section", preset = { direction: "web" }
     e.preventDefault();
     if (sending.current) return;
     const trap = readHoneypot(e.currentTarget as HTMLFormElement);
-    const found = validate(name, contact, question, message);
+    const found = validate(name, contact, question, message, locale);
     setErrors(found);
     if (Object.keys(found).length) return;
 
@@ -127,10 +181,12 @@ export function ContactForm({ variant = "section", preset = { direction: "web" }
             ? { kind: "lead", name: name.trim(), contact: contact.trim(), option: projectType, budget, message: message.trim() }
             : { kind: "lead", name: name.trim(), contact: contact.trim(), direction: title, option, message: message.trim() },
         trap,
+        locale,
       );
       setStatus("sent");
       // only after the request succeeded
-      router.push(question ? "/thank-you?type=question" : "/thank-you");
+      const thankYou = routes[locale].thankYou;
+      router.push(question ? `${thankYou}?type=question` : thankYou);
     } catch {
       sending.current = false;
       setStatus("error");
@@ -149,9 +205,9 @@ export function ContactForm({ variant = "section", preset = { direction: "web" }
           </svg>
         </span>
         <p className="font-display text-[20px] leading-display font-semibold tracking-[-0.01em] text-white md:text-[24px]">
-          {question ? "Дякуємо! Питання отримано" : "Дякуємо! Заявку отримано"}
+          {question ? t.sentQuestion : t.sentLead}
         </p>
-        <p className="max-w-[380px] text-[15px] leading-[1.55] text-white/70">Відповімо протягом 15 хвилин у робочий час.</p>
+        <p className="max-w-[380px] text-[15px] leading-[1.55] text-white/70">{t.sentNote}</p>
       </div>
     );
   }
@@ -159,13 +215,13 @@ export function ContactForm({ variant = "section", preset = { direction: "web" }
   const nameField = (
     <div>
       <label htmlFor={`${id}-name`} className="sr-only">
-        Ваше ім’я
+        {t.name}
       </label>
       <input
         id={`${id}-name`}
         name="name"
         autoComplete="name"
-        placeholder="Ваше ім’я"
+        placeholder={t.name}
         value={name}
         onChange={(e) => setName(e.target.value)}
         aria-invalid={!!errors.name}
@@ -179,13 +235,13 @@ export function ContactForm({ variant = "section", preset = { direction: "web" }
   const contactField = (
     <div>
       <label htmlFor={`${id}-contact`} className="sr-only">
-        Телефон або @telegram
+        {t.contact}
       </label>
       <input
         id={`${id}-contact`}
         name="contact"
         autoComplete="tel"
-        placeholder={question ? "Ваш Telegram або телефон" : "Телефон або @telegram"}
+        placeholder={question ? t.contactQuestion : t.contact}
         value={contact}
         onChange={(e) => setContact(e.target.value)}
         aria-invalid={!!errors.contact}
@@ -215,8 +271,8 @@ export function ContactForm({ variant = "section", preset = { direction: "web" }
       {/* Popup: the direction is known from the card, the user picks the concrete service */}
       {variant === "modal" && (
         <fieldset>
-          <legend className={legendClass}>Оберіть, що саме вас цікавить</legend>
-          <div role="radiogroup" aria-label="Оберіть, що саме вас цікавить" className="grid grid-cols-2 gap-2">
+          <legend className={legendClass}>{t.option}</legend>
+          <div role="radiogroup" aria-label={t.option} className="grid grid-cols-2 gap-2">
             {service.options.map((o) => (
               <Chip key={o} variant="option" selected={option === o} onClick={() => setOption(o)}>
                 {o}
@@ -229,8 +285,8 @@ export function ContactForm({ variant = "section", preset = { direction: "web" }
       {section && (
         <>
           <fieldset className="flex flex-col gap-3 md:gap-4">
-            <legend className={legendClass}>Тип проєкту</legend>
-            <div role="radiogroup" aria-label="Тип проєкту" className="flex flex-wrap items-start gap-2 md:max-w-[420px]">
+            <legend className={legendClass}>{t.projectType}</legend>
+            <div role="radiogroup" aria-label={t.projectType} className="flex flex-wrap items-start gap-2 md:max-w-[420px]">
               {projectTypes.map((t) => (
                 <Chip key={t} variant="type" selected={projectType === t} onClick={() => setProjectType(t)}>
                   {t}
@@ -240,8 +296,8 @@ export function ContactForm({ variant = "section", preset = { direction: "web" }
           </fieldset>
 
           <fieldset>
-            <legend className={legendClass}>Бюджет</legend>
-            <div role="radiogroup" aria-label="Бюджет" className="flex flex-wrap items-start gap-2">
+            <legend className={legendClass}>{t.budget}</legend>
+            <div role="radiogroup" aria-label={t.budget} className="flex flex-wrap items-start gap-2">
               {budgets.map((b) => (
                 <Chip key={b} variant="budget" selected={budget === b} onClick={() => setBudget(b)}>
                   {b}
@@ -254,12 +310,12 @@ export function ContactForm({ variant = "section", preset = { direction: "web" }
 
       <div>
         <label htmlFor={`${id}-message`} className="sr-only">
-          {question ? "Ваше питання" : "Коротко про проєкт"}
+          {question ? t.question : t.message}
         </label>
         <textarea
           id={`${id}-message`}
           name="message"
-          placeholder={question ? "Ваше питання" : "Коротко про проєкт"}
+          placeholder={question ? t.question : t.message}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           aria-invalid={!!errors.message}
@@ -276,7 +332,7 @@ export function ContactForm({ variant = "section", preset = { direction: "web" }
         disabled={status === "sending"}
         className="pop-trigger flex h-14 w-full items-center justify-between rounded-full bg-lime pr-1.5 pl-6 font-display text-[15px] leading-none font-medium text-ink-2 transition-[translate,box-shadow,opacity] duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_-10px_rgba(174,238,5,0.55)] disabled:opacity-70 md:h-[60px] md:pr-2 md:pl-[29px]"
       >
-        {status === "sending" ? "Надсилаємо…" : question ? "Надіслати питання" : "Надіслати заявку"}
+        {status === "sending" ? t.sending : question ? t.sendQuestion : t.sendLead}
         <span className="relative grid h-11 w-[45px] place-items-center overflow-hidden rounded-full bg-ink-2 md:w-[46px]">
           {status === "sending" ? (
             <span className="size-4 animate-spin rounded-full border-2 border-lime border-t-transparent" aria-hidden="true" />
@@ -288,17 +344,17 @@ export function ContactForm({ variant = "section", preset = { direction: "web" }
 
       {status === "error" && (
         <p className="text-[13px] text-orange" role="alert">
-          Не вдалося надіслати. Спробуйте ще раз або напишіть нам у Telegram.
+          {t.error}
         </p>
       )}
 
       <p className="max-w-[205px] text-[11px] leading-body text-white/45 md:max-w-none md:text-[12px]">
-        Натискаючи кнопку, ви погоджуєтесь з{" "}
+        {t.consent}{" "}
         <a
-          href={socialLinks.privacy}
+          href={routes[locale].privacy}
           className="text-white/75 underline decoration-white/45 underline-offset-2 transition-colors hover:text-white hover:decoration-white"
         >
-          політикою конфіденційності
+          {t.privacy}
         </a>
         .
       </p>

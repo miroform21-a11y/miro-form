@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { submitBrief } from "@/lib/submitBrief";
 import { FormSubmitError } from "@/lib/submitLead";
 import { socialLinks } from "@/data/navigation";
+import { briefSchemas } from "@/data/briefEn";
+import { routes, type Locale } from "@/i18n/locale";
 import { ArrowShot } from "@/components/ui/ArrowShot";
 import { PillButton } from "@/components/ui/PillButton";
 import { Honeypot, readHoneypot } from "@/components/ui/Honeypot";
@@ -13,19 +15,18 @@ import {
   DEFAULT_LINKS,
   MAX_LINKS,
   MAX_SOCIALS,
-  briefSteps,
+  briefSchemaUk,
   defaultAnswers,
   emptySiteContacts,
   hasAnswer,
   isShown,
-  OTHER_NETWORK,
-  SOCIAL_NETWORKS,
   sendErrors,
   skipKey,
   type BriefAnswers,
   type BriefField,
   type BriefLink,
   type BriefNotice,
+  type BriefSchema,
   type BriefSiteContacts,
   type BriefSocial,
 } from "@/data/brief";
@@ -33,13 +34,107 @@ import {
 /** field key → message */
 type Errors = Record<string, string>;
 
-const LAST = briefSteps.length - 1;
+const copy = {
+  uk: {
+    fillTime: ["Орієнтовний час заповнення —", "10–15 хвилин"],
+    required: " (обов’язкове поле)",
+    several: "можна кілька",
+    link: "посилання",
+    comment: "коментар",
+    removeLink: "Прибрати посилання",
+    addLink: "+ Додати посилання",
+    phone: "Телефон",
+    // an example of the format (our own number) — only a placeholder, never sent as an answer
+    phonePlaceholder: "+38 073 021 77 21",
+    socials: "Соціальні мережі",
+    socialNetwork: "Соціальна мережа",
+    change: "Змінити",
+    remove: "Прибрати",
+    socialName: "назва",
+    socialNamePlaceholder: "Назва соціальної мережі",
+    profileLink: "посилання на профіль",
+    profilePlaceholder: "Посилання на профіль",
+    addSocial: "+ Додати соціальну мережу",
+    openTelegram: "Відкрити Telegram MIROFORM у новій вкладці",
+    progress: "Прогрес заповнення брифу",
+    step: ["Крок", "із"],
+    sentTitle: "Бриф отримано",
+    sentText: "Дякуємо! Ми уважно вивчимо відповіді та зв’яжемося з вами найближчим часом.",
+    backToSite: "Повернутися на сайт",
+    networkError: "мережа",
+    form: "Бриф",
+    lastNote: "Перед відправленням можна повернутися до будь-якого кроку. Натискаючи кнопку, ви погоджуєтесь з",
+    privacy: "політикою конфіденційності",
+    back: "Назад",
+    next: "Далі",
+    sending: "Надсилаємо…",
+    send: "Надіслати бриф",
+    limited: "Забагато спроб за короткий час. Ваші відповіді збережені — спробуйте ще раз за кілька хвилин або",
+    failed: "Не вдалося надіслати бриф. Ваші відповіді збережені — спробуйте ще раз або",
+    writeTelegram: "напишіть нам у Telegram",
+    code: "код",
+    steps: "Кроки брифу",
+    done: "пройдено",
+    requiredNote: ["Поля із зірочкою", "обов’язкові. Інші запитання можна пропускати, якщо поки немає відповіді."],
+  },
+  en: {
+    fillTime: ["Estimated time to complete —", "10–15 minutes"],
+    required: " (required field)",
+    several: "select all that apply",
+    link: "link",
+    comment: "comment",
+    removeLink: "Remove link",
+    addLink: "+ Add link",
+    phone: "Phone",
+    phonePlaceholder: "+1 (555) 123-4567",
+    socials: "Social media",
+    socialNetwork: "Social network",
+    change: "Change",
+    remove: "Remove",
+    socialName: "name",
+    socialNamePlaceholder: "Social network name",
+    profileLink: "profile link",
+    profilePlaceholder: "Profile link",
+    addSocial: "+ Add social network",
+    openTelegram: "Open MIROFORM on Telegram in a new tab",
+    progress: "Brief progress",
+    step: ["Step", "of"],
+    sentTitle: "Brief received",
+    sentText: "Thank you! We’ll review your answers carefully and get back to you shortly.",
+    backToSite: "Back to the site",
+    networkError: "network",
+    form: "Brief",
+    lastNote: "You can go back to any step before sending. By clicking the button, you agree to our",
+    privacy: "privacy policy",
+    back: "Back",
+    next: "Next",
+    sending: "Sending…",
+    send: "Send brief",
+    limited: "Too many attempts in a short time. Your answers are saved — try again in a few minutes or",
+    failed: "Couldn’t send the brief. Your answers are saved — try again or",
+    writeTelegram: "message us on Telegram",
+    code: "code",
+    steps: "Brief steps",
+    done: "completed",
+    requiredNote: ["Fields marked with", "are required. Feel free to skip other questions if you don’t have an answer yet."],
+  },
+} satisfies Record<Locale, unknown>;
+
+type BriefCopy = (typeof copy)["uk"];
+
+/** The language of the wizard: its texts and its schema (steps, social networks) */
+const BriefLocale = createContext<{ locale: Locale; t: BriefCopy; schema: BriefSchema }>({ locale: "uk", t: copy.uk, schema: briefSchemaUk });
+const useBriefLocale = () => useContext(BriefLocale);
+
 /** "10–15 хвилин" never breaks inside the range */
-const FILL_TIME = (
-  <>
-    Орієнтовний час заповнення — <span className="whitespace-nowrap">10–15 хвилин</span>
-  </>
-);
+function FillTime() {
+  const { t } = useBriefLocale();
+  return (
+    <>
+      {t.fillTime[0]} <span className="whitespace-nowrap">{t.fillTime[1]}</span>
+    </>
+  );
+}
 
 /* ------------------------------------------------------------------ */
 /* Building blocks                                                     */
@@ -53,6 +148,7 @@ const areaClass = `${inputBase} block min-h-[104px] resize-y px-5 pt-[15px] md:p
 const border = (error?: string) => (error ? "border-orange/80" : "border-white/14");
 
 function Label({ field, htmlFor, id, extra }: { field: BriefField; htmlFor?: string; id?: string; extra?: string }) {
+  const { t } = useBriefLocale();
   const Tag = htmlFor ? "label" : "p";
   return (
     <Tag htmlFor={htmlFor} id={id} className={labelClass}>
@@ -62,7 +158,7 @@ function Label({ field, htmlFor, id, extra }: { field: BriefField; htmlFor?: str
           {" "}*
         </span>
       )}
-      {field.required && <span className="sr-only"> (обов’язкове поле)</span>}
+      {field.required && <span className="sr-only">{t.required}</span>}
       {extra && <span className="ml-2 font-body text-[12px] font-[350] text-white/40">{extra}</span>}
     </Tag>
   );
@@ -118,6 +214,7 @@ function Chips({
   error?: string;
 }) {
   const id = useId();
+  const { t } = useBriefLocale();
   const multi = field.type === "multi";
   const exclusive = field.type === "multi" ? field.exclusive : undefined;
   const independent: readonly string[] = (field.type === "multi" && field.independent) || [];
@@ -136,7 +233,7 @@ function Chips({
 
   return (
     <div role="group" aria-labelledby={id} aria-describedby={error ? `brief-${field.key}-error` : undefined} className="flex min-w-0 flex-col gap-3">
-      <Label field={field} id={id} extra={multi ? "можна кілька" : undefined} />
+      <Label field={field} id={id} extra={multi ? t.several : undefined} />
       <Hint text={field.hint} />
       <div className="flex flex-wrap gap-2">
         {field.options.map((v) => (
@@ -178,6 +275,7 @@ const emptyLink = (): BriefLink => ({ url: "", note: "" });
 /** "Link + what about it" rows: DEFAULT_LINKS shown, more added on demand (up to MAX_LINKS). */
 function Links({ field, value, onChange }: { field: Extract<BriefField, { type: "links" }>; value: BriefLink[] | undefined; onChange: (v: BriefLink[]) => void }) {
   const id = useId();
+  const { t } = useBriefLocale();
   const rows = value?.length ? value : Array.from({ length: DEFAULT_LINKS }, emptyLink);
   const update = (i: number, patch: Partial<BriefLink>) => onChange(rows.map((r, j) => (j === i ? { ...r, ...patch } : r)));
 
@@ -191,7 +289,7 @@ function Links({ field, value, onChange }: { field: Extract<BriefField, { type: 
             <input
               type="url"
               inputMode="url"
-              aria-label={`${field.label} — посилання ${i + 1}`}
+              aria-label={`${field.label} — ${t.link} ${i + 1}`}
               placeholder="https://"
               maxLength={BRIEF_LIMITS.link}
               value={row.url}
@@ -199,7 +297,7 @@ function Links({ field, value, onChange }: { field: Extract<BriefField, { type: 
               className={`${fieldClass} border-white/14`}
             />
             <input
-              aria-label={`${field.label} — коментар ${i + 1}`}
+              aria-label={`${field.label} — ${t.comment} ${i + 1}`}
               maxLength={BRIEF_LIMITS.link}
               placeholder={field.notePlaceholder}
               value={row.note}
@@ -207,14 +305,14 @@ function Links({ field, value, onChange }: { field: Extract<BriefField, { type: 
               className={`${fieldClass} border-white/14`}
             />
             {i >= DEFAULT_LINKS ? (
-              <RemoveButton label={`Прибрати посилання ${i + 1}`} onClick={() => onChange(rows.filter((_, j) => j !== i))} />
+              <RemoveButton label={`${t.removeLink} ${i + 1}`} onClick={() => onChange(rows.filter((_, j) => j !== i))} />
             ) : (
               <span className="max-md:hidden" />
             )}
           </li>
         ))}
       </ul>
-      {rows.length < MAX_LINKS && <AddButton onClick={() => onChange([...rows, emptyLink()])}>+ Додати посилання</AddButton>}
+      {rows.length < MAX_LINKS && <AddButton onClick={() => onChange([...rows, emptyLink()])}>{t.addLink}</AddButton>}
     </div>
   );
 }
@@ -222,11 +320,12 @@ function Links({ field, value, onChange }: { field: Extract<BriefField, { type: 
 /**
  * Phone mask in the site's format: "+38 (073) 021 77 21" for Ukrainian numbers (typed from 0… or +380…),
  * "+<digits>" for other countries. Separators are added only before the next digit, so Backspace never gets stuck.
+ * The English brief does not treat a leading 0 as a Ukrainian number.
  */
-function formatPhone(input: string): string {
+function formatPhone(input: string, locale: Locale = "uk"): string {
   const digits = input.replace(/\D/g, "").slice(0, 15);
   if (!digits) return input.trim().startsWith("+") ? "+" : "";
-  const d = digits.startsWith("0") ? `38${digits}` : digits;
+  const d = digits.startsWith("0") && locale === "uk" ? `38${digits}` : digits;
   if (!d.startsWith("380")) return `+${d}`;
   const [op, a, b, c] = [d.slice(2, 5), d.slice(5, 8), d.slice(8, 10), d.slice(10, 12)];
   return `+38${op ? ` (${op}` : ""}${a ? `) ${a}` : ""}${b ? ` ${b}` : ""}${c ? ` ${c}` : ""}`;
@@ -245,6 +344,7 @@ function NetworkMenu({
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
+  const { schema } = useBriefLocale();
 
   useEffect(() => {
     if (!open) return;
@@ -268,7 +368,7 @@ function NetworkMenu({
           role="menu"
           className={`absolute top-[calc(100%+8px)] z-20 grid w-[230px] gap-0.5 rounded-[18px] border border-white/12 bg-[#111] p-1.5 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.8)] ${align === "right" ? "right-0" : "left-0"}`}
         >
-          {SOCIAL_NETWORKS.map((n) => (
+          {schema.socialNetworks.map((n) => (
             <li key={n} role="none">
               <button
                 type="button"
@@ -308,6 +408,8 @@ function SiteContacts({
   error?: string;
 }) {
   const id = useId();
+  const { locale, t, schema } = useBriefLocale();
+  const OTHER_NETWORK = schema.otherNetwork;
   const listRef = useRef<HTMLUListElement>(null);
   const v = value ?? emptySiteContacts();
   const socials = v.socials;
@@ -328,15 +430,14 @@ function SiteContacts({
       <div className={`flex flex-col gap-4 rounded-[20px] border bg-white/[0.02] p-4 md:p-5 ${error ? "border-orange/60" : "border-white/10"}`}>
         <div className="grid gap-3 md:grid-cols-2">
           <label className="flex min-w-0 flex-col gap-1.5">
-            <span className={subLabelClass}>Телефон</span>
-            {/* an example of the format (our own number) — only a placeholder, never sent as an answer */}
+            <span className={subLabelClass}>{t.phone}</span>
             <input
               type="tel"
               inputMode="tel"
               autoComplete="off"
-              placeholder="+38 073 021 77 21"
+              placeholder={t.phonePlaceholder}
               value={v.phone}
-              onChange={(e) => onChange({ ...v, phone: formatPhone(e.target.value) })}
+              onChange={(e) => onChange({ ...v, phone: formatPhone(e.target.value, locale) })}
               className={`${fieldClass} border-white/14`}
             />
           </label>
@@ -355,12 +456,12 @@ function SiteContacts({
           </label>
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className={subLabelClass}>Соціальні мережі</span>
+          <span className={subLabelClass}>{t.socials}</span>
           {socials.length > 0 && (
             <ul ref={listRef} className="flex flex-col gap-2.5">
               {socials.map((s, i) => {
                 const other = s.network === OTHER_NETWORK;
-                const rowName = other ? s.name || "Соціальна мережа" : s.network;
+                const rowName = other ? s.name || t.socialNetwork : s.network;
                 return (
                   // phones: [network | ×] then full-width inputs; desktop: [network | link (+ name for "Інше") | ×]
                   <li key={i} className="grid grid-cols-[minmax(0,1fr)_44px] items-center gap-2 md:grid-cols-[180px_minmax(0,1fr)_44px]">
@@ -373,7 +474,7 @@ function SiteContacts({
                             aria-haspopup="menu"
                             aria-expanded={open}
                             aria-controls={menuId}
-                            aria-label={`Соціальна мережа ${i + 1}: ${s.network}. Змінити`}
+                            aria-label={`${t.socialNetwork} ${i + 1}: ${s.network}. ${t.change}`}
                             onClick={toggle}
                             className={`${fieldClass} flex w-full items-center justify-between gap-2 border-white/14 bg-white/6 text-left text-white`}
                           >
@@ -384,12 +485,12 @@ function SiteContacts({
                       />
                     </div>
                     <div className="col-start-2 row-start-1 md:col-start-3">
-                      <RemoveButton label={`Прибрати ${rowName}`} onClick={() => onChange({ ...v, socials: socials.filter((_, j) => j !== i) })} />
+                      <RemoveButton label={`${t.remove} ${rowName}`} onClick={() => onChange({ ...v, socials: socials.filter((_, j) => j !== i) })} />
                     </div>
                     {other && (
                       <input
-                        aria-label={`Соціальна мережа ${i + 1} — назва`}
-                        placeholder="Назва соціальної мережі"
+                        aria-label={`${t.socialNetwork} ${i + 1} — ${t.socialName}`}
+                        placeholder={t.socialNamePlaceholder}
                         maxLength={BRIEF_LIMITS.socialName}
                         value={s.name}
                         onChange={(e) => setSocial(i, { name: e.target.value })}
@@ -399,8 +500,8 @@ function SiteContacts({
                     <input
                       type="url"
                       inputMode="url"
-                      aria-label={`${rowName} — посилання на профіль`}
-                      placeholder="Посилання на профіль"
+                      aria-label={`${rowName} — ${t.profileLink}`}
+                      placeholder={t.profilePlaceholder}
                       maxLength={BRIEF_LIMITS.link}
                       value={s.url}
                       onChange={(e) => setSocial(i, { url: e.target.value })}
@@ -425,7 +526,7 @@ function SiteContacts({
                 // phones: a full-width one-line button; desktop: a compact pill under the list
                 className="flex w-full items-center justify-center gap-1.5 rounded-full border border-lime/45 bg-lime/[0.07] px-3 py-3 font-display text-[12px] leading-none font-medium whitespace-nowrap text-lime transition-[background-color,border-color] duration-300 hover:border-lime hover:bg-lime/[0.14] md:w-auto md:gap-2 md:px-4 md:py-2.5 md:text-[14px]"
               >
-                + Додати соціальну мережу
+                {t.addSocial}
                 <Chevron open={open} />
               </button>
             )}
@@ -453,6 +554,7 @@ function Reveal({ show, children, flush }: { show: boolean; children: ReactNode;
 
 /** Lime "paperclip" plate: compact, outlined, not a full-width fill. With `href` the whole plate opens it in a new tab. */
 function Notice({ notice }: { notice: BriefNotice }) {
+  const { t } = useBriefLocale();
   // one plate, colour by screen width: blue (the background render colour) on phones, lime from md up
   const blue = notice.mobileTone === "blue";
   const content = (
@@ -484,7 +586,7 @@ function Notice({ notice }: { notice: BriefNotice }) {
       href={notice.href}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={`${notice.text} Відкрити Telegram MIROFORM у новій вкладці`}
+      aria-label={`${notice.text} ${t.openTelegram}`}
       className={`${box} transition-[border-color,background-color,translate] duration-300 ease-(--ease-smooth) hover:-translate-y-0.5 hover:border-lime/60 hover:bg-lime/[0.09] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-lime active:translate-y-0`}
     >
       {content}
@@ -493,25 +595,30 @@ function Notice({ notice }: { notice: BriefNotice }) {
 }
 
 function ProgressBar({ step, className = "" }: { step: number; className?: string }) {
+  const { t, schema } = useBriefLocale();
+  const total = schema.steps.length;
   return (
     <div
       className={`h-1 overflow-hidden rounded-full bg-white/10 ${className}`}
       role="progressbar"
-      aria-label="Прогрес заповнення брифу"
+      aria-label={t.progress}
       aria-valuemin={1}
-      aria-valuemax={briefSteps.length}
+      aria-valuemax={total}
       aria-valuenow={step + 1}
     >
-      <div className="h-full rounded-full bg-lime transition-[width] duration-500 ease-(--ease-smooth)" style={{ width: `${((step + 1) / briefSteps.length) * 100}%` }} />
+      <div className="h-full rounded-full bg-lime transition-[width] duration-500 ease-(--ease-smooth)" style={{ width: `${((step + 1) / total) * 100}%` }} />
     </div>
   );
 }
 
-const StepCounter = ({ step }: { step: number }) => (
-  <p className="font-display text-[13px] leading-none font-medium text-white/80">
-    Крок <span className="text-lime">{step + 1}</span> із {briefSteps.length}
-  </p>
-);
+function StepCounter({ step }: { step: number }) {
+  const { t, schema } = useBriefLocale();
+  return (
+    <p className="font-display text-[13px] leading-none font-medium text-white/80">
+      {t.step[0]} <span className="text-lime">{step + 1}</span> {t.step[1]} {schema.steps.length}
+    </p>
+  );
+}
 
 const ClockIcon = () => (
   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0">
@@ -524,8 +631,21 @@ const ClockIcon = () => (
 /* Wizard                                                              */
 /* ------------------------------------------------------------------ */
 
-export function BriefForm() {
-  const [answers, setAnswers] = useState<BriefAnswers>(defaultAnswers);
+export function BriefForm({ locale = "uk" }: { locale?: Locale }) {
+  const schema = briefSchemas[locale];
+  const t = copy[locale];
+  return (
+    <BriefLocale.Provider value={{ locale, t, schema }}>
+      <Wizard />
+    </BriefLocale.Provider>
+  );
+}
+
+function Wizard() {
+  const { locale, t, schema } = useBriefLocale();
+  const briefSteps = schema.steps;
+  const LAST = briefSteps.length - 1;
+  const [answers, setAnswers] = useState<BriefAnswers>(() => defaultAnswers(briefSteps));
   const [step, setStep] = useState(0);
   /** Furthest step opened so far — the steps before it are marked as passed in the side list */
   const [furthest, setFurthest] = useState(0);
@@ -601,7 +721,7 @@ export function BriefForm() {
     if (sending.current) return;
 
     const trap = readHoneypot(e.currentTarget);
-    const blocked = sendErrors(answers);
+    const blocked = sendErrors(answers, schema);
     if (blocked) {
       if (blocked.step !== step) setStep(blocked.step);
       return showErrors(blocked.errors);
@@ -627,13 +747,13 @@ export function BriefForm() {
     sending.current = true;
     setStatus("sending");
     try {
-      await submitBrief(payload, trap);
+      await submitBrief(payload, trap, locale);
       setStatus("sent");
     } catch (err) {
       sending.current = false;
       // every answer stays in the form
       // a short code next to the message tells us what went wrong if a client reports it (no secrets in it)
-      setErrorCode(err instanceof FormSubmitError ? String(err.status) : "мережа");
+      setErrorCode(err instanceof FormSubmitError ? String(err.status) : t.networkError);
       setStatus(err instanceof FormSubmitError && err.status === 429 ? "limited" : "error");
     }
   };
@@ -652,13 +772,13 @@ export function BriefForm() {
             </svg>
           </span>
           <h2 ref={headingRef} tabIndex={-1} className="font-display text-[26px] leading-[1.15] font-semibold tracking-[-0.03em] text-white outline-none md:text-[32px]">
-            Бриф отримано
+            {t.sentTitle}
           </h2>
           <p className="max-w-[440px] text-[15px] leading-[1.6] font-[350] text-white/70">
-            Дякуємо! Ми уважно вивчимо відповіді та зв’яжемося з вами найближчим часом.
+            {t.sentText}
           </p>
-          <PillButton href="/" circleSize={44} gap={18} className="mt-3 h-[60px] pr-2 pl-[28px]">
-            Повернутися на сайт
+          <PillButton href={routes[locale].home} circleSize={44} gap={18} className="mt-3 h-[60px] pr-2 pl-[28px]">
+            {t.backToSite}
           </PillButton>
         </div>
       </div>
@@ -732,7 +852,7 @@ export function BriefForm() {
   };
 
   return (
-    <form noValidate onSubmit={onSubmit} aria-label="Бриф" className="relative grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-8 xl:grid-cols-[minmax(0,1fr)_300px]">
+    <form noValidate onSubmit={onSubmit} aria-label={t.form} className="relative grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-8 xl:grid-cols-[minmax(0,1fr)_300px]">
       <Honeypot />
 
       {/* ---------- Active step (left) ---------- */}
@@ -747,7 +867,9 @@ export function BriefForm() {
             <ProgressBar step={step} className="mt-3" />
             <p className="mt-2.5 flex items-center gap-1.5 text-[12px] leading-[1.4] text-white/45">
               <ClockIcon />
-              <span>{FILL_TIME}</span>
+              <span>
+                <FillTime />
+              </span>
             </p>
           </div>
 
@@ -784,9 +906,9 @@ export function BriefForm() {
 
             {step === LAST && (
               <p className={`mt-7 ${hintClass}`}>
-                Перед відправленням можна повернутися до будь-якого кроку. Натискаючи кнопку, ви погоджуєтесь з{" "}
-                <a href={socialLinks.privacy} className="text-white/75 underline decoration-white/40 underline-offset-2 transition-colors hover:text-white">
-                  політикою конфіденційності
+                {t.lastNote}{" "}
+                <a href={routes[locale].privacy} className="text-white/75 underline decoration-white/40 underline-offset-2 transition-colors hover:text-white">
+                  {t.privacy}
                 </a>
                 .
               </p>
@@ -805,7 +927,7 @@ export function BriefForm() {
                   <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 {/* phones: arrow only, the label stays for screen readers */}
-                <span className="max-sm:sr-only">Назад</span>
+                <span className="max-sm:sr-only">{t.back}</span>
               </button>
             ) : (
               <span />
@@ -816,7 +938,7 @@ export function BriefForm() {
               disabled={status === "sending"}
               className="pop-trigger flex h-[52px] items-center justify-between gap-3 rounded-full bg-lime pr-1.5 pl-4 font-display text-[14px] leading-none font-medium whitespace-nowrap text-ink-2 transition-[translate,box-shadow,opacity] duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_-10px_rgba(174,238,5,0.55)] disabled:opacity-70 sm:h-[56px] sm:gap-5 sm:pl-6 sm:text-[15px] md:h-[60px] md:pl-7"
             >
-              {step < LAST ? "Далі" : status === "sending" ? "Надсилаємо…" : "Надіслати бриф"}
+              {step < LAST ? t.next : status === "sending" ? t.sending : t.send}
               <span className="relative grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-ink-2 sm:size-11 md:size-12">
                 {status === "sending" ? (
                   <span className="size-5 animate-spin rounded-full border-2 border-lime border-t-transparent" aria-hidden="true" />
@@ -829,27 +951,29 @@ export function BriefForm() {
 
           {status === "limited" && step === LAST && (
             <p className="mt-4 text-[13px] leading-[1.5] text-orange" role="alert">
-              Забагато спроб за короткий час. Ваші відповіді збережені — спробуйте ще раз за кілька хвилин або{" "}
+              {t.limited}{" "}
               <a href={socialLinks.telegram} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
-                напишіть нам у Telegram
+                {t.writeTelegram}
               </a>
               .
             </p>
           )}
           {status === "error" && step === LAST && (
             <p className="mt-4 text-[13px] leading-[1.5] text-orange" role="alert">
-              Не вдалося надіслати бриф. Ваші відповіді збережені — спробуйте ще раз або{" "}
+              {t.failed}{" "}
               <a href={socialLinks.telegram} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
-                напишіть нам у Telegram
+                {t.writeTelegram}
               </a>
-              . {errorCode && <span className="text-orange/60">(код: {errorCode})</span>}
+              . {errorCode && <span className="text-orange/60">
+                  ({t.code}: {errorCode})
+                </span>}
             </p>
           )}
         </section>
       </div>
 
       {/* ---------- Progress + steps (desktop, right) ---------- */}
-      <aside aria-label="Кроки брифу" className="hidden lg:block">
+      <aside aria-label={t.steps} className="hidden lg:block">
         <div className="sticky top-8 rounded-[28px] border border-white/8 bg-white/[0.03] p-4 backdrop-blur-[20px]">
           <div className="px-4 pt-2 pb-4" aria-live="polite">
             <StepCounter step={step} />
@@ -858,7 +982,9 @@ export function BriefForm() {
               <span className="mt-px">
                 <ClockIcon />
               </span>
-              <span>{FILL_TIME}</span>
+              <span>
+                <FillTime />
+              </span>
             </p>
           </div>
           <ol className="flex flex-col gap-0.5 border-t border-white/8 pt-3">
@@ -878,7 +1004,7 @@ export function BriefForm() {
                     <span className={`font-pixel text-[10px] ${active ? "text-lime" : "text-white/35"}`}>{s.number}</span>
                     <span className="min-w-0 flex-1">{s.title}</span>
                     {done && (
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-label="пройдено">
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-label={t.done}>
                         <path d="M3.5 8.3l2.8 2.8L12.5 5" stroke="#AEEE05" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     )}
@@ -888,7 +1014,7 @@ export function BriefForm() {
             })}
           </ol>
           <p className="mt-3 border-t border-white/8 px-4 pt-3 text-[12px] leading-[1.5] text-white/45">
-            Поля із зірочкою <span className="text-lime">*</span> обов’язкові. Інші запитання можна пропускати, якщо поки немає відповіді.
+            {t.requiredNote[0]} <span className="text-lime">*</span> {t.requiredNote[1]}
           </p>
         </div>
       </aside>

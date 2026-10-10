@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { projects } from "@/data/projects";
+import { projects as projectsUk, type Project } from "@/data/projects";
+import type { Locale } from "@/i18n/locale";
 import { ProjectCard } from "./ProjectCard";
 
 /** Card geometry from the mobile Figma frame: height, media→info gap, bottom padding, info block height */
@@ -14,8 +15,14 @@ const mobileCards = [
   { h: 328.74, gap: 18, pb: 18, info: 84.74 },
 ];
 
+const copy = {
+  uk: { label: "Наші проєкти", slides: "Слайди", slide: "Слайд" },
+  en: { label: "Our projects", slides: "Slides", slide: "Slide" },
+} satisfies Record<Locale, Record<string, string>>;
+
 /** Mobile swipe slider with pagination dots. */
-export function WorksSlider() {
+export function WorksSlider({ projects = projectsUk, locale = "uk" }: { projects?: Project[]; locale?: Locale }) {
+  const t = copy[locale];
   const trackRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
 
@@ -40,7 +47,7 @@ export function WorksSlider() {
         ref={trackRef}
         onScroll={onScroll}
         aria-roledescription="carousel"
-        aria-label="Наші проєкти"
+        aria-label={t.label}
         data-lenis-prevent-horizontal
         className="no-scrollbar flex snap-x snap-mandatory items-start gap-3 overflow-x-auto overscroll-x-contain"
       >
@@ -49,6 +56,7 @@ export function WorksSlider() {
             key={project.id}
             project={project}
             variant="mobile"
+            locale={locale}
             className="w-full shrink-0 snap-start"
             style={
               {
@@ -62,14 +70,14 @@ export function WorksSlider() {
         ))}
       </div>
 
-      <div className="mt-4 flex items-center justify-center gap-2" role="tablist" aria-label="Слайди">
+      <div className="mt-4 flex items-center justify-center gap-2" role="tablist" aria-label={t.slides}>
         {projects.map((project, i) => (
           <button
             key={project.id}
             type="button"
             role="tab"
             aria-selected={active === i}
-            aria-label={`Слайд ${i + 1}: ${project.title}`}
+            aria-label={`${t.slide} ${i + 1}: ${project.title}`}
             onClick={() => goTo(i)}
             className={`h-1.5 rounded-full transition-[width,background-color] duration-400 ease-(--ease-smooth) ${
               active === i ? "w-10 bg-ink-2" : "w-3 bg-ink-2/18"

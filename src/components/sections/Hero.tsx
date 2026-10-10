@@ -2,6 +2,24 @@ import Image from "next/image";
 import { Header } from "./Header";
 import { PillButton } from "@/components/ui/PillButton";
 import { HeroParallax } from "./HeroParallax";
+import type { Locale } from "@/i18n/locale";
+
+const copy = {
+  uk: {
+    rating: "347+ клієнтів у 12 країнах",
+    eyebrow: "МИ СТВОРЮЄМО",
+    title: ["Сайти, які", "продають —", "а не просто", "існують"],
+    lead: ["Дизайн, розробка й AI-рішення під ключ.", "Від ідеї до першої заявки — від 7 днів."],
+    cta: "Обговорити проєкт",
+  },
+  en: {
+    rating: "347+ clients in 12 countries",
+    eyebrow: "WE BUILD",
+    title: ["Websites", "that sell —", "not just", "sit there"],
+    lead: ["Turnkey design, development and AI solutions.", "From idea to first lead in as little as 7 days."],
+    cta: "Discuss your project",
+  },
+} satisfies Record<Locale, unknown>;
 
 /** Square, face-centred crops of the Figma photos — they fill the circle completely */
 const avatars = ["/images/avatars/client-1.jpg", "/images/avatars/client-2.jpg", "/images/avatars/client-3.jpg", "/images/avatars/client-4.jpg"];
@@ -30,13 +48,13 @@ export function AvatarStack({ size = 46, borderColor = "#050505" }: { size?: num
   );
 }
 
-function Rating({ textClass = "text-white/70" }: { textClass?: string }) {
+function Rating({ textClass = "text-white/70", text }: { textClass?: string; text: string }) {
   return (
     <div className="flex items-center">
       <AvatarStack />
       <div className="flex flex-col gap-1 pl-[26px] leading-body whitespace-nowrap">
         <p className="font-pixel text-[10px] leading-pixel text-lime">★★★★★ 4.9</p>
-        <p className={`text-[14px] ${textClass}`}>347+ клієнтів у 12 країнах</p>
+        <p className={`text-[14px] ${textClass}`}>{text}</p>
       </div>
     </div>
   );
@@ -58,7 +76,8 @@ function StackTags({ className = "", size }: { className?: string; size: "lg" | 
   );
 }
 
-export function Hero() {
+export function Hero({ locale = "uk" }: { locale?: Locale }) {
+  const t = copy[locale];
   return (
     <section
       id="top"
@@ -126,37 +145,37 @@ export function Hero() {
 
       {/* ---------- Content ---------- */}
       <div className="relative z-10 mx-auto flex h-full max-w-[1440px] flex-col px-5 pt-[24.2px] pb-4 max-lg:min-h-[inherit] md:px-8 lg:px-[clamp(40px,6.25vw,90px)] lg:pt-7 lg:pb-0">
-        <Header />
+        <Header locale={locale} />
 
         <div className="mt-[24.2px] flex flex-col lg:mt-[clamp(48px,5.56vw,80px)] lg:w-[calc(100%+19px)] lg:flex-row lg:items-start lg:justify-between">
           <div className="flex flex-col whitespace-nowrap">
-            <p className="font-pixel text-[11px] leading-pixel text-lime lg:text-[13px]">МИ СТВОРЮЄМО</p>
+            <p className="font-pixel text-[11px] leading-pixel text-lime lg:text-[13px]">{t.eyebrow}</p>
             <h1 className="mt-[23px] font-display text-[34px] leading-[1.05] font-bold tracking-[-0.03em] text-white md:text-[52px] lg:mt-[19px] lg:text-[clamp(34px,2.92vw,42px)]">
-              Сайти, які
+              {t.title[0]}
               <br />
-              продають —
+              {t.title[1]}
               <br />
-              а не просто
+              {t.title[2]}
               <br />
-              існують
+              {t.title[3]}
             </h1>
           </div>
 
           <div className="flex flex-col items-start lg:items-end lg:pt-8">
             <p className="mt-[18px] text-[14px] leading-[1.55] font-[350] text-white md:text-[16px] lg:mt-0 lg:pr-[19px] lg:text-right lg:text-[16px]">
-              Дизайн, розробка й AI-рішення під ключ.
+              {t.lead[0]}
               <br />
-              Від ідеї до першої заявки — від 7 днів.
+              {t.lead[1]}
             </p>
             <PillButton href="#contact" className="mt-[22px] h-[55px] pr-1.5 pl-7 lg:mt-[38px] lg:h-[60px]">
-              Обговорити проєкт
+              {t.cta}
             </PillButton>
           </div>
         </div>
 
         {/* Mobile / tablet: rating under CTA, stack at the very bottom */}
         <div className="mt-[22px] flex h-[55.34px] items-center lg:hidden">
-          <Rating textClass="text-white/90" />
+          <Rating textClass="text-white/90" text={t.rating} />
         </div>
         <div className="flex-1 lg:hidden" />
         <StackTags size="sm" className="gap-1.5 pl-[3px] lg:hidden [&>li]:h-[21.2px] [&>li]:border-[0.85px] [&>li]:text-[10.2px]" />
@@ -165,7 +184,7 @@ export function Hero() {
       {/* Desktop bottom row */}
       <div className="absolute inset-x-0 bottom-[62px] z-10 hidden lg:block">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between pr-[clamp(32px,4vw,58px)] pl-[clamp(24px,4.86vw,70px)]">
-          <Rating />
+          <Rating text={t.rating} />
           <StackTags size="lg" className="gap-2.5 [&>li]:h-[33px] [&>li]:text-[12px]" />
         </div>
       </div>

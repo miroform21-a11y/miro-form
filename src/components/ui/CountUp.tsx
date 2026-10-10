@@ -11,16 +11,16 @@ type CountUpProps = {
   decimals?: number;
   /** Text before the number, e.g. "$" or "-" */
   prefix?: string;
-  /** Group thousands with a space ("1 490") */
-  group?: boolean;
+  /** Group thousands with a space ("1 490"), or with the given separator ("," for US prices: "1,490") */
+  group?: boolean | string;
   /** Reserve the final width so neighbours do not move while counting */
   reserve?: boolean;
   className?: string;
 };
 
-const format = (n: number, decimals: number, group: boolean) => {
+const format = (n: number, decimals: number, group: boolean | string) => {
   const s = n.toFixed(decimals);
-  return group ? s.replace(/\B(?=(\d{3})+(?!\d))/g, " ") : s;
+  return group ? s.replace(/\B(?=(\d{3})+(?!\d))/g, group === true ? " " : group) : s;
 };
 
 /** Animates a number from 0 to `to` the first time it becomes visible. */

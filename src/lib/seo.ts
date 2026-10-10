@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { contacts, founderInstagram, socialLinks } from "@/data/navigation";
+import type { Locale } from "@/i18n/locale";
 
 /** Production origin (miro-form.com and http:// both 308-redirect here on Vercel). */
 export const siteUrl = "https://www.miro-form.com";
@@ -7,6 +8,7 @@ export const siteName = "MIROFORM";
 
 /** Static social preview (public/og-image.png, 1200×630) */
 export const ogImage = { url: "/og-image.png", width: 1200, height: 630, alt: "MIROFORM — розробка сайтів, дизайн та AI-рішення під ключ" };
+const ogImageEn = { ...ogImage, alt: "MIROFORM — websites, design and AI solutions" };
 
 export const absoluteUrl = (path = "/") => new URL(path, siteUrl).toString().replace(/\/$/, "");
 
@@ -18,8 +20,18 @@ const websiteId = `${siteUrl}/#website`;
 
 /**
  * Per-page metadata: unique title/description, canonical, Open Graph and Twitter card.
+ * English pages (locale "en") get en_US Open Graph and stay noindex until the English version is approved.
  */
-export function pageMetadata({ title, description, path }: { title: string; description: string; path: string }): Metadata {
+export function pageMetadata({ title, description, path, locale = "uk" }: { title: string; description: string; path: string; locale?: Locale }): Metadata {
+  if (locale === "en")
+    return {
+      title: { absolute: title },
+      description,
+      alternates: { canonical: path },
+      robots: { index: false, follow: false },
+      openGraph: { title, description, url: path, type: "website", locale: "en_US", siteName, images: [ogImageEn] },
+      twitter: { card: "summary_large_image", title, description, images: [ogImage.url] },
+    };
   return {
     title: { absolute: title },
     description,
@@ -82,3 +94,16 @@ export function faqJsonLd(items: { question: string; answer: string }[]) {
     })),
   };
 }
+
+/** The same Organization + WebSite graph for the English root layout, with English text. */
+export const siteJsonLdEn = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      ...siteJsonLd["@graph"][0],
+      description: "Digital studio: turnkey design, web development and AI solutions for businesses.",
+      contactPoint: { ...siteJsonLd["@graph"][0].contactPoint, availableLanguage: ["uk", "en"] },
+    },
+    { ...siteJsonLd["@graph"][1], url: absoluteUrl("/en"), inLanguage: "en" },
+  ],
+};

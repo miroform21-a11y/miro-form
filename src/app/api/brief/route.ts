@@ -1,11 +1,13 @@
-import { BRIEF_LIMITS, MAX_LINKS, MAX_SOCIALS, OTHER_NETWORK, SOCIAL_NETWORKS, briefSteps, isShown, sendErrors, skipKey, type BriefAnswers, type BriefField, type BriefValue } from "@/data/brief";
+import { BRIEF_LIMITS, MAX_LINKS, MAX_SOCIALS, isShown, sendErrors, skipKey, type BriefAnswers, type BriefField, type BriefSchema, type BriefValue } from "@/data/brief";
+import { briefSchemas } from "@/data/briefEn";
 import { claimOnce, releaseClaim, withinRateLimit } from "@/lib/server/limits";
 import { sendTelegramHtml, telegramConfigured } from "@/lib/server/telegram";
 import { buildBriefMessages } from "@/lib/server/briefMessage";
 import { HttpError, assertSameOrigin, clientKey, isRecord, kyivTime, looksAutomated, readJson, reply, sha256, text } from "@/lib/server/http";
 
 /**
- * The /brief wizard → validated against the same schema as the form (data/brief.ts) → Telegram.
+ * The /brief and /en/brief wizards → validated against the same schema as the form that was sent
+ * (data/brief.ts, or data/briefEn.ts when the body says lang "en") → Telegram.
  * Only known keys and listed options are accepted; hidden conditional answers are dropped;
  * required fields and the contact format are checked with the same rules as in the form.
  * Nothing is stored except short-lived hashed rate-limit / duplicate keys.
@@ -13,10 +15,9 @@ import { HttpError, assertSameOrigin, clientKey, isRecord, kyivTime, looksAutoma
 
 // generous: a detailed brief in Cyrillic (2 bytes per letter) easily passes 32 KB
 const MAX_BODY = 256 * 1024;
-const fields = briefSteps.flatMap((s) => s.fields);
 
 /** One answer, or null when it does not fit the field (→ 400). Empty answers become undefined. */
-function parseValue(field: BriefField, raw: unknown): BriefValue | undefined | null {
+function parseValue(field: BriefField, raw: unknown, schema: BriefSchema): BriefValue | undefined | null {
   if (raw === undefined || raw === null || raw === "") return undefined;
   switch (field.type) {
     case "text":
@@ -55,8 +56,8 @@ function parseValue(field: BriefField, raw: unknown): BriefValue | undefined | n
       if (phone === null || email === null) return null;
       const socials = [];
       for (const item of raw.socials) {
-        if (!isRecord(item) || typeof item.network !== "string" || !(SOCIAL_NETWORKS as readonly string[]).includes(item.network)) return null;
-        const name = item.network === OTHER_NETWORK ? text(item.name, BRIEF_LIMITS.socialName) : ""; // a custom name only for "Інше"
+        if (!isRecord(item) || typeof item.network !== "string" || !schema.socialNetworks.includes(item.network)) return null;
+        const name = item.network === schema.otherNetwork ? text(item.name, BRIEF_LIMITS.socialName) : ""; // a custom name only for "Інше" / "Other"
         const url = text(item.url, BRIEF_LIMITS.link);
         if (name === null || url === null) return null;
         if (name || url) socials.push({ network: item.network, name, url });
@@ -66,11 +67,12 @@ function parseValue(field: BriefField, raw: unknown): BriefValue | undefined | n
   }
 }
 
-function parse(body: Record<string, unknown>): BriefAnswers | null {
+function parse(body: Record<string, unknown>, schema: BriefSchema): BriefAnswers | null {
   if (!isRecord(body.answers)) return null;
+  const fields = schema.steps.flatMap((s) => s.fields);
   const answers: BriefAnswers = {};
   for (const field of fields) {
-    const value = parseValue(field, body.answers[field.key]);
+    const value = parseValue(field, body.answers[field.key], schema);
     if (value === null) return null;
     if (value !== undefined) answers[field.key] = value;
     // one-click alternative ("Поки не маю побажань…")
@@ -81,7 +83,7 @@ function parse(body: Record<string, unknown>): BriefAnswers | null {
 
   // the final "Ваші контакти" step must be complete (name, valid phone / Telegram, method, time) —
   // the same check the form runs before sending; stars on other steps are hints only
-  if (sendErrors(answers)) return null;
+  if (sendErrors(answers, schema)) return null;
   return answers;
 }
 
@@ -96,7 +98,9 @@ export async function POST(request: Request) {
     if (!isRecord(body)) return reply(400);
     if (looksAutomated(body)) return reply(200); // silently dropped
 
-    const answers = parse(body);
+    // the English form says so; anything else is the Ukrainian brief, exactly as before
+    const schema = briefSchemas[body.lang === "en" ? "en" : "uk"];
+    const answers = parse(body, schema);
     if (!answers) {
       console.warn("[brief] refused: answers did not pass validation");
       return reply(400);
@@ -116,7 +120,7 @@ export async function POST(request: Request) {
     const fingerprint = sha256(JSON.stringify(["brief", answers]));
     if (!(await claimOnce(fingerprint, 600))) return reply(200);
 
-    if (!(await sendTelegramHtml(buildBriefMessages(answers, `${kyivTime()} (Київ)`)))) {
+    if (!(await sendTelegramHtml(buildBriefMessages(answers, `${kyivTime()} (Київ)`, schema)))) {
       await releaseClaim(fingerprint);
       return reply(502);
     }

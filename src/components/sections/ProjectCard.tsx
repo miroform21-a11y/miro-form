@@ -3,15 +3,21 @@ import type { CSSProperties } from "react";
 import type { Project, ProjectCrop } from "@/data/projects";
 import { ArrowShot } from "@/components/ui/ArrowShot";
 import { ProjectVideo } from "./ProjectVideo";
+import type { Locale } from "@/i18n/locale";
 
-function Media({ project, crop, sizes, radius, mobile }: { project: Project; crop: ProjectCrop; sizes: string; radius: string; mobile: boolean }) {
+const copy = {
+  uk: { screenshot: "скріншот сайту", video: "відео сайту", open: "відкрити сайт проєкту" },
+  en: { screenshot: "website screenshot", video: "website video", open: "open the project website" },
+} satisfies Record<Locale, Record<string, string>>;
+
+function Media({ project, crop, sizes, radius, mobile, locale }: { project: Project; crop: ProjectCrop; sizes: string; radius: string; mobile: boolean; locale: Locale }) {
   const { src, width, height } = project.image;
   const videoSrc = mobile ? project.video?.mobile : project.video?.desktop;
   return (
     <div className={`relative min-h-0 w-full flex-1 overflow-hidden ${radius}`}>
       <Image
         src={src}
-        alt={`${project.title} — скріншот сайту`}
+        alt={`${project.title} — ${copy[locale].screenshot}`}
         width={width}
         height={height}
         sizes={sizes}
@@ -23,7 +29,7 @@ function Media({ project, crop, sizes, radius, mobile }: { project: Project; cro
           src={videoSrc}
           trigger={mobile ? "visible" : "hover"}
           delay={mobile ? 1000 : 0}
-          label={`${project.title} — відео сайту`}
+          label={`${project.title} — ${copy[locale].video}`}
         />
       )}
     </div>
@@ -37,9 +43,11 @@ export function ProjectCard({
   variant,
   className = "",
   style,
+  locale = "uk",
 }: {
   project: Project;
   variant: Variant;
+  locale?: Locale;
   className?: string;
   style?: CSSProperties;
 }) {
@@ -61,6 +69,7 @@ export function ProjectCard({
         sizes={mobile ? "342px" : "(min-width: 1024px) 60vw, 50vw"}
         radius={mobile ? "rounded-[18px]" : "rounded-[22px]"}
         mobile={mobile}
+        locale={locale}
       />
 
       <div className={`relative flex shrink-0 flex-col ${mobile ? "h-(--card-info,auto) gap-2 px-2" : "h-[109px] gap-2.5 px-[19px]"}`}>
@@ -104,7 +113,7 @@ export function ProjectCard({
         href={project.href}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label={`${project.title} — відкрити сайт проєкту`}
+        aria-label={`${project.title} — ${copy[locale].open}`}
         className="absolute inset-0 z-[2] rounded-[inherit] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-lime"
       />
     </article>

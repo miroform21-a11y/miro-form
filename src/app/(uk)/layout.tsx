@@ -1,32 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Noto_Sans, Unbounded } from "next/font/google";
-import localFont from "next/font/local";
-import "./globals.css";
+import "../globals.css";
+import { fontVariables } from "../fonts";
 import { SmoothScroll } from "@/components/ui/SmoothScroll";
 import { Preloader } from "@/components/ui/Preloader";
 import { JsonLd } from "@/components/ui/JsonLd";
 import { ogImage, siteJsonLd, siteName, siteUrl } from "@/lib/seo";
 
-const unbounded = Unbounded({
-  subsets: ["latin", "cyrillic"],
-  // Variable font: all weights 200–900 (static weights render the same; intermediate ones are available)
-  variable: "--font-unbounded",
-  display: "swap",
-});
-
-const noto = Noto_Sans({
-  subsets: ["latin", "cyrillic"],
-  variable: "--font-noto",
-  display: "swap",
-});
-
-const pressStart = localFont({
-  src: "../../public/fonts/PressStart2P.ttf",
-  variable: "--font-press-start",
-  display: "swap",
-});
-
-/** Defaults for every route; indexable pages override title/description/canonical via pageMetadata(). */
+/** Defaults for every Ukrainian route; indexable pages override title/description/canonical via pageMetadata(). */
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   // every page title already ends with "— MIROFORM", so no template
@@ -43,9 +23,10 @@ export const viewport: Viewport = {
   themeColor: "#050505",
 };
 
+/** Root layout of the Ukrainian site (the route group keeps its URLs unchanged; /en has its own root layout). */
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="uk" className={`${unbounded.variable} ${noto.variable} ${pressStart.variable}`}>
+    <html lang="uk" className={fontVariables}>
       <body>
         <Preloader />
         <noscript>

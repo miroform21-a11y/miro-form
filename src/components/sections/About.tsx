@@ -5,6 +5,31 @@ import { CountUp } from "@/components/ui/CountUp";
 import { ArrowShot } from "@/components/ui/ArrowShot";
 import { ReadWords, ScrollRead } from "@/components/ui/ScrollRead";
 import { socialLinks } from "@/data/navigation";
+import type { Locale } from "@/i18n/locale";
+
+const copy = {
+  uk: {
+    tag: "Про нас",
+    founderAlt: "German Guk — засновник MIROFORM",
+    statement: "— digital-студія, що поєднує дизайн, технології та результат.",
+    // "…нова [photo] форма" — the photo sits inside the phrase
+    readBefore: "Сім років досвіду — нова",
+    readAfter: "форма, нове ім’я.",
+    projects: "Реалізованих проєктів",
+    years: "Років досвіду в digital",
+    fullCycle: "Full-cycle підхід: аналітика, дизайн, розробка, запуск і підтримка — разом, від ідеї до результату.",
+  },
+  en: {
+    tag: "About us",
+    founderAlt: "German Guk — founder of MIROFORM",
+    statement: "— a digital studio uniting design, technology and results.",
+    readBefore: "Seven years of craft — a new",
+    readAfter: "form, a new name.",
+    projects: "Projects delivered",
+    years: "Years in digital",
+    fullCycle: "Full-cycle approach: research, design, development, launch and support — together, from idea to results.",
+  },
+} satisfies Record<Locale, Record<string, string>>;
 
 function InlinePhoto({ className }: { className: string }) {
   return (
@@ -21,7 +46,7 @@ function InlinePhoto({ className }: { className: string }) {
   );
 }
 
-function FounderCard() {
+function FounderCard({ locale }: { locale: Locale }) {
   return (
     <a
       // for now the card leads to the company Instagram (@miro.form); founderInstagram (@gukgerman) is kept in navigation.ts
@@ -45,7 +70,7 @@ function FounderCard() {
         {/* Mobile photo */}
         <Image
           src="/images/about/m-founder.png"
-          alt="German Guk — засновник MIROFORM"
+          alt={copy[locale].founderAlt}
           fill
           sizes="350px"
           draggable={false}
@@ -54,7 +79,7 @@ function FounderCard() {
         {/* Desktop photo (crop from Figma) */}
         <Image
           src="/images/about/founder.png"
-          alt="German Guk — засновник MIROFORM"
+          alt={copy[locale].founderAlt}
           width={839}
           height={1119}
           sizes="420px"
@@ -100,7 +125,7 @@ function StatCard({ label, value, suffix, tone }: { label: string; value: number
   );
 }
 
-function FullCycleCard() {
+function FullCycleCard({ locale }: { locale: Locale }) {
   return (
     <div className="relative flex h-[340px] flex-col gap-4 overflow-hidden rounded-[28px] border border-white/8 transition-[translate,border-color,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 active:-translate-y-1 hover:border-white/16 hover:shadow-[0_24px_60px_-30px_rgba(174,238,5,0.3)] active:border-white/16 px-5 pt-[30px] pb-5 md:h-[280px] md:gap-[18px] md:rounded-[32px] md:p-8">
       {/* Glow + fade + glass star (mobile and desktop placements differ) */}
@@ -131,7 +156,7 @@ function FullCycleCard() {
         className="relative font-pixel text-[44px] leading-pixel tracking-[-0.03em] whitespace-nowrap text-white md:text-[75px]"
       />
       <p className="relative w-[272px] text-[15px] leading-[1.1] text-white/80 md:w-[462px] md:max-w-[60%] md:text-[18px] md:leading-[1.5] xl:max-[1439px]:max-w-[55%]">
-        Full-cycle підхід: аналітика, дизайн, розробка, запуск і підтримка — разом, від ідеї до результату.
+        {copy[locale].fullCycle}
       </p>
       <p className="relative font-pixel text-[11px] leading-[1.4] text-lime uppercase md:text-[15px] md:leading-pixel">
         Make the right
@@ -141,7 +166,8 @@ function FullCycleCard() {
   );
 }
 
-export function About() {
+export function About({ locale = "uk" }: { locale?: Locale }) {
+  const t = copy[locale];
   return (
     <section id="about" className="relative overflow-hidden bg-ink pt-6 pb-8 md:pt-[69px] md:pb-[70px]">
       {/* Faint left glow (desktop) */}
@@ -154,20 +180,20 @@ export function About() {
 
       <div className="relative mx-auto max-w-[1440px] px-5 md:px-8 lg:px-[clamp(40px,6.25vw,90px)]">
         <Reveal className="flex flex-col gap-[22px] md:gap-[30px]">
-          <SectionTag className="self-start pt-[10px] pr-[15px] pb-[9px] pl-4">Про нас</SectionTag>
+          <SectionTag className="self-start pt-[10px] pr-[15px] pb-[9px] pl-4">{t.tag}</SectionTag>
 
           {/* Mobile statement */}
           <ScrollRead as="div" from={0.35} className="flex flex-col gap-1 md:hidden">
             <p className="font-display text-[24px] leading-[1.28] font-medium tracking-[-0.02em] text-white">
-              <span className="font-pixel leading-none text-lime">MIROFORM®</span> — digital-студія, що поєднує дизайн, технології та результат.{" "}
+              <span className="font-pixel leading-none text-lime">MIROFORM®</span> {t.statement}{" "}
               <span className="text-white/35">
-                <ReadWords text="Сім років досвіду — нова" />
+                <ReadWords text={t.readBefore} />
               </span>
             </p>
             <p className="flex items-center gap-2.5 font-display text-[24px] leading-[1.28] font-medium tracking-[-0.02em] text-white/35">
               <InlinePhoto className="h-6 w-[69px]" />
               <span>
-                <ReadWords text="форма, нове ім’я." />
+                <ReadWords text={t.readAfter} />
               </span>
             </p>
           </ScrollRead>
@@ -177,31 +203,31 @@ export function About() {
             from={0.35}
             className="font-display text-[34px] leading-[1.28] font-medium tracking-[-0.02em] text-white max-md:hidden lg:text-[40px] xl:text-[46px]"
           >
-            <span className="font-pixel leading-none text-lime">MIROFORM®</span> — digital-студія, що поєднує дизайн, технології та результат.{" "}
+            <span className="font-pixel leading-none text-lime">MIROFORM®</span> {t.statement}{" "}
             <span className="text-white/35">
-              <ReadWords text="Сім років досвіду — нова" />{" "}
-              <InlinePhoto className="mx-[0.35em] h-[0.96em] w-[2.76em] -translate-y-[0.05em]" /> <ReadWords text="форма, нове ім’я." />
+              <ReadWords text={t.readBefore} />{" "}
+              <InlinePhoto className="mx-[0.35em] h-[0.96em] w-[2.76em] -translate-y-[0.05em]" /> <ReadWords text={t.readAfter} />
             </span>
           </ScrollRead>
         </Reveal>
 
         <div className="mt-9 flex flex-col gap-2 md:mt-[63px] md:grid md:grid-cols-2 md:gap-5 lg:flex lg:flex-row">
           <Reveal className="lg:w-[clamp(380px,33.4%,420px)] lg:shrink-0">
-            <FounderCard />
+            <FounderCard locale={locale} />
           </Reveal>
 
           <div className="flex min-w-0 flex-1 flex-col gap-2 md:gap-5">
             <Reveal delay={80} className="flex gap-2.5 md:flex-col md:gap-5 md:max-lg:flex-1 lg:flex-row">
-              <StatCard label="Реалізованих проєктів" value={400} suffix="+" tone="lime" />
-              <StatCard label="Років досвіду в digital" value={7} suffix="+" tone="dark" />
+              <StatCard label={t.projects} value={400} suffix="+" tone="lime" />
+              <StatCard label={t.years} value={7} suffix="+" tone="dark" />
             </Reveal>
             <Reveal delay={160} className="md:max-lg:hidden">
-              <FullCycleCard />
+              <FullCycleCard locale={locale} />
             </Reveal>
           </div>
 
           <Reveal className="hidden md:col-span-2 md:block lg:hidden">
-            <FullCycleCard />
+            <FullCycleCard locale={locale} />
           </Reveal>
         </div>
       </div>

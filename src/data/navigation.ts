@@ -1,3 +1,5 @@
+import type { Locale } from "@/i18n/locale";
+
 export const navLinks = [
   { label: "Послуги", href: "#services" },
   { label: "Роботи", href: "#works" },
@@ -24,4 +26,22 @@ export const contacts = {
   phoneHref: "tel:+380730217721",
   legalName: "ФОП Гук Герман Андрійович",
   legalId: "РНОКПП: 3548105017",
+} as const;
+
+const navLinksEn = [
+  { label: "Services", href: "#services" },
+  { label: "Work", href: "#works" },
+  { label: "About", href: "#about" },
+  { label: "Process", href: "#process" },
+  { label: "FAQ", href: "#faq" },
+  { label: "Contact", href: "#contact" },
+] as const;
+
+export const navLinksByLocale: Record<Locale, readonly { label: string; href: string }[]> = { uk: navLinks, en: navLinksEn };
+
+/** Legal details as shown on the English pages (same entity and tax number) */
+export const contactsEn = {
+  ...contacts,
+  legalName: "Sole Proprietor German Guk",
+  legalId: "Tax ID (RNOKPP): 3548105017",
 } as const;

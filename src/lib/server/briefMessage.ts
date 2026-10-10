@@ -1,9 +1,11 @@
-import { OTHER_NETWORK, briefSteps, skipKey, type BriefAnswers, type BriefField, type BriefLink, type BriefSiteContacts } from "@/data/brief";
+import { briefSchemaUk, skipKey, type BriefAnswers, type BriefField, type BriefLink, type BriefSchema, type BriefSiteContacts } from "@/data/brief";
 
 /**
  * Telegram message for a brief (parse_mode "HTML"): five sections with bold headings and field names,
  * user text escaped, empty fields and empty sections left out. Long briefs are split into several
  * messages between sections / fields (very long answers between words) — nothing is cut.
+ * A brief from the English site (/en/brief) gets the same Ukrainian headings and field names, the answers
+ * as the client chose / wrote them, and an "EN" mark under the title.
  */
 
 /** Safe size of one message: Telegram allows 4096 characters of text; tags only add to the raw length. */
@@ -82,18 +84,23 @@ const LABELS: Record<string, string> = {
   extra: "Додатково",
 };
 
-const fieldsByKey = new Map(briefSteps.flatMap((s) => s.fields).map((f) => [f.key, f] as const));
+const fieldsOf = (schema: BriefSchema) => new Map(schema.steps.flatMap((s) => s.fields).map((f) => [f.key, f] as const));
 
 // Any field missing from SECTIONS still reaches Telegram (in an extra section) — no answer is ever dropped
-const unlisted = [...fieldsByKey.keys()].filter((k) => !SECTIONS.some((s) => s.keys.includes(k)));
-const ALL_SECTIONS = unlisted.length ? [...SECTIONS, { title: "Інше", keys: unlisted }] : SECTIONS;
+function sectionsFor(fieldsByKey: Map<string, BriefField>): Section[] {
+  const unlisted = [...fieldsByKey.keys()].filter((k) => !SECTIONS.some((s) => s.keys.includes(k)));
+  return unlisted.length ? [...SECTIONS, { title: "Інше", keys: unlisted }] : SECTIONS;
+}
+
+/** Shown under the title of a brief that came from the English site */
+const EN_MARK = "🇬🇧 EN-версія сайту";
 
 export const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 const b = (s: string) => `<b>${escapeHtml(s)}</b>`;
 
 /** Answer as escaped lines (one string per visual line), or null when the field is empty. */
-function valueLines(field: BriefField, answers: BriefAnswers): string[] | null {
+function valueLines(field: BriefField, answers: BriefAnswers, schema: BriefSchema): string[] | null {
   if ("skip" in field && field.skip && answers[skipKey(field)] === "1") return [escapeHtml(field.skip)];
   const v = answers[field.key];
   if (v === undefined) return null;
@@ -108,7 +115,7 @@ function valueLines(field: BriefField, answers: BriefAnswers): string[] | null {
       c.email && `Email: ${escapeHtml(c.email)}`,
       ...c.socials
         .filter((s) => s.name || s.url)
-        .map((s) => `${escapeHtml((s.network === OTHER_NETWORK ? s.name : s.network) || "Соцмережа")}: ${escapeHtml(s.url || "—")}`),
+        .map((s) => `${escapeHtml((s.network === schema.otherNetwork ? s.name : s.network) || "Соцмережа")}: ${escapeHtml(s.url || "—")}`),
     ].filter(Boolean) as string[];
     return lines.length ? lines : null;
   }
@@ -143,8 +150,8 @@ function escapedChunks(raw: string, max: number): string[] {
 }
 
 /** One field as one or more blocks (a block never exceeds the message budget). */
-function fieldBlocks(field: BriefField, answers: BriefAnswers): string[] {
-  const lines = valueLines(field, answers);
+function fieldBlocks(field: BriefField, answers: BriefAnswers, schema: BriefSchema): string[] {
+  const lines = valueLines(field, answers, schema);
   if (!lines) return [];
   const label = LABELS[field.key] ?? field.label.replace(/\?$/, "");
   const isPlainText = !(field.type === "links" || field.type === "siteContacts") && !(answers[skipKey(field)] === "1");
@@ -160,9 +167,11 @@ function fieldBlocks(field: BriefField, answers: BriefAnswers): string[] {
 }
 
 /** Builds the HTML message(s) for Telegram. */
-export function buildBriefMessages(answers: BriefAnswers, sentAt: string): string[] {
+export function buildBriefMessages(answers: BriefAnswers, sentAt: string, schema: BriefSchema = briefSchemaUk): string[] {
   const PART = "\u0000PART\u0000";
-  const title = `🟢 ${b("Новий бриф · MIROFORM")}${PART}\n${escapeHtml(sentAt)}`;
+  const fieldsByKey = fieldsOf(schema);
+  const mark = schema.locale === "en" ? `\n${b(EN_MARK)}` : "";
+  const title = `🟢 ${b("Новий бриф · MIROFORM")}${PART}${mark}\n${escapeHtml(sentAt)}`;
   const who = [answers.name, answers.contact].filter((x): x is string => typeof x === "string" && !!x).map(escapeHtml).join(" · ");
   const continuation = `${b("Бриф · продовження")}${PART}${who ? `\n${who}` : ""}`;
 
@@ -174,10 +183,10 @@ export function buildBriefMessages(answers: BriefAnswers, sentAt: string): strin
     current = continuation;
   };
 
-  for (const section of ALL_SECTIONS) {
+  for (const section of sectionsFor(fieldsByKey)) {
     const blocks = section.keys.flatMap((k) => {
       const f = fieldsByKey.get(k);
-      return f ? fieldBlocks(f, answers) : [];
+      return f ? fieldBlocks(f, answers, schema) : [];
     });
     if (!blocks.length) continue; // empty sections are left out
 

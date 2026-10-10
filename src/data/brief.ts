@@ -7,6 +7,7 @@
 
 import { contactError } from "@/lib/contact";
 import { socialLinks } from "@/data/navigation";
+import type { Locale } from "@/i18n/locale";
 
 /** Networks offered in the "+ Додати соціальну мережу" menu; "Інше" asks for a name as well */
 export const SOCIAL_NETWORKS = ["Instagram", "Telegram", "YouTube", "Viber", "WhatsApp", "TikTok", "Інше"] as const;
@@ -323,6 +324,20 @@ export const briefSteps: BriefStep[] = [
   },
 ];
 
+/**
+ * Everything that differs between the Ukrainian and the English brief: the steps (same keys, translated
+ * labels and options), the social network names and which of them asks for a custom name.
+ * The wizard, /api/brief and the Telegram message all work from the schema of the form that was sent.
+ */
+export type BriefSchema = {
+  locale: Locale;
+  steps: BriefStep[];
+  socialNetworks: readonly string[];
+  otherNetwork: string;
+};
+
+export const briefSchemaUk: BriefSchema = { locale: "uk", steps: briefSteps, socialNetworks: SOCIAL_NETWORKS, otherNetwork: OTHER_NETWORK };
+
 /** Link rows shown by default and the most a client can add */
 export const DEFAULT_LINKS = 2;
 export const MAX_LINKS = 6;
@@ -338,9 +353,9 @@ export const BRIEF_LIMITS = { text: 1000, textarea: 5000, link: 1000, socialName
 export const emptySiteContacts = (): BriefSiteContacts => ({ phone: "", email: "", socials: [{ network: "Instagram", name: "", url: "" }] });
 
 /** Initial answers: the preselected options from the schema. */
-export function defaultAnswers(): BriefAnswers {
+export function defaultAnswers(steps: BriefStep[] = briefSteps): BriefAnswers {
   const answers: BriefAnswers = {};
-  for (const step of briefSteps)
+  for (const step of steps)
     for (const f of step.fields) {
       if (f.type === "choice" && f.default) answers[f.key] = f.default;
       if (f.type === "multi" && f.default) answers[f.key] = [...f.default];
@@ -369,31 +384,53 @@ export function hasAnswer(value: BriefValue | undefined) {
 /** Key that stores the one-click alternative of a text field ("Поки не маю побажань…"). */
 export const skipKey = (field: BriefField) => `${field.key}_skip`;
 
+const errorText = {
+  uk: {
+    choice: "Оберіть один із варіантів",
+    multi: "Оберіть хоча б один варіант",
+    siteContacts: "Вкажіть хоча б один контакт",
+    links: "Додайте хоча б одне посилання",
+    name: "Вкажіть, будь ласка, ваше ім’я",
+    skip: "Опишіть побажання або оберіть «Поки не маю побажань»",
+    text: "Заповніть, будь ласка, це поле",
+  },
+  en: {
+    choice: "Please choose one of the options",
+    multi: "Please choose at least one option",
+    siteContacts: "Please add at least one contact",
+    links: "Please add at least one link",
+    name: "Please enter your name",
+    skip: "Describe your preferences or choose “No preferences yet”",
+    text: "Please fill in this field",
+  },
+} satisfies Record<Locale, Record<string, string>>;
+
 /**
  * Why a shown field is not answered correctly (undefined = fine). Optional fields only have
  * the contact format check. Shared by the wizard ("Далі" / send) and /api/brief.
  */
-export function fieldError(field: BriefField, answers: BriefAnswers): string | undefined {
+export function fieldError(field: BriefField, answers: BriefAnswers, locale: Locale = "uk"): string | undefined {
   const value = answers[field.key];
+  const t = errorText[locale];
   if (field.type === "contact") {
     if (!filled(value) && !field.required) return undefined;
-    return contactError(typeof value === "string" ? value : "");
+    return contactError(typeof value === "string" ? value : "", locale);
   }
   if (!field.required) return undefined;
   switch (field.type) {
     case "choice":
-      return filled(value) ? undefined : "Оберіть один із варіантів";
+      return filled(value) ? undefined : t.choice;
     case "multi":
-      return Array.isArray(value) && value.length ? undefined : "Оберіть хоча б один варіант";
+      return Array.isArray(value) && value.length ? undefined : t.multi;
     case "siteContacts":
-      return hasAnswer(value) ? undefined : "Вкажіть хоча б один контакт";
+      return hasAnswer(value) ? undefined : t.siteContacts;
     case "links":
-      return hasAnswer(value) ? undefined : "Додайте хоча б одне посилання";
+      return hasAnswer(value) ? undefined : t.links;
     default: {
       if (field.skip && answers[skipKey(field)] === "1") return undefined;
-      if (field.key === "name") return typeof value === "string" && value.trim().length >= 2 ? undefined : "Вкажіть, будь ласка, ваше ім’я";
+      if (field.key === "name") return typeof value === "string" && value.trim().length >= 2 ? undefined : t.name;
       if (filled(value)) return undefined;
-      return field.skip ? "Опишіть побажання або оберіть «Поки не маю побажань»" : "Заповніть, будь ласка, це поле";
+      return field.skip ? t.skip : t.text;
     }
   }
 }
@@ -402,21 +439,21 @@ export function fieldError(field: BriefField, answers: BriefAnswers): string | u
  * What stops the brief from being sent: the required fields (incl. the phone / Telegram format)
  * of the blocking step "Ваші контакти". Stars on other steps are hints only.
  */
-export function sendErrors(answers: BriefAnswers): { step: number; errors: Record<string, string> } | null {
-  for (const [i, s] of briefSteps.entries()) {
+export function sendErrors(answers: BriefAnswers, schema: BriefSchema = briefSchemaUk): { step: number; errors: Record<string, string> } | null {
+  for (const [i, s] of schema.steps.entries()) {
     if (!s.blocking) continue;
-    const errors = stepErrors(s, answers);
+    const errors = stepErrors(s, answers, schema.locale);
     if (Object.keys(errors).length) return { step: i, errors };
   }
   return null;
 }
 
 /** Errors of one step's shown fields, keyed by field key. */
-export function stepErrors(step: BriefStep, answers: BriefAnswers): Record<string, string> {
+export function stepErrors(step: BriefStep, answers: BriefAnswers, locale: Locale = "uk"): Record<string, string> {
   const errors: Record<string, string> = {};
   for (const f of step.fields) {
     if (!isShown(f, answers)) continue;
-    const error = fieldError(f, answers);
+    const error = fieldError(f, answers, locale);
     if (error) errors[f.key] = error;
   }
   return errors;

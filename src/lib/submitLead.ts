@@ -1,4 +1,4 @@
-import type { Budget } from "@/data/leads";
+import type { Locale } from "@/i18n/locale";
 
 export type Lead = {
   /** "lead" — project request, "question" — the FAQ popup */
@@ -8,7 +8,7 @@ export type Lead = {
   direction?: string;
   option?: string;
   /** Asked only in the contacts section form */
-  budget?: Budget;
+  budget?: string;
   message: string;
 };
 
@@ -37,7 +37,10 @@ export async function postForm(url: string, payload: object): Promise<void> {
   if (!res.ok || !data?.ok) throw new FormSubmitError(res.status);
 }
 
+/** "lang" goes only with the English forms, so a Ukrainian submit is exactly what it was before */
+export const langField = (locale: Locale) => (locale === "en" ? { lang: "en" } : {});
+
 /** Sends a lead from the contact form / popups to /api/lead (delivered to Telegram on the server). */
-export async function submitLead(lead: Lead, trap?: string): Promise<void> {
-  await postForm("/api/lead", { ...lead, ...botSignals(trap) });
+export async function submitLead(lead: Lead, trap?: string, locale: Locale = "uk"): Promise<void> {
+  await postForm("/api/lead", { ...lead, ...botSignals(trap), ...langField(locale) });
 }

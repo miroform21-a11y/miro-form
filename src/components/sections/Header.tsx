@@ -3,13 +3,37 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { navLinks } from "@/data/navigation";
+import { navLinksByLocale } from "@/data/navigation";
 import { LangSwitch } from "@/components/ui/LangSwitch";
 import { PillButton } from "@/components/ui/PillButton";
 import { Pinned } from "@/components/ui/Pinned";
 import { usePixelMorph } from "@/components/ui/usePixelMorph";
+import type { Locale } from "@/i18n/locale";
 
-export function Header() {
+const copy = {
+  uk: {
+    home: "MIROFORM — на головну",
+    nav: "Основна навігація",
+    mobileNav: "Мобільна навігація",
+    cta: "Зв’язатися",
+    openMenu: "Відкрити меню",
+    closeMenu: "Закрити меню",
+    menu: "Меню",
+  },
+  en: {
+    home: "MIROFORM — home",
+    nav: "Main navigation",
+    mobileNav: "Mobile navigation",
+    cta: "Get in touch",
+    openMenu: "Open menu",
+    closeMenu: "Close menu",
+    menu: "Menu",
+  },
+} satisfies Record<Locale, Record<string, string>>;
+
+export function Header({ locale = "uk" }: { locale?: Locale }) {
+  const t = copy[locale];
+  const navLinks = navLinksByLocale[locale];
   const [open, setOpen] = useState(false);
   const [hovered, setHovered] = useState(0);
   const menuRef = useRef<HTMLUListElement>(null);
@@ -49,7 +73,7 @@ export function Header() {
       <div className="flex items-center gap-[clamp(24px,4.9vw,71px)] xl:gap-[clamp(20px,calc(100vw-1369px),71px)]">
         <a
           href="#top"
-          aria-label="MIROFORM — на головну"
+          aria-label={t.home}
           ref={logo.ref}
           onPointerDown={logo.onPointerDown}
           className={`${logo.className} relative block h-[41.6px] w-[160px] shrink-0 xl:h-[72px] xl:w-[198px]`}
@@ -72,7 +96,7 @@ export function Header() {
         </a>
 
         <Pinned className="hidden xl:block">
-        <nav aria-label="Основна навігація">
+        <nav aria-label={t.nav}>
           <ul
             ref={menuRef}
             onMouseLeave={() => setHovered(0)}
@@ -106,20 +130,20 @@ export function Header() {
 
       <div className="flex items-center gap-2.5 md:gap-6 xl:gap-[clamp(16px,calc((100vw-1280px)*0.156+16px),41px)]">
         <Pinned className="xl:hidden">
-          <LangSwitch size="sm" solid={scrolled} className={open ? "invisible" : ""} />
+          <LangSwitch size="sm" solid={scrolled} className={open ? "invisible" : ""} locale={locale} />
         </Pinned>
         <Pinned className="hidden xl:block">
-          <LangSwitch solid={scrolled} />
+          <LangSwitch solid={scrolled} locale={locale} />
         </Pinned>
         <div className="hidden md:block">
           <PillButton href="#contact" circleSize={44} className="h-[52px] w-[225px] pr-[9px] pl-[31px]">
-            Зв’язатися
+            {t.cta}
           </PillButton>
         </div>
         <Pinned className="xl:hidden">
           <button
             type="button"
-            aria-label="Відкрити меню"
+            aria-label={t.openMenu}
             aria-expanded={open}
             aria-controls="mobile-menu"
             onClick={() => setOpen(true)}
@@ -132,7 +156,7 @@ export function Header() {
         </Pinned>
       </div>
 
-      <MobileMenu open={open} onClose={() => setOpen(false)} />
+      <MobileMenu open={open} onClose={() => setOpen(false)} locale={locale} />
     </header>
   );
 }
@@ -141,7 +165,9 @@ export function Header() {
  * Rendered into <body>: the hero is its own stacking context (isolate), so a fixed menu inside it
  * would be painted under every later section once the page is scrolled — invisible, yet scroll-locked.
  */
-function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
+function MobileMenu({ open, onClose, locale }: { open: boolean; onClose: () => void; locale: Locale }) {
+  const t = copy[locale];
+  const navLinks = navLinksByLocale[locale];
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   if (!mounted) return null;
@@ -151,7 +177,7 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
       id="mobile-menu"
       role="dialog"
       aria-modal="true"
-      aria-label="Меню"
+      aria-label={t.menu}
       aria-hidden={!open}
       // any link in the menu (sections, EN, logo, CTA) closes it — so the scroll lock is released before navigating
       onClickCapture={(e) => (e.target as Element).closest("a") && onClose()}
@@ -167,7 +193,7 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
       </div>
 
       <div className="relative flex items-center justify-between">
-        <a href="#top" onClick={onClose} aria-label="MIROFORM — на головну" className="relative block h-[41.6px] w-[160px]">
+        <a href="#top" onClick={onClose} aria-label={t.home} className="relative block h-[41.6px] w-[160px]">
           <Image
             src="/images/hero/logo.png"
             alt="MIROFORM"
@@ -177,10 +203,10 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
           />
         </a>
         <div className="flex items-center gap-2.5">
-          <LangSwitch size="sm" />
+          <LangSwitch size="sm" locale={locale} />
           <button
             type="button"
-            aria-label="Закрити меню"
+            aria-label={t.closeMenu}
             onClick={onClose}
             className="relative grid size-[42px] place-items-center rounded-full bg-lime transition-transform duration-300 after:absolute after:-inset-1.5 after:content-[''] hover:rotate-90"
           >
@@ -191,7 +217,7 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
         </div>
       </div>
 
-      <nav aria-label="Мобільна навігація" className="relative mt-14 flex-1">
+      <nav aria-label={t.mobileNav} className="relative mt-14 flex-1">
         <ul className="flex flex-col">
           {navLinks.map((link, i) => (
             <li
@@ -216,7 +242,7 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
 
       <div className="relative mt-10">
         <PillButton href="#contact" onClick={onClose} className="h-[55px] w-full pr-[6px] pl-7">
-          Зв’язатися
+          {t.cta}
         </PillButton>
       </div>
     </div>,

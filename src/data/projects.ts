@@ -1,3 +1,5 @@
+import type { Locale } from "@/i18n/locale";
+
 /** Image box inside the media frame, in % of the frame (exact values from Figma). */
 export type ProjectCrop = { left: number; top: number; width: number; height: number };
 
@@ -97,3 +99,18 @@ export const projects: Project[] = [
 
 /** Total number of delivered projects shown in the counter */
 export const projectsTotal = "40+";
+
+/** English descriptions; media, crops, videos and links are the same objects as on the Ukrainian site */
+const projectCopyEn: Record<string, Pick<Project, "description" | "mobileDescription">> = {
+  "car-rental": { description: "Style. Comfort. Freedom to move" },
+  "we-padel": { description: "Where sport becomes pure joy" },
+  bloomly: { description: "Grooming for beloved pets" },
+  "modular-homes": { description: "Functional homes for modern living", mobileDescription: "Homes for modern living" },
+  avalon: { description: "Avalon investment project with Oleksandr Usyk", mobileDescription: "Avalon project with Oleksandr Usyk" },
+  "padel-alicante": { description: "A modern padel club in Alicante" },
+};
+
+export const projectsByLocale: Record<Locale, Project[]> = {
+  uk: projects,
+  en: projects.map((p) => ({ ...p, mobileDescription: undefined, ...projectCopyEn[p.id] })),
+};

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { services, type Service } from "@/data/services";
+import { servicesByLocale, type Service } from "@/data/services";
+import type { Locale } from "@/i18n/locale";
 import { SectionTag } from "@/components/ui/SectionTag";
 import { Reveal } from "@/components/ui/Reveal";
 import { ArrowShot } from "@/components/ui/ArrowShot";
@@ -35,6 +36,26 @@ const theme = {
   },
 } as const;
 
+const copy = {
+  uk: {
+    tag: "Послуги",
+    // decor cursor labels (fixed label widths from Figma)
+    cursorSite: "Сайт",
+    cursorDesign: "Дизайн",
+    keyLetter: "М",
+    lead: "залишити заявку",
+    quote: "Незалежно від типу проєкту, ми вкладаємо максимум умінь і досвіду, щоб отримати результат, яким не соромно хвалитися.",
+  },
+  en: {
+    tag: "Services",
+    cursorSite: "Site",
+    cursorDesign: "Design",
+    keyLetter: "M",
+    lead: "request a quote",
+    quote: "Whatever the project, we put all our skill and experience into it to deliver a result worth showing off.",
+  },
+} satisfies Record<Locale, Record<string, string>>;
+
 /* ---------------------------------------------------------------- */
 /* Shared decor pieces                                               */
 /* ---------------------------------------------------------------- */
@@ -62,8 +83,8 @@ function KeyImage() {
   );
 }
 
-function KeyLetter({ size }: { size: number }) {
-  return <p className="font-pixel leading-[0.984] text-white uppercase" style={{ fontSize: size }}>М</p>;
+function KeyLetter({ size, letter }: { size: number; letter: string }) {
+  return <p className="font-pixel leading-[0.984] text-white uppercase" style={{ fontSize: size }}>{letter}</p>;
 }
 
 function Texture() {
@@ -102,7 +123,8 @@ function Liquid({ mobile = false }: { mobile?: boolean }) {
 /* expressed relative to x = 700 and anchored to the card's right.   */
 /* ---------------------------------------------------------------- */
 
-function DesktopDecor({ id }: { id: Service["id"] }) {
+function DesktopDecor({ id, locale }: { id: Service["id"]; locale: Locale }) {
+  const t = copy[locale];
   const layer = "pointer-events-none absolute top-0 right-0 hidden h-[360px] w-[560px] origin-top-right md:block md:max-lg:scale-[0.5] lg:max-xl:scale-[0.78] xl:max-[1439px]:scale-[0.88]";
 
   if (id === "web")
@@ -113,9 +135,9 @@ function DesktopDecor({ id }: { id: Service["id"] }) {
           <KeyImage />
         </Rotated>
         <Rotated box={{ left: 171, top: 111, width: 94.75, height: 93.65 }} inner={{ width: 77.7, height: 76.1 }} rotate={-15} className="transition-[rotate,scale] duration-[900ms] ease-(--ease-smooth) group-hover/card:rotate-[-21.5deg] group-active/card:rotate-[-21.5deg]">
-          <KeyLetter size={70} />
+          <KeyLetter size={70} letter={t.keyLetter} />
         </Rotated>
-        <CursorLabel label="Сайт" tone="dark" left={347} top={119} labelWidth={63} className="drift" />
+        <CursorLabel label={t.cursorSite} tone="dark" left={347} top={119} labelWidth={63} className="drift" />
       </div>
     );
 
@@ -123,7 +145,7 @@ function DesktopDecor({ id }: { id: Service["id"] }) {
     return (
       <div aria-hidden="true" className={layer}>
         <BigNumber value="02" className="text-[250px] text-white/6" style={{ left: 35.6, top: 54 }} />
-        <CursorLabel label="Дизайн" tone="lime" left={358} top={216} labelWidth={83} className="drift [--drift-duration:6s] [--drift-x:-12px] [--drift-y:8px]" />
+        <CursorLabel label={t.cursorDesign} tone="lime" left={358} top={216} labelWidth={83} className="drift [--drift-duration:6s] [--drift-x:-12px] [--drift-y:8px]" />
         <SelectionBox box={{ left: 146.3, top: 45, width: 281, height: 280 }} handle={10} border={1.5} />
         <Rotated box={{ left: -426, top: 43, width: 1034, height: 695.4 }} inner={{ width: 537.7, height: 955.1 }} rotate={80} className="transition-[rotate,scale] duration-[900ms] ease-(--ease-smooth) group-hover/card:rotate-[-6deg] group-active/card:rotate-[-6deg]">
           <Texture />
@@ -149,7 +171,8 @@ function DesktopDecor({ id }: { id: Service["id"] }) {
 /* Mobile decor: coordinates from the 352px-wide Figma cards         */
 /* ---------------------------------------------------------------- */
 
-function MobileDecor({ id }: { id: Service["id"] }) {
+function MobileDecor({ id, locale }: { id: Service["id"]; locale: Locale }) {
+  const t = copy[locale];
   const layer = "pointer-events-none absolute inset-0 md:hidden";
 
   if (id === "web")
@@ -159,9 +182,9 @@ function MobileDecor({ id }: { id: Service["id"] }) {
         <Rotated box={{ left: -129, top: 126, width: 547.8, height: 620.2 }} inner={{ width: 395, height: 516.2 }} rotate={20} className="transition-[rotate,scale] duration-[900ms] ease-(--ease-smooth) group-hover/card:rotate-[-4deg] group-active/card:rotate-[-4deg]">
           <KeyImage />
         </Rotated>
-        <CursorLabel label="Сайт" tone="dark" left={245} top={358} labelWidth={63} scale={0.62} className="drift [--drift-x:-12px]" />
+        <CursorLabel label={t.cursorSite} tone="dark" left={245} top={358} labelWidth={63} scale={0.62} className="drift [--drift-x:-12px]" />
         <Rotated box={{ left: 126, top: 396, width: 58.7, height: 58 }} inner={{ width: 48.2, height: 47.2 }} rotate={-15} className="transition-[rotate,scale] duration-[900ms] ease-(--ease-smooth) group-hover/card:rotate-[-21.5deg] group-active/card:rotate-[-21.5deg]">
-          <KeyLetter size={43.4} />
+          <KeyLetter size={43.4} letter={t.keyLetter} />
         </Rotated>
       </div>
     );
@@ -178,7 +201,7 @@ function MobileDecor({ id }: { id: Service["id"] }) {
         <Rotated box={{ left: 39, top: 358, width: 175.7, height: 175.7 }} inner={{ width: 167.2, height: 167.2 }} rotate={3} className="transition-[rotate,scale] duration-[900ms] ease-(--ease-smooth) group-hover/card:rotate-[10deg] group-hover/card:scale-[1.05] group-active/card:rotate-[10deg]">
           <IconsCluster />
         </Rotated>
-        <CursorLabel label="Дизайн" tone="lime" left={236} top={383} labelWidth={83} scale={0.62} className="drift [--drift-duration:6s] [--drift-x:-10px] [--drift-y:6px]" />
+        <CursorLabel label={t.cursorDesign} tone="lime" left={236} top={383} labelWidth={83} scale={0.62} className="drift [--drift-duration:6s] [--drift-x:-10px] [--drift-y:6px]" />
       </div>
     );
 
@@ -215,7 +238,7 @@ const mobileArrowPos: Record<Service["id"], string> = {
   ai: "max-md:bottom-[15px] max-md:right-[23.72px]",
 };
 
-function ServiceCard({ service }: { service: Service }) {
+function ServiceCard({ service, locale }: { service: Service; locale: Locale }) {
   const t = theme[service.theme];
   const isAi = service.id === "ai";
 
@@ -223,8 +246,8 @@ function ServiceCard({ service }: { service: Service }) {
     <article
       className={`group/card pop-trigger relative w-full cursor-pointer overflow-hidden rounded-[28px] px-6 pt-6 transition-[translate,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 hover:shadow-[0_24px_60px_-30px_rgba(174,238,5,0.35)] active:-translate-y-1 active:shadow-[0_24px_60px_-30px_rgba(174,238,5,0.35)] md:h-[360px] md:rounded-[36px] md:px-8 md:pt-11 lg:px-[47px] ${t.card} ${mobileHeights[service.id]}`}
     >
-      <MobileDecor id={service.id} />
-      <DesktopDecor id={service.id} />
+      <MobileDecor id={service.id} locale={locale} />
+      <DesktopDecor id={service.id} locale={locale} />
 
       <div className="relative flex flex-col">
         <ul className="flex flex-wrap items-center gap-x-[7px] gap-y-2 max-md:min-h-8">
@@ -247,7 +270,10 @@ function ServiceCard({ service }: { service: Service }) {
 
         <h3
           className={`mt-[21px] font-display leading-[1.1] ${
-            service.id === "web" ? "text-[min(30px,calc((100vw-84px)/10.15))] whitespace-nowrap" : "text-[30px]"
+            // the phone size is fitted to the title's width: "Web Development" is wider than "Розробка сайтів"
+            service.id === "web"
+              ? `${locale === "en" ? "text-[min(30px,calc((100vw-84px)/11))]" : "text-[min(30px,calc((100vw-84px)/10.15))]"} whitespace-nowrap`
+              : "text-[30px]"
           } tracking-[-0.04em] md:mt-5 md:text-[30px] ${service.theme === "dark" ? "md:font-[440]" : "md:font-medium"} md:whitespace-nowrap lg:text-[44px] xl:text-[50px] ${
             isAi ? "font-bold" : service.theme === "dark" ? "font-[440]" : "font-medium"
           } ${service.id === "design" ? "max-md:mt-[25px]" : ""} ${isAi ? "max-md:mt-6" : ""}`}
@@ -289,7 +315,7 @@ function ServiceCard({ service }: { service: Service }) {
       >
         <ArrowShot color={t.arrow.color} size={20} />
       </span>
-      <LeadOverlayButton preset={{ direction: service.id }} label={`${service.title} — залишити заявку`} />
+      <LeadOverlayButton preset={{ direction: service.id }} label={`${service.title} — ${copy[locale].lead}`} />
     </article>
   );
 }
@@ -308,7 +334,49 @@ function LogosPill({ className = "" }: { className?: string }) {
   );
 }
 
-export function Services() {
+/** The section heading with Figma's line breaks and the logos pill in the middle (per language). */
+function Heading({ locale }: { locale: Locale }) {
+  if (locale === "en")
+    return (
+      <>
+        {/* English lines run longer: keep the same 19px gap to the screen edge as on the left */}
+        <span className="block max-w-[calc(100vw-38px)] md:hidden">
+          <ReadWords text="We take on projects" /> <span className="font-semibold text-white">we can be proud of</span>
+          <ReadWords text=" and see them through to results" />
+        </span>
+        <span className="max-md:hidden">
+          <ReadWords text="We take on projects" /> <span className="font-semibold text-white">that</span>
+          <br />
+          <span className="font-semibold text-white">we’re</span>
+          <LogosPill className="mx-[0.45em] -translate-y-[0.06em]" />
+          <span className="font-semibold text-white">proud of</span>,
+          <br />
+          <ReadWords text="and see them through to results" />
+        </span>
+      </>
+    );
+  return (
+    <>
+      <span className="md:hidden">
+        <ReadWords text="Беремося за проєкти," /> <span className="font-semibold text-white">якими зможемо пишатися</span>
+        <ReadWords text=", та доводимо їх до результату" />
+      </span>
+      <span className="max-md:hidden">
+        <ReadWords text={"Беремося  за проєкти,"} /> <span className="font-semibold text-white">якими</span>
+        <br />
+        <span className="font-semibold text-white">зможемо</span>
+        <LogosPill className="mx-[0.45em] -translate-y-[0.06em]" />
+        <span className="font-semibold text-white">пишатися</span>,
+        <br />
+        <ReadWords text="та доводимо їх до результату" />
+      </span>
+    </>
+  );
+}
+
+export function Services({ locale = "uk" }: { locale?: Locale }) {
+  const t = copy[locale];
+  const services = servicesByLocale[locale];
   return (
     <section id="services" className="relative overflow-hidden bg-ink pt-10 pb-[111px] md:pt-6 md:pb-[140px]">
       {/* Faint blue glow (desktop: left, mobile: top right) */}
@@ -329,25 +397,13 @@ export function Services() {
         {/* Header */}
         <div className="flex flex-col gap-7 xl:h-[279px] xl:flex-row xl:items-end xl:justify-between">
           <Reveal className="flex flex-col">
-            <SectionTag className="self-start max-md:pr-[22px]">Послуги</SectionTag>
+            <SectionTag className="self-start max-md:pr-[22px]">{t.tag}</SectionTag>
             <ScrollRead
               as="h2"
               from={0.45}
               className="mt-5 w-[min(370px,calc(100vw-20px))] font-display text-[26px] leading-[31px] font-normal md:leading-[1.18] tracking-[-0.03em] text-white/45 md:mt-7 md:w-auto md:text-[36px] lg:text-[40px] xl:text-[min(44px,3.05vw)]"
             >
-              <span className="md:hidden">
-                <ReadWords text="Беремося за проєкти," /> <span className="font-semibold text-white">якими зможемо пишатися</span>
-                <ReadWords text=", та доводимо їх до результату" />
-              </span>
-              <span className="max-md:hidden">
-                <ReadWords text={"Беремося\u00a0 за проєкти,"} /> <span className="font-semibold text-white">якими</span>
-                <br />
-                <span className="font-semibold text-white">зможемо</span>
-                <LogosPill className="mx-[0.45em] -translate-y-[0.06em]" />
-                <span className="font-semibold text-white">пишатися</span>,
-                <br />
-                <ReadWords text="та доводимо їх до результату" />
-              </span>
+              <Heading locale={locale} />
             </ScrollRead>
             <LogosPill className="mt-[18px] md:hidden" />
           </Reveal>
@@ -357,8 +413,7 @@ export function Services() {
               “
             </p>
             <p className="max-w-[350px] text-[15px] leading-[1.55] font-[350] text-white/70 xl:max-w-none">
-              Незалежно від типу проєкту, ми вкладаємо максимум умінь і досвіду, щоб отримати результат, яким не соромно
-              хвалитися.
+              {t.quote}
             </p>
           </Reveal>
         </div>
@@ -367,7 +422,7 @@ export function Services() {
         <div className="mt-8 flex flex-col gap-5 md:mt-20">
           {services.map((service, i) => (
             <Reveal key={service.id} delay={i * 60}>
-              <ServiceCard service={service} />
+              <ServiceCard service={service} locale={locale} />
             </Reveal>
           ))}
         </div>

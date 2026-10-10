@@ -1,30 +1,46 @@
-import type { Metadata } from "next";
-import { PillButton } from "@/components/ui/PillButton";
-import { PixelAssemble } from "@/components/ui/PixelAssemble";
-import { StatusScreen } from "@/components/ui/StatusScreen";
+import { Hero } from "@/components/sections/Hero";
+import { Services } from "@/components/sections/Services";
+import { Works } from "@/components/sections/Works";
+import { About } from "@/components/sections/About";
+import { Facts } from "@/components/sections/Facts";
+import { Process } from "@/components/sections/Process";
+import { Pricing } from "@/components/sections/Pricing";
+import { Reviews } from "@/components/sections/Reviews";
+import { Faq } from "@/components/sections/Faq";
+import { Contact } from "@/components/sections/Contact";
+import { Footer } from "@/components/sections/Footer";
+import { LeadModal } from "@/components/sections/LeadModal";
+import { JsonLd } from "@/components/ui/JsonLd";
+import { faqByLocale } from "@/data/faq";
+import { faqJsonLd, pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "English version — MIROFORM",
-  robots: { index: false, follow: false },
-};
+export const metadata = pageMetadata({
+  title: "Turnkey Website Development for Business — MIROFORM",
+  description:
+    "We build landing pages, corporate websites and online stores, turnkey. Modern design, development, AI and Telegram integrations. From idea to launch in as little as 7 days.",
+  path: "/en",
+  locale: "en",
+});
 
-/**
- * Temporary placeholder for the English version (same look as the 404 page).
- * Replace this page with the real English site later.
- */
-export default function EnglishPlaceholder() {
+/** The English home page: the same sections as the Ukrainian site, with English copy. */
+export default function EnglishHome() {
   return (
-    <StatusScreen>
-      <h1 className="pixel-headline font-pixel text-[min(26vw,300px)] leading-none text-lime">
-        <span className="sr-only">404 — сторінка в розробці</span>
-        <PixelAssemble text="404" />
-      </h1>
-
-      <p className="mt-8 text-[15px] leading-[1.55] font-[350] text-white/70 md:mt-12 md:text-[18px]">Ця сторінка ще в розробці.</p>
-
-      <PillButton href="/" circleSize={44} gap={18} className="mt-9 h-[60px] pr-2 pl-[28px] md:mt-11">
-        Повернутися на головну
-      </PillButton>
-    </StatusScreen>
+    <>
+      <main>
+        <Hero locale="en" />
+        <Services locale="en" />
+        <Works locale="en" />
+        <About locale="en" />
+        <Facts locale="en" />
+        <Process locale="en" />
+        <Pricing locale="en" />
+        <Reviews locale="en" />
+        <Faq locale="en" />
+        <Contact locale="en" />
+      </main>
+      <Footer locale="en" />
+      <LeadModal locale="en" />
+      <JsonLd data={{ "@context": "https://schema.org", ...faqJsonLd(faqByLocale.en) }} />
+    </>
   );
 }

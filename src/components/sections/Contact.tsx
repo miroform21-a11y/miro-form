@@ -3,6 +3,20 @@ import { socialLinks } from "@/data/navigation";
 import { SectionTag } from "@/components/ui/SectionTag";
 import { Reveal } from "@/components/ui/Reveal";
 import { ContactForm } from "./ContactForm";
+import type { Locale } from "@/i18n/locale";
+
+const copy = {
+  uk: {
+    tag: "Контакти",
+    title: ["Маєте ідею?", "Розкажіть", "нам про неї"],
+    lead: "Відповімо протягом 15 хвилин та запропонуємо оптимальне рішення для вашого проєкту.",
+  },
+  en: {
+    tag: "Contact",
+    title: ["Got an idea?", "Tell us", "all about it"],
+    lead: "We’ll reply within 15 minutes and suggest the best solution for your project.",
+  },
+} satisfies Record<Locale, unknown>;
 
 const messengers = [
   { label: "Telegram", href: socialLinks.telegram },
@@ -10,7 +24,8 @@ const messengers = [
   { label: "Instagram", href: socialLinks.instagram },
 ];
 
-export function Contact() {
+export function Contact({ locale = "uk" }: { locale?: Locale }) {
+  const t = copy[locale];
   return (
     <section id="contact" className="relative bg-ink px-2.5 pt-6 pb-[72px] md:px-[38px] md:py-[55px]">
       <div className="relative mx-auto flex max-w-[1364px] flex-col gap-[34px] overflow-hidden rounded-[28px] border border-white/8 bg-ink-2 pt-8 pr-[11px] pb-[216px] pl-[13px] md:rounded-[40px] md:px-12 md:pt-12 md:pb-[300px] xl:h-[806px] xl:flex-row xl:items-start xl:justify-between xl:gap-10 xl:px-[67px] xl:pt-[47px] xl:pb-[46px]">
@@ -54,19 +69,19 @@ export function Contact() {
         {/* Left content */}
         <Reveal className="relative flex min-w-0 flex-col gap-4 pl-1.5 md:pl-0 xl:h-[424px] xl:max-w-[537px] xl:flex-1 xl:gap-7 xl:pt-[17px]">
           <div className="flex flex-col gap-4 xl:gap-6">
-            <SectionTag className="self-start pr-[26px] xl:pr-[30px]">Контакти</SectionTag>
+            <SectionTag className="self-start pr-[26px] xl:pr-[30px]">{t.tag}</SectionTag>
             <p className="font-pixel text-[11px] leading-pixel whitespace-nowrap text-white/60 xl:text-[13px]">Make the right decision</p>
           </div>
           <h2 className="font-display text-[36px] leading-[38px] font-bold md:leading-[1.05] tracking-[-0.03em] whitespace-nowrap text-white md:text-[52px] xl:text-[58px]">
-            Маєте ідею?
+            {t.title[0]}
             <br />
-            Розкажіть
+            {t.title[1]}
             <br />
-            <span className="text-lime">нам про неї</span>
+            <span className="text-lime">{t.title[2]}</span>
           </h2>
           <div className="flex flex-col gap-[22px] xl:gap-7">
             <p className="max-w-[282px] text-[15px] leading-[1.55] text-white/90 md:max-w-[462px] xl:text-[17px]">
-              Відповімо протягом 15 хвилин та запропонуємо оптимальне рішення для вашого проєкту.
+              {t.lead}
             </p>
             <ul className="flex flex-wrap gap-1.5 xl:gap-4">
               {messengers.map((m) => (
@@ -87,7 +102,7 @@ export function Contact() {
 
         {/* Form */}
         <Reveal delay={120} className="relative w-full md:max-w-[620px] xl:w-[588px] xl:shrink-0">
-          <ContactForm />
+          <ContactForm locale={locale} />
         </Reveal>
       </div>
     </section>

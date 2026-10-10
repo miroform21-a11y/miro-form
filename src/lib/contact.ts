@@ -8,8 +8,15 @@
  * - Anything else (e.g. text with a few digits) is neither and gets the general message.
  */
 
+import type { Locale } from "@/i18n/locale";
+
 export const PHONE_TOO_SHORT = "Перевірте номер телефону — здається, не вистачає цифр";
 export const CONTACT_INVALID = "Вкажіть номер телефону або @нікнейм у Telegram";
+
+const messages: Record<Locale, { phoneTooShort: string; invalid: string }> = {
+  uk: { phoneTooShort: PHONE_TOO_SHORT, invalid: CONTACT_INVALID },
+  en: { phoneTooShort: "Please check the phone number — it looks like some digits are missing", invalid: "Enter a phone number or a Telegram @username" },
+};
 
 const TELEGRAM_WITH_AT = /^@\w{4,32}$/;
 const TELEGRAM_BARE = /^[A-Za-z][A-Za-z0-9_]{4,31}$/;
@@ -30,9 +37,9 @@ export function checkContact(raw: string): ContactCheck {
 }
 
 /** Error text for a "phone or Telegram" field, or undefined when the value is fine. */
-export function contactError(raw: string): string | undefined {
+export function contactError(raw: string, locale: Locale = "uk"): string | undefined {
   const result = checkContact(raw);
-  return result === "ok" ? undefined : result === "phone-too-short" ? PHONE_TOO_SHORT : CONTACT_INVALID;
+  return result === "ok" ? undefined : result === "phone-too-short" ? messages[locale].phoneTooShort : messages[locale].invalid;
 }
 
 /** For phone-only fields (the brief): only a phone-formatted value with too few digits is an error. */

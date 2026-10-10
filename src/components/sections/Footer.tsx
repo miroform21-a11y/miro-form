@@ -1,17 +1,51 @@
 import Image from "next/image";
-import { contacts, socialLinks } from "@/data/navigation";
+import { contacts, contactsEn, socialLinks } from "@/data/navigation";
 import { PillButton } from "@/components/ui/PillButton";
 import { FooterWordmark } from "@/components/ui/FooterWordmark";
+import { routes, type Locale } from "@/i18n/locale";
 
-const navColumn = [
-  { label: "Послуги", href: "#services" },
-  { label: "Роботи", href: "#works" },
-  { label: "Про нас", href: "#about" },
-  { label: "Тарифи", href: "#pricing" },
-  { label: "FAQ", href: "#faq" },
-];
-
-const servicesColumn = ["Landing Page", "Інтернет-магазини", "UI/UX дизайн", "AI-асистенти", "Telegram-боти"];
+const copy = {
+  uk: {
+    nav: [
+      { label: "Послуги", href: "#services" },
+      { label: "Роботи", href: "#works" },
+      { label: "Про нас", href: "#about" },
+      { label: "Тарифи", href: "#pricing" },
+      { label: "FAQ", href: "#faq" },
+    ],
+    services: ["Landing Page", "Інтернет-магазини", "UI/UX дизайн", "AI-асистенти", "Telegram-боти"],
+    home: "MIROFORM — на головну",
+    tagline: "Digital-студія, що поєднує дизайн, технології та результат.",
+    cta: "Обговорити проєкт",
+    navLabel: "Навігація у футері",
+    navTitle: "Навігація",
+    servicesTitle: "Послуги",
+    contactsTitle: "Контакти",
+    rights: "© 2026 MIROFORM®. Усі права захищені.",
+    privacy: "Політика конфіденційності",
+    contacts,
+  },
+  en: {
+    nav: [
+      { label: "Services", href: "#services" },
+      { label: "Work", href: "#works" },
+      { label: "About", href: "#about" },
+      { label: "Pricing", href: "#pricing" },
+      { label: "FAQ", href: "#faq" },
+    ],
+    services: ["Landing pages", "Online stores", "UI/UX design", "AI assistants", "Telegram bots"],
+    home: "MIROFORM — home",
+    tagline: "A digital studio that brings together design, technology and results.",
+    cta: "Discuss your project",
+    navLabel: "Footer navigation",
+    navTitle: "Navigation",
+    servicesTitle: "Services",
+    contactsTitle: "Contact",
+    rights: "© 2026 MIROFORM®. All rights reserved.",
+    privacy: "Privacy Policy",
+    contacts: contactsEn,
+  },
+} satisfies Record<Locale, unknown>;
 
 const socials = [
   { label: "IG", name: "Instagram", href: socialLinks.instagram },
@@ -57,7 +91,9 @@ function LimeArc({ className }: { className: string }) {
   );
 }
 
-export function Footer() {
+export function Footer({ locale = "uk" }: { locale?: Locale }) {
+  const t = copy[locale];
+  const { contacts } = t;
   return (
     <footer className="relative overflow-hidden rounded-t-[32px] border-t border-white/8 bg-ink-2 md:rounded-t-[70px]">
       {/* ---------- Background ---------- */}
@@ -89,7 +125,7 @@ export function Footer() {
         {/* ---------- Top ---------- */}
         <div className="grid pt-[34px] md:grid-cols-3 md:gap-y-12 md:pt-[39px] lg:grid-cols-[33.57%_22.57%_22.56%_1fr] lg:gap-y-0">
           <div className="md:col-span-3 lg:col-span-1">
-            <a href="#top" aria-label="MIROFORM — на головну" className="relative block h-[60px] w-[177px] md:h-[72px] md:w-[285px]">
+            <a href="#top" aria-label={t.home} className="relative block h-[60px] w-[177px] md:h-[72px] md:w-[285px]">
               <Image
                 src="/images/hero/logo.png"
                 alt="MIROFORM"
@@ -99,17 +135,17 @@ export function Footer() {
               />
             </a>
             <p className="mt-3 w-[300px] text-[15px] leading-[1.55] text-white/60 md:mt-[30px] md:w-[330px] md:max-w-full md:text-[16px]">
-              Digital-студія, що поєднує дизайн, технології та результат.
+              {t.tagline}
             </p>
             <PillButton href="#contact" circleSize={44} gap={10} className="mt-[21px] h-[60px] w-[273px] pr-[8px] pl-[27px] md:mt-7">
-              Обговорити проєкт
+              {t.cta}
             </PillButton>
           </div>
 
-          <nav aria-label="Навігація у футері" className="hidden md:block lg:pt-[31px]">
-            <ColumnTitle>Навігація</ColumnTitle>
+          <nav aria-label={t.navLabel} className="hidden md:block lg:pt-[31px]">
+            <ColumnTitle>{t.navTitle}</ColumnTitle>
             <ul className="mt-4 flex flex-col gap-[13px] leading-body">
-              {navColumn.map((l) => (
+              {t.nav.map((l) => (
                 <li key={l.href}>
                   <a href={l.href} className={linkClass}>
                     {l.label}
@@ -120,9 +156,9 @@ export function Footer() {
           </nav>
 
           <div className="hidden md:block lg:pt-[31px]">
-            <ColumnTitle>Послуги</ColumnTitle>
+            <ColumnTitle>{t.servicesTitle}</ColumnTitle>
             <ul className="mt-4 flex flex-col gap-[13px] leading-body">
-              {servicesColumn.map((s) => (
+              {t.services.map((s) => (
                 <li key={s}>
                   <a href="#services" className={linkClass}>
                     {s}
@@ -133,7 +169,7 @@ export function Footer() {
           </div>
 
           <div className="mt-11 md:mt-0 lg:pt-[31px]">
-            <ColumnTitle>Контакти</ColumnTitle>
+            <ColumnTitle>{t.contactsTitle}</ColumnTitle>
             <ul className="mt-4 flex flex-col gap-[13px] leading-body">
               <li>
                 <a href={`mailto:${contacts.email}`} className={linkClass}>
@@ -162,14 +198,14 @@ export function Footer() {
 
         {/* ---------- Bottom ---------- */}
         <div className="mt-[27px] border-t border-white/99 pt-5 pb-8 md:mt-[72px] md:grid md:h-[73px] md:grid-cols-[45.58%_1fr_auto] md:items-center md:border-white/10 md:pt-0 md:pb-0 lg:h-[115px] lg:items-start lg:pt-[28px]">
-          <p className="hidden text-[14px] leading-body text-white/50 md:block lg:pt-[13.5px]">© 2026 MIROFORM®. Усі права захищені.</p>
-          <a href={socialLinks.privacy} className="block self-start justify-self-start text-[14px] leading-[17px] text-white/50 underline decoration-white/35 underline-offset-4 md:leading-body transition-colors hover:text-white hover:decoration-white md:self-center lg:self-auto lg:pt-[13.5px]">
-            Політика конфіденційності
+          <p className="hidden text-[14px] leading-body text-white/50 md:block lg:pt-[13.5px]">{t.rights}</p>
+          <a href={routes[locale].privacy} className="block self-start justify-self-start text-[14px] leading-[17px] text-white/50 underline decoration-white/35 underline-offset-4 md:leading-body transition-colors hover:text-white hover:decoration-white md:self-center lg:self-auto lg:pt-[13.5px]">
+            {t.privacy}
           </a>
           <div className="hidden md:block">
             <Socials />
           </div>
-          <p className="mt-2.5 text-[14px] leading-[17px] text-white/50 md:hidden">© 2026 MIROFORM®. Усі права захищені.</p>
+          <p className="mt-2.5 text-[14px] leading-[17px] text-white/50 md:hidden">{t.rights}</p>
         </div>
       </div>
     </footer>

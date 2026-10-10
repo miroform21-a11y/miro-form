@@ -1,3 +1,4 @@
+import type { Locale } from "@/i18n/locale";
 import type { LeadPreset } from "./leads";
 
 export type Plan = {
@@ -65,3 +66,60 @@ export const discounts: { value: string; title: string; lines: [string, string];
     wrapOnDesktop: true,
   },
 ];
+
+/* ---------------- English version ---------------- */
+
+/**
+ * US prices are set separately from the Ukrainian ones and are not filled in yet.
+ * An empty `price` shows "Custom quote" in the price slot; enter e.g. "$1,500" to show "From $1,500".
+ */
+const plansEn: Plan[] = [
+  {
+    id: "landing",
+    tags: ["turnkey project", "Responsive", "SEO", "CMS"],
+    mobileTagRows: [
+      ["turnkey project", "CMS"],
+      ["Responsive", "SEO"],
+    ],
+    title: ["Landing Page"],
+    description: "A one-page site for a product, service or ad campaign. Up to 10 well-crafted sections and a custom design. Launch in as little as 7 days.",
+    price: "", // US price — to be provided
+    lead: { direction: "web", option: "Landing page", title: "Landing Page" },
+  },
+  {
+    id: "multi",
+    tags: ["Up to 10 pages", "CMS", "CRM", "turnkey project", "Responsive"],
+    mobileTagRows: [["Up to 10 pages", "CMS"], ["turnkey project", "CRM"], ["Responsive"]],
+    title: ["Multi-page", " website"],
+    description: "A multi-page website or online store for a company or brand. Admin panel, animations and CRM. Timeline: from 3 weeks.",
+    mobileDescription: ["A multi-page website or online store for a company or brand. Admin panel, animations and CRM.", "Timeline: from 3 weeks."],
+    price: "", // US price — to be provided
+    lead: { direction: "web", option: "Multi-page website", title: "Multi-page website" },
+  },
+];
+
+const customPlanEn: typeof customPlan = {
+  badge: "Custom",
+  title: "AI & Custom",
+  description: "AI assistants, Telegram bots, process automation and integrations tailored to your business.",
+  lead: { direction: "ai", title: "AI & Custom" },
+};
+
+const discountsEn: typeof discounts = [
+  {
+    value: "-10%",
+    title: "Full prepayment",
+    lines: ["Pay for the project upfront —", "and lock in a discount on all the work."],
+  },
+  {
+    value: "-15%",
+    title: "Returning clients",
+    lines: ["For clients who come back", "with a new project within 30 days."],
+    wrapOnDesktop: true,
+  },
+];
+
+export const pricingByLocale: Record<Locale, { plans: Plan[]; customPlan: typeof customPlan; discounts: typeof discounts }> = {
+  uk: { plans, customPlan, discounts },
+  en: { plans: plansEn, customPlan: customPlanEn, discounts: discountsEn },
+};

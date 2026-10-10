@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import type { Locale } from "@/i18n/locale";
 
 export type Review = {
   id: string;
@@ -87,3 +88,48 @@ export const ratingFaces = [
   "/images/avatars/client-3.jpg",
   "/images/avatars/client-5.jpg",
 ];
+
+/** English text of the same reviews (photos and companies are shared); names are transliterated */
+const reviewCopyEn: Record<string, Pick<Review, "text" | "name"> & Partial<Pick<Review, "mobileText" | "company" | "initials">>> = {
+  oleksandr: {
+    text: "The site paid for itself in the first month of ads. We get twice as many leads, and clients love the premium look.",
+    name: "Oleksandr K.",
+  },
+  maryna: {
+    text: "They got our vibe from the very first brief. Court bookings now go through the site — it saves us so much time.",
+    name: "Maryna L.",
+  },
+  anna: { text: "Incredibly detail-oriented: every animation, every screen. They launched even faster than promised.", name: "Anna Sh." },
+  dmytro: {
+    text: "What we got is more than a website — it’s a well-oiled system: CRM, Telegram bot and analytics all work perfectly.",
+    mobileText: "Not just a website but a system: CRM, Telegram bot and analytics run like clockwork.",
+    name: "Dmytro P.",
+  },
+  viktor: {
+    text: "They built the landing page for our investment project in two weeks. Serious and modern — investors get it instantly.",
+    name: "Viktor S.",
+    initials: "VS",
+  },
+  olena: {
+    text: "Online court bookings grew several-fold. The admin is easy — we update schedules and prices ourselves in a minute.",
+    name: "Olena R.",
+    initials: "OR",
+  },
+  iryna: {
+    text: "They rebuilt our online school’s website: fast, clear and finally selling. Lead conversion nearly doubled.",
+    name: "Iryna T.",
+    company: "SkillUp Online School",
+    initials: "IT",
+  },
+  maksym: {
+    text: "The Telegram bot takes orders 24/7 and passes them straight to the CRM. Our managers finally sell instead of doing busywork.",
+    name: "Maksym H.",
+    initials: "MH",
+  },
+};
+
+export const reviewsByLocale: Record<Locale, Review[]> = {
+  uk: reviews,
+  // Figma's explicit line breaks belong to the Ukrainian copy — English wraps naturally
+  en: reviews.map((r) => ({ ...r, lines: undefined, mobileText: undefined, ...reviewCopyEn[r.id] })),
+};

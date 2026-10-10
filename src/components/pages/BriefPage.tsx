@@ -1,18 +1,34 @@
-import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { PillButton } from "@/components/ui/PillButton";
 import { BriefForm } from "@/components/brief/BriefForm";
-
-export const metadata: Metadata = {
-  title: "Бриф — MIROFORM",
-  description: "Анкета для нового проєкту MIROFORM: цілі, структура, функціонал, контент, терміни та бюджет.",
-  robots: { index: false, follow: false },
-};
+import { routes, type Locale } from "@/i18n/locale";
 
 const pad = "px-5 md:px-8 lg:px-[clamp(40px,6.25vw,90px)]";
 
-export default function BriefPage() {
+const copy = {
+  uk: {
+    home: "MIROFORM — на головну",
+    back: "На головну",
+    title: "Бриф",
+    intro: "Бриф допоможе нам зрозуміти ваш проєкт: за відповідями ми продумаємо структуру, дизайн і функціонал майбутнього сайту.",
+    help: "Якщо якесь питання здається складним, пропустіть його або напишіть нам — ми підкажемо.",
+    privacy: "Ми гарантуємо повну конфіденційність інформації про вас і вашу діяльність.",
+  },
+  en: {
+    home: "MIROFORM — home",
+    back: "Back to home",
+    title: "Brief",
+    intro: "This brief helps us understand your project: based on your answers, we’ll plan the structure, design and features of your future website.",
+    help: "If a question seems difficult, skip it or message us — we’re happy to help.",
+    privacy: "We guarantee full confidentiality of all information about you and your business.",
+  },
+} satisfies Record<Locale, Record<string, string>>;
+
+/** The /brief page (and /en/brief): intro + the wizard. */
+export function BriefPage({ locale = "uk" }: { locale?: Locale }) {
+  const t = copy[locale];
+  const home = routes[locale].home;
   return (
     <main className="relative isolate overflow-hidden bg-ink">
       {/*
@@ -34,7 +50,7 @@ export default function BriefPage() {
       <div className={`mx-auto max-w-[1440px] ${pad}`}>
         {/* Top bar */}
         <div className="flex items-center justify-between pt-6 lg:pt-7">
-          <Link href="/" aria-label="MIROFORM — на головну" className="relative block h-[41.6px] w-[160px] shrink-0 xl:h-[72px] xl:w-[198px]">
+          <Link href={home} aria-label={t.home} className="relative block h-[41.6px] w-[160px] shrink-0 xl:h-[72px] xl:w-[198px]">
             <Image
               src="/images/hero/logo.png"
               alt="MIROFORM"
@@ -44,8 +60,8 @@ export default function BriefPage() {
               className="absolute top-[-17.2px] left-[-6px] h-[78px] w-[173px] max-w-none object-contain xl:top-[-10px] xl:left-[-13px] xl:h-[95px] xl:w-[211px]"
             />
           </Link>
-          <PillButton href="/" variant="dark" circleSize={40} gap={14} className="h-[52px] border border-white/12 pr-1.5 pl-6 max-md:hidden">
-            На головну
+          <PillButton href={home} variant="dark" circleSize={40} gap={14} className="h-[52px] border border-white/12 pr-1.5 pl-6 max-md:hidden">
+            {t.back}
           </PillButton>
         </div>
 
@@ -56,14 +72,13 @@ export default function BriefPage() {
             {/* pixel font (Press Start 2P — the preloader / eyebrow font) only for this heading */}
             <h1 className="font-pixel text-[38px] leading-[1.15] font-normal text-white md:text-[52px] xl:text-[60px]">
               {/* the monospace dot cell is wide — pull it to the word */}
-              Бриф<span className="-ml-[0.28em] text-lime">.</span>
+              {t.title}
+              <span className="-ml-[0.28em] text-lime">.</span>
             </h1>
             <div className="flex flex-col gap-2.5 text-[14px] leading-[1.6] font-[350] text-white/65 md:text-[15px]">
-              <p className="max-w-[640px]">
-                Бриф допоможе нам зрозуміти ваш проєкт: за відповідями ми продумаємо структуру, дизайн і функціонал майбутнього сайту.
-              </p>
+              <p className="max-w-[640px]">{t.intro}</p>
               {/* one line on desktop (from 1280px), wraps on smaller screens */}
-              <p className="xl:whitespace-nowrap">Якщо якесь питання здається складним, пропустіть його або напишіть нам — ми підкажемо.</p>
+              <p className="xl:whitespace-nowrap">{t.help}</p>
             </div>
           </div>
           <p className="flex items-start gap-2.5 rounded-[16px] border border-lime/25 bg-lime/[0.05] px-4 py-3 text-[13px] leading-[1.5] text-white/80 md:text-[14px] lg:justify-self-end">
@@ -71,11 +86,11 @@ export default function BriefPage() {
               <rect x="3" y="8" width="12" height="8" rx="2" stroke="#AEEE05" strokeWidth="1.6" />
               <path d="M5.5 8V6a3.5 3.5 0 0 1 7 0v2" stroke="#AEEE05" strokeWidth="1.6" />
             </svg>
-            Ми гарантуємо повну конфіденційність інформації про вас і вашу діяльність.
+            {t.privacy}
           </p>
         </header>
 
-        <BriefForm />
+        <BriefForm locale={locale} />
 
         <p className="py-12 text-center text-[13px] leading-body text-white/40">© 2026 MIROFORM®</p>
       </div>

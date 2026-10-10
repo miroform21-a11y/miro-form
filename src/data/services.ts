@@ -1,3 +1,5 @@
+import type { Locale } from "@/i18n/locale";
+
 export type ServiceTheme = "light" | "dark" | "lime";
 
 export type Service = {
@@ -66,3 +68,40 @@ export const services: Service[] = [
     href: "#pricing",
   },
 ];
+
+/** English copy on top of the same cards (themes, decor and gaps stay shared) */
+const servicesEn: Service[] = [
+  {
+    ...services[0],
+    tags: ["from 7 days", "turnkey", "SEO"],
+    mobileTags: ["from 7 days", "turnkey"],
+    title: "Web Development",
+    lists: [
+      ["Landing pages", "Multi-page websites", "Online stores"],
+      ["Corporate websites", "App development"],
+    ],
+  },
+  {
+    ...services[1],
+    tags: ["UI/UX", "branding"],
+    mobileTags: ["UI/UX", "branding"],
+    title: "Digital Design",
+    lists: [
+      ["UI/UX design", "Design concepts", "Project redesigns"],
+      ["Brand style", "Brand identity"],
+    ],
+  },
+  {
+    ...services[2],
+    tags: ["AI", "integrations"],
+    mobileTags: ["AI", "integrations"],
+    title: "AI Automation",
+    mobileTitle: "AI SOLUTIONS",
+    lists: [
+      ["AI assistants", "Telegram bots", "Integrations & APIs"],
+      ["CRM automation", "Custom solutions"],
+    ],
+  },
+];
+
+export const servicesByLocale: Record<Locale, Service[]> = { uk: services, en: servicesEn };

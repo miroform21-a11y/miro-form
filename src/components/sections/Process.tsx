@@ -1,5 +1,25 @@
 import Image from "next/image";
-import { steps, type Step } from "@/data/process";
+import { stepsByLocale, type Step } from "@/data/process";
+import type { Locale } from "@/i18n/locale";
+
+const copy = {
+  uk: {
+    tag: "Етапи роботи",
+    title: ["Від ідеї до", "запуску"],
+    lead: "Прозорий процес у 4 кроки. На кожному етапі ви бачите результат і погоджуєте його перед наступним.",
+    average: "Середній термін запуску лендінгу —",
+    averageValue: "10 днів",
+    cta: "Почати проєкт",
+  },
+  en: {
+    tag: "How we work",
+    title: ["From idea", "to launch"],
+    lead: "A transparent 4-step process. At every stage you see the result and approve it before we move on.",
+    average: "Average landing page launch time —",
+    averageValue: "10 days",
+    cta: "Start a project",
+  },
+} satisfies Record<Locale, unknown>;
 import { SectionTag } from "@/components/ui/SectionTag";
 import { Reveal } from "@/components/ui/Reveal";
 import { PillButton } from "@/components/ui/PillButton";
@@ -36,7 +56,9 @@ function StepText({ step }: { step: Step }) {
   );
 }
 
-export function Process() {
+export function Process({ locale = "uk" }: { locale?: Locale }) {
+  const t = copy[locale];
+  const steps = stepsByLocale[locale];
   return (
     <section id="process" className="relative overflow-hidden bg-ink md:[overflow:clip_visible] pt-12 pb-[50px] md:py-14">
       {/* Glows */}
@@ -68,15 +90,15 @@ export function Process() {
         {/* Header */}
         <Reveal className="flex flex-col gap-[18px] md:gap-6 lg:h-[211px] lg:flex-row lg:items-end lg:justify-between lg:pb-5">
           <div className="flex flex-col gap-[22px] md:gap-6">
-            <SectionTag className="self-start">Етапи роботи</SectionTag>
+            <SectionTag className="self-start">{t.tag}</SectionTag>
             <h2 className="font-display text-[38px] leading-[1.05] font-bold tracking-[-0.03em] whitespace-nowrap text-white md:text-[56px] xl:text-[64px]">
-              Від ідеї до
+              {t.title[0]}
               <br />
-              запуску
+              {t.title[1]}
             </h2>
           </div>
           <p className="text-[16px] leading-[1.55] font-[350] text-white/65 md:max-w-[420px] md:text-[18px] lg:w-[322px] lg:pb-[9px]">
-            Прозорий процес у 4 кроки. На кожному етапі ви бачите результат і погоджуєте його перед наступним.
+            {t.lead}
           </p>
         </Reveal>
 
@@ -136,10 +158,10 @@ export function Process() {
         {/* CTA */}
         <Reveal className="mt-[46px] flex h-[180px] flex-col items-center justify-between rounded-[24px] border border-white/10 bg-white/4 px-6 pt-[19px] pb-[26px] backdrop-blur-[15px] md:mt-10 md:h-[94px] md:flex-row md:rounded-[28px] md:py-0 md:pr-4 md:pl-10">
           <p className="w-full font-display text-[18px] leading-[1.5] font-medium text-white md:w-auto md:text-[18px] md:leading-display lg:text-[20px]">
-            Середній термін запуску лендінгу — <span className="text-lime">10 днів</span>
+            {t.average} <span className="text-lime">{t.averageValue}</span>
           </p>
           <PillButton href="#contact" circleSize={44} gap={11} className="h-[60px] w-full shrink-0 pr-2 pl-[27px] md:w-auto">
-            Почати проєкт
+            {t.cta}
           </PillButton>
         </Reveal>
       </div>

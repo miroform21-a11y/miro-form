@@ -2,11 +2,17 @@ import Image from "next/image";
 import { ratingFaces, type Review } from "@/data/reviews";
 import { CountUp } from "@/components/ui/CountUp";
 import { InView } from "@/components/ui/InView";
+import type { Locale } from "@/i18n/locale";
 
-function Stars({ size, color, animated = false }: { size: "sm" | "lg"; color: "white" | "lime"; animated?: boolean }) {
+const copy = {
+  uk: { stars: "5 з 5", rating: "Середня оцінка клієнтів на Google та UpWork", happy: "задоволених", clients: "клієнтів компанії" },
+  en: { stars: "5 out of 5", rating: "Average client rating on Google and Upwork", happy: "happy clients", clients: "and counting" },
+} satisfies Record<Locale, Record<string, string>>;
+
+function Stars({ size, color, animated = false, locale }: { size: "sm" | "lg"; color: "white" | "lime"; animated?: boolean; locale: Locale }) {
   const s = size === "lg" ? { w: 23.26, h: 24 } : { w: 17.45, h: 18 };
   return (
-    <span className="flex items-center gap-1" role="img" aria-label="5 з 5">
+    <span className="flex items-center gap-1" role="img" aria-label={copy[locale].stars}>
       {Array.from({ length: 5 }, (_, i) => (
         <svg
           key={i}
@@ -28,7 +34,8 @@ function Stars({ size, color, animated = false }: { size: "sm" | "lg"; color: "w
   );
 }
 
-export function RatingCard({ className = "" }: { className?: string }) {
+export function RatingCard({ className = "", locale = "uk" }: { className?: string; locale?: Locale }) {
+  const t = copy[locale];
   return (
     <InView
       className={`rating-card relative flex h-[560px] flex-col justify-end gap-[26px] overflow-hidden rounded-[32px] border border-white/8 px-[31px] pt-[230px] pb-8 max-[389px]:px-5 ${className}`}
@@ -62,8 +69,8 @@ export function RatingCard({ className = "" }: { className?: string }) {
           duration={1400}
           className="block font-display text-[120px] leading-none font-bold tracking-[-0.06em] whitespace-nowrap text-white"
         />
-        <Stars size="lg" color="white" animated />
-        <p className="rating-fade w-[211px] text-[17px] leading-[1.5] font-medium text-white">Середня оцінка клієнтів на Google та UpWork</p>
+        <Stars size="lg" color="white" animated locale={locale} />
+        <p className="rating-fade w-[211px] text-[17px] leading-[1.5] font-medium text-white">{t.rating}</p>
       </div>
 
       <div className="rating-fade relative flex items-center gap-[9px]" style={{ "--d": "520ms" } as React.CSSProperties}>
@@ -78,9 +85,9 @@ export function RatingCard({ className = "" }: { className?: string }) {
           ))}
         </div>
         <p className="font-display text-[12px] leading-[1.3] font-medium whitespace-nowrap text-white">
-          <CountUp to={347} suffix="+" duration={1600} /> задоволених
+          <CountUp to={347} suffix="+" duration={1600} /> {t.happy}
           <br />
-          клієнтів компанії
+          {t.clients}
         </p>
       </div>
     </InView>
@@ -95,7 +102,7 @@ function Monogram({ initials }: { initials: string }) {
   );
 }
 
-export function ReviewCard({ review, variant }: { review: Review; variant: "desktop" | "mobile" }) {
+export function ReviewCard({ review, variant, locale = "uk" }: { review: Review; variant: "desktop" | "mobile"; locale?: Locale }) {
   const mobile = variant === "mobile";
   return (
     <figure
@@ -105,7 +112,7 @@ export function ReviewCard({ review, variant }: { review: Review; variant: "desk
     >
       <div className="flex flex-col gap-[18px]">
         <div className="flex items-center justify-between">
-          <Stars size="sm" color="lime" />
+          <Stars size="sm" color="lime" locale={locale} />
           <span aria-hidden="true" className="font-display text-[44px] leading-[0.6] font-bold text-white/15">
             “
           </span>

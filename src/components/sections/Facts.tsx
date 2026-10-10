@@ -1,4 +1,5 @@
-import { audiences, facts, type Fact } from "@/data/facts";
+import { audiencesByLocale, factsByLocale, type Fact } from "@/data/facts";
+import type { Locale } from "@/i18n/locale";
 import { SectionTag } from "@/components/ui/SectionTag";
 import { Reveal } from "@/components/ui/Reveal";
 import { CountUp } from "@/components/ui/CountUp";
@@ -19,7 +20,10 @@ function FactValue({ fact, mobile }: { fact: Fact; mobile?: boolean }) {
   );
 }
 
-export function Facts() {
+export function Facts({ locale = "uk" }: { locale?: Locale }) {
+  const facts = factsByLocale[locale];
+  const audiences = audiencesByLocale[locale];
+  const en = locale === "en";
   return (
     <section id="why" className="relative overflow-hidden bg-ink md:[overflow:clip_visible] pt-14 pb-[35px] md:py-[110px]">
       {/* Glows */}
@@ -42,14 +46,22 @@ export function Facts() {
         {/* Header */}
         <Reveal className="flex flex-col gap-4 px-5 md:px-0 lg:flex-row lg:items-end lg:justify-between">
           <div className="flex flex-col gap-4 md:gap-6">
-            <SectionTag className="self-start">Чому ми</SectionTag>
+            <SectionTag className="self-start">{en ? "Why us" : "Чому ми"}</SectionTag>
             <h2 className="font-display text-[38px] leading-[40px] font-bold md:leading-[1.05] tracking-[-0.03em] whitespace-nowrap text-white md:text-[56px] xl:text-[64px]">
-              Тільки факти
+              {en ? "Just the facts" : "Тільки факти"}
             </h2>
           </div>
           {/* Figma's two-line break fits from 384px; narrower phones get balanced lines instead of a lone last word */}
           <p className="text-[15px] leading-[1.55] text-white/60 max-[384px]:text-balance md:max-w-[380px] md:text-[16px]">
-            Конкретні умови, які фіксуємо в&nbsp;договорі —<br className="max-[384px]:hidden" /> без «індивідуального підходу» і загальних слів.
+            {en ? (
+              <>
+                Specific terms we lock in by&nbsp;contract —<br className="max-[384px]:hidden" /> no “custom approach” talk or vague promises.
+              </>
+            ) : (
+              <>
+                Конкретні умови, які фіксуємо в&nbsp;договорі —<br className="max-[384px]:hidden" /> без «індивідуального підходу» і загальних слів.
+              </>
+            )}
           </p>
         </Reveal>
 
@@ -85,9 +97,9 @@ export function Facts() {
         {/* Audience marquee */}
         <Reveal delay={140} className="mt-7 flex items-center gap-7 md:mt-10">
           <p className="hidden shrink-0 font-display text-[14px] leading-[1.3] font-semibold tracking-[0.04em] text-lime uppercase md:block">
-            Для кого
+            {en ? "Who we" : "Для кого"}
             <br />
-            розробляємо
+            {en ? "build for" : "розробляємо"}
           </p>
 
           <div className="relative min-w-0 flex-1 max-md:pl-5">

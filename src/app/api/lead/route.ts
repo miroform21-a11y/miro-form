@@ -1,5 +1,6 @@
-import { budgets, directions, projectTypes } from "@/data/leads";
-import { customPlan, plans } from "@/data/pricing";
+import { leadOptions } from "@/data/leads";
+import { pricingByLocale } from "@/data/pricing";
+import type { Locale } from "@/i18n/locale";
 import { claimOnce, releaseClaim, withinRateLimit } from "@/lib/server/limits";
 import { sendToTelegram, telegramConfigured } from "@/lib/server/telegram";
 import { HttpError, assertSameOrigin, clientKey, isContact, isRecord, kyivTime, looksAutomated, readJson, reply, sha256, text } from "@/lib/server/http";
@@ -7,18 +8,29 @@ import { HttpError, assertSameOrigin, clientKey, isContact, isRecord, kyivTime, 
 /**
  * Leads from the main page forms (Contacts section, service/pricing popups, FAQ question popup)
  * → validated here → Telegram. Nothing is stored except short-lived hashed rate-limit/duplicate keys.
+ * The English site (/en) sends lang "en": its own option values are accepted and the message gets an "EN" mark.
  */
 
 const MAX_BODY = 8 * 1024;
 
-// The only values the forms can send — anything else is rejected
-const allowedOptions = new Set<string>([...projectTypes, ...directions.flatMap((d) => d.options)]);
-const allowedDirections = new Set<string>([
-  ...directions.map((d) => d.popupTitle),
-  ...plans.map((p) => p.lead.title).filter((t): t is string => Boolean(t)),
-  ...(customPlan.lead.title ? [customPlan.lead.title] : []),
-]);
-const allowedBudgets = new Set<string>(budgets);
+// The only values the forms of each language can send — anything else is rejected
+function allowedFor(locale: Locale) {
+  const { directions, projectTypes, budgets } = leadOptions[locale];
+  const { plans, customPlan } = pricingByLocale[locale];
+  return {
+    options: new Set<string>([...projectTypes, ...directions.flatMap((d) => d.options)]),
+    directions: new Set<string>([
+      ...directions.map((d) => d.popupTitle),
+      ...plans.map((p) => p.lead.title).filter((t): t is string => Boolean(t)),
+      ...(customPlan.lead.title ? [customPlan.lead.title] : []),
+    ]),
+    budgets: new Set<string>(budgets),
+  };
+}
+const allowed = { uk: allowedFor("uk"), en: allowedFor("en") };
+
+/** Shown under the title of a lead that came from the English site */
+const EN_MARK = "🇬🇧 EN-версія сайту";
 
 type Lead = {
   kind: "lead" | "question";
@@ -30,7 +42,7 @@ type Lead = {
   message: string;
 };
 
-function parse(body: Record<string, unknown>): Lead | null {
+function parse(body: Record<string, unknown>, locale: Locale): Lead | null {
   const kind = body.kind;
   if (kind !== "lead" && kind !== "question") return null;
 
@@ -46,13 +58,13 @@ function parse(body: Record<string, unknown>): Lead | null {
   if (!isContact(lead.contact)) return null;
   if (kind === "lead" && lead.name.length < 2) return null;
   if (kind === "question" && lead.message.length < 3) return null;
-  if (lead.option && !allowedOptions.has(lead.option)) return null;
-  if (lead.direction && !allowedDirections.has(lead.direction)) return null;
-  if (lead.budget && !allowedBudgets.has(lead.budget)) return null;
+  if (lead.option && !allowed[locale].options.has(lead.option)) return null;
+  if (lead.direction && !allowed[locale].directions.has(lead.direction)) return null;
+  if (lead.budget && !allowed[locale].budgets.has(lead.budget)) return null;
   return lead;
 }
 
-function format(lead: Lead) {
+function format(lead: Lead, locale: Locale) {
   const source = lead.kind === "question" ? "FAQ — питання" : lead.direction ? `Попап «${lead.direction}»` : "Форма «Контакти»";
   const fields = [
     `Джерело: ${source}`,
@@ -63,6 +75,7 @@ function format(lead: Lead) {
   ].filter(Boolean);
   return [
     lead.kind === "question" ? "❓ Нове питання з сайту MIROFORM" : "🟢 Нова заявка з сайту MIROFORM",
+    locale === "en" && EN_MARK,
     fields.join("\n"),
     lead.message && `${lead.kind === "question" ? "Питання" : "Коментар"}:\n${lead.message}`,
     `🕒 ${kyivTime()} (Київ)`,
@@ -80,7 +93,9 @@ export async function POST(request: Request) {
     if (!isRecord(body)) return reply(400);
     if (looksAutomated(body)) return reply(200); // silently dropped
 
-    const lead = parse(body);
+    // the English forms say so; anything else is the Ukrainian site, exactly as before
+    const locale: Locale = body.lang === "en" ? "en" : "uk";
+    const lead = parse(body, locale);
     if (!lead) return reply(400);
     if (!telegramConfigured()) {
       console.error("[lead] Telegram is not configured — lead not delivered");
@@ -91,7 +106,7 @@ export async function POST(request: Request) {
     const fingerprint = sha256(JSON.stringify(["lead", lead]));
     if (!(await claimOnce(fingerprint, 600))) return reply(200);
 
-    if (!(await sendToTelegram(format(lead)))) {
+    if (!(await sendToTelegram(format(lead, locale)))) {
       await releaseClaim(fingerprint);
       return reply(502);
     }
