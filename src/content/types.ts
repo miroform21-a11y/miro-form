@@ -5,6 +5,8 @@
 
 import type { Service } from "@/data/services";
 import type { Project } from "@/data/projects";
+import type { Fact } from "@/data/facts";
+import type { Step } from "@/data/process";
 
 /** A button / link: visible text + where it leads ("#contact", "/en", "https://…") */
 export type ContentLink = { label: string; href: string };
@@ -72,9 +74,48 @@ export type WorksContent = {
   slider: { label: string; slides: string; slide: string };
 };
 
+export type AboutContent = {
+  tag: string;
+  /** Statement after the "MIROFORM®" wordmark */
+  statement: string;
+  /** The grey phrase around the inline photo: "<readBefore> [photo] <readAfter>" */
+  readBefore: string;
+  readAfter: string;
+  founder: { name: string; role: string; alt: string; href: string; ariaLabel: string };
+  /** Two counters: projects / years */
+  stats: [AboutStat, AboutStat];
+  fullCycle: { value: number; suffix: string; text: string; tagline: [string, string] };
+};
+export type AboutStat = { label: string; value: number; suffix: string };
+
+export type FactsContent = {
+  tag: string;
+  title: string;
+  /** Two lines (Figma break, joined on narrow phones) */
+  lead: [string, string];
+  facts: Fact[];
+  audienceTitle: [string, string];
+  /** Niches in the marquee */
+  audiences: string[];
+};
+
+export type ProcessContent = {
+  tag: string;
+  title: [string, string];
+  lead: string;
+  steps: Step[];
+  /** CTA plate: "<average> <averageValue>" (value in lime) */
+  average: string;
+  averageValue: string;
+  cta: ContentLink;
+};
+
 export type SiteContent = {
   header: HeaderContent;
   hero: HeroContent;
   services: ServicesContent;
   works: WorksContent;
+  about: AboutContent;
+  facts: FactsContent;
+  process: ProcessContent;
 };
