@@ -252,6 +252,8 @@ export type ThankYouContent = {
   back: ContentLink;
 };
 
+export type PrivacyContent = { back: string; title: string; sections: { title: string; body: string[] }[] };
+
 export type SiteContent = {
   header: HeaderContent;
   hero: HeroContent;
@@ -267,4 +269,18 @@ export type SiteContent = {
   footer: FooterContent;
   forms: FormsContent;
   thankYou: ThankYouContent;
+  privacy: PrivacyContent;
 };
+
+/* ---------- Brief (/brief, /en/brief) ---------- */
+
+export type { BriefUiContent } from "./brief/ui";
+export type { BriefPageContent } from "./brief/page";
+import type { BriefUiContent } from "./brief/ui";
+import type { BriefPageContent } from "./brief/page";
+
+/**
+ * Texts of the brief page and wizard. The questionnaire itself (steps, fields, options, conditions) stays in
+ * data/brief.ts and data/briefEn.ts: /api/brief validates answers against it.
+ */
+export type BriefContent = { page: BriefPageContent; ui: BriefUiContent };

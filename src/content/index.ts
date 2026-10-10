@@ -1,5 +1,5 @@
 import type { Locale } from "@/i18n/locale";
-import type { SiteContent } from "./types";
+import type { BriefContent, SiteContent } from "./types";
 import { headerContent } from "./site/header";
 import { heroContent } from "./site/hero";
 import { servicesContent } from "./site/services";
@@ -13,12 +13,15 @@ import { faqContent } from "./site/faq";
 import { contactContent } from "./site/contact";
 import { footerContent } from "./site/footer";
 import { formsContent, thankYouContent } from "./site/forms";
+import { privacyContent } from "./site/privacy";
+import { briefPageContent } from "./brief/page";
+import { briefUiContent } from "./brief/ui";
 
 /**
- * Editable site content, one independent object per language. This is the single source the public
- * components render by default (each takes an optional `content` prop for the same shape).
+ * Editable content, one independent object per language. This is the single source the public
+ * components render by default (each takes an optional `content` prop of the same shape).
  */
-const forLocale = (l: Locale): SiteContent => ({
+const siteFor = (l: Locale): SiteContent => ({
   header: headerContent[l],
   hero: heroContent[l],
   services: servicesContent[l],
@@ -33,8 +36,15 @@ const forLocale = (l: Locale): SiteContent => ({
   footer: footerContent[l],
   forms: formsContent[l],
   thankYou: thankYouContent[l],
+  privacy: privacyContent[l],
 });
 
-export const siteContent: Record<Locale, SiteContent> = { uk: forLocale("uk"), en: forLocale("en") };
+export const siteContent: Record<Locale, SiteContent> = { uk: siteFor("uk"), en: siteFor("en") };
 
-export type { SiteContent } from "./types";
+/** The brief area: page texts + wizard texts per language (questions: data/brief.ts, data/briefEn.ts) */
+export const briefContent: Record<Locale, BriefContent> = {
+  uk: { page: briefPageContent.uk, ui: briefUiContent.uk },
+  en: { page: briefPageContent.en, ui: briefUiContent.en },
+};
+
+export type { BriefContent, SiteContent } from "./types";
