@@ -4,21 +4,26 @@ import type { Project, ProjectCrop } from "@/data/projects";
 import { ArrowShot } from "@/components/ui/ArrowShot";
 import { ProjectVideo } from "./ProjectVideo";
 
-function Media({ project, crop, sizes, radius }: { project: Project; crop: ProjectCrop; sizes: string; radius: string }) {
+function Media({ project, crop, sizes, radius, mobile }: { project: Project; crop: ProjectCrop; sizes: string; radius: string; mobile: boolean }) {
   const { src, width, height } = project.image;
+  const videoSrc = mobile ? project.video?.mobile : project.video?.desktop;
   return (
     <div className={`relative min-h-0 w-full flex-1 overflow-hidden ${radius}`}>
-      {project.video ? (
-        <ProjectVideo {...project.video} label={`${project.title} — відео сайту`} />
-      ) : (
-        <Image
-          src={src}
-          alt={`${project.title} — скріншот сайту`}
-          width={width}
-          height={height}
-          sizes={sizes}
-          className="absolute max-w-none"
-          style={{ left: `${crop.left}%`, top: `${crop.top}%`, width: `${crop.width}%`, height: `${crop.height}%` }}
+      <Image
+        src={src}
+        alt={`${project.title} — скріншот сайту`}
+        width={width}
+        height={height}
+        sizes={sizes}
+        className="absolute max-w-none"
+        style={{ left: `${crop.left}%`, top: `${crop.top}%`, width: `${crop.width}%`, height: `${crop.height}%` }}
+      />
+      {videoSrc && (
+        <ProjectVideo
+          src={videoSrc}
+          trigger={mobile ? "visible" : "hover"}
+          delay={mobile ? 4000 : 3000}
+          label={`${project.title} — відео сайту`}
         />
       )}
     </div>
@@ -55,6 +60,7 @@ export function ProjectCard({
         crop={mobile ? project.mobileCrop : project.crop}
         sizes={mobile ? "342px" : "(min-width: 1024px) 60vw, 50vw"}
         radius={mobile ? "rounded-[18px]" : "rounded-[22px]"}
+        mobile={mobile}
       />
 
       <div className={`relative flex shrink-0 flex-col ${mobile ? "h-(--card-info,auto) gap-2 px-2" : "h-[109px] gap-2.5 px-[19px]"}`}>
