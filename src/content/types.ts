@@ -7,6 +7,7 @@ import type { Service } from "@/data/services";
 import type { Project } from "@/data/projects";
 import type { Fact } from "@/data/facts";
 import type { Step } from "@/data/process";
+import type { Plan, pricingByLocale } from "@/data/pricing";
 
 /** A button / link: visible text + where it leads ("#contact", "/en", "https://…") */
 export type ContentLink = { label: string; href: string };
@@ -110,6 +111,33 @@ export type ProcessContent = {
   cta: ContentLink;
 };
 
+type PricingData = (typeof pricingByLocale)["uk"];
+
+export type PricingContent = {
+  tag: string;
+  title: string;
+  /** Small label before a price ("Від $390") */
+  from: string;
+  /** Shown in the price slot when a plan has no price: small label + big word */
+  quote: [string, string];
+  payment: { title: string; note: string };
+  /** "Умови <знижки>" — `accent` = index of the orange word */
+  discountsTitle: { parts: [string, string]; accent: 0 | 1 };
+  /** Floating "Хіт продажів" label (fixed width — keep it short) */
+  hit: string;
+  choose: string;
+  discuss: string;
+  /** Screen-reader labels: "<plan title> — <label>" */
+  chooseLabel: string;
+  discussLabel: string;
+  /** The two priced packages (prices as shown, e.g. "$390"; their popup preset is checked by /api/lead) */
+  plans: Plan[];
+  customPlan: PricingData["customPlan"];
+  /** "AI & Custom" text on phones/tablets: three lines with non-breaking parts (Figma) */
+  customPlanMobile: { line1: string; line2Nowrap: string; line2Tail: string; line3Nowrap: string };
+  discounts: PricingData["discounts"];
+};
+
 export type SiteContent = {
   header: HeaderContent;
   hero: HeroContent;
@@ -118,4 +146,5 @@ export type SiteContent = {
   about: AboutContent;
   facts: FactsContent;
   process: ProcessContent;
+  pricing: PricingContent;
 };

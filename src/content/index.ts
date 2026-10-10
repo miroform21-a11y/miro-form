@@ -7,6 +7,7 @@ import { worksContent } from "./site/works";
 import { aboutContent } from "./site/about";
 import { factsContent } from "./site/facts";
 import { processContent } from "./site/process";
+import { pricingContent } from "./site/pricing";
 
 /**
  * Editable site content, one independent object per language. This is the single source the public
@@ -20,6 +21,7 @@ const forLocale = (l: Locale): SiteContent => ({
   about: aboutContent[l],
   facts: factsContent[l],
   process: processContent[l],
+  pricing: pricingContent[l],
 });
 
 export const siteContent: Record<Locale, SiteContent> = { uk: forLocale("uk"), en: forLocale("en") };
