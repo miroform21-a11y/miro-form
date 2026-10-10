@@ -3,36 +3,10 @@ import { Header } from "./Header";
 import { PillButton } from "@/components/ui/PillButton";
 import { HeroParallax } from "./HeroParallax";
 import type { Locale } from "@/i18n/locale";
+import { siteContent } from "@/content";
+import type { HeroContent } from "@/content/types";
 
-const copy = {
-  uk: {
-    rating: "347+ клієнтів у 12 країнах",
-    eyebrow: "МИ СТВОРЮЄМО",
-    title: ["Сайти, які", "продають —", "а не просто", "існують"],
-    lead: ["Дизайн, розробка й AI-рішення під ключ.", "Від ідеї до першої заявки — від 7 днів."],
-    cta: "Обговорити проєкт",
-  },
-  en: {
-    rating: "347+ clients in 12 countries",
-    eyebrow: "WE BUILD",
-    title: ["Websites", "that sell —", "not just", "sit there"],
-    lead: ["Turnkey design, development and AI solutions.", "From idea to first lead in as little as 7 days."],
-    cta: "Discuss your project",
-  },
-} satisfies Record<Locale, unknown>;
-
-/** Square, face-centred crops of the Figma photos — they fill the circle completely */
-const avatars = ["/images/avatars/client-1.jpg", "/images/avatars/client-2.jpg", "/images/avatars/client-3.jpg", "/images/avatars/client-4.jpg"];
-
-/** Tag widths from Figma (desktop 1440 / mobile 390) */
-const stack = [
-  { label: "Figma", w: [83.35, 70.85] },
-  { label: "Framer", w: [97.89, 83.21] },
-  { label: "Next.js", w: [95.95, 81.56] },
-  { label: "Webflow", w: [110, 93.5] },
-];
-
-export function AvatarStack({ size = 46, borderColor = "#050505" }: { size?: number; borderColor?: string }) {
+export function AvatarStack({ avatars, size = 46, borderColor = "#050505" }: { avatars: readonly string[]; size?: number; borderColor?: string }) {
   return (
     <div className="flex shrink-0">
       {avatars.map((src, i) => (
@@ -48,26 +22,27 @@ export function AvatarStack({ size = 46, borderColor = "#050505" }: { size?: num
   );
 }
 
-function Rating({ textClass = "text-white/70", text }: { textClass?: string; text: string }) {
+function Rating({ textClass = "text-white/70", content }: { textClass?: string; content: HeroContent }) {
   return (
     <div className="flex items-center">
-      <AvatarStack />
+      <AvatarStack avatars={content.avatars} />
       <div className="flex flex-col gap-1 pl-[26px] leading-body whitespace-nowrap">
-        <p className="font-pixel text-[10px] leading-pixel text-lime">★★★★★ 4.9</p>
-        <p className={`text-[14px] ${textClass}`}>{text}</p>
+        <p className="font-pixel text-[10px] leading-pixel text-lime">{content.ratingScore}</p>
+        <p className={`text-[14px] ${textClass}`}>{content.rating}</p>
       </div>
     </div>
   );
 }
 
-function StackTags({ className = "", size }: { className?: string; size: "lg" | "sm" }) {
+function StackTags({ className = "", size, stack }: { className?: string; size: "lg" | "sm"; stack: HeroContent["stack"] }) {
   return (
     <ul className={`flex items-center ${className}`}>
       {stack.map((t) => (
         <li
           key={t.label}
-          style={{ width: t.w[size === "lg" ? 0 : 1] }}
-          className="flex items-center justify-center rounded-full border border-white/30 bg-white/4 transition-[translate,border-color] duration-400 ease-(--ease-smooth) hover:-translate-y-[3px] hover:border-white/50 active:-translate-y-[3px] font-display leading-display font-medium tracking-[0.04em] whitespace-nowrap text-white uppercase"
+          // Figma width for the original pills; a renamed pill (no `w`) sizes itself to its label
+          style={t.w ? { width: t.w[size === "lg" ? 0 : 1] } : undefined}
+          className={`flex items-center justify-center rounded-full border border-white/30 bg-white/4 transition-[translate,border-color] duration-400 ease-(--ease-smooth) hover:-translate-y-[3px] hover:border-white/50 active:-translate-y-[3px] font-display leading-display font-medium tracking-[0.04em] whitespace-nowrap text-white uppercase${t.w ? "" : " px-[1.1em]"}`}
         >
           {t.label}
         </li>
@@ -76,8 +51,8 @@ function StackTags({ className = "", size }: { className?: string; size: "lg" | 
   );
 }
 
-export function Hero({ locale = "uk" }: { locale?: Locale }) {
-  const t = copy[locale];
+export function Hero({ locale = "uk", content = siteContent[locale].hero }: { locale?: Locale; content?: HeroContent }) {
+  const t = content;
   return (
     <section
       id="top"
@@ -167,25 +142,25 @@ export function Hero({ locale = "uk" }: { locale?: Locale }) {
               <br />
               {t.lead[1]}
             </p>
-            <PillButton href="#contact" className="mt-[22px] h-[55px] pr-1.5 pl-7 lg:mt-[38px] lg:h-[60px]">
-              {t.cta}
+            <PillButton href={t.cta.href} className="mt-[22px] h-[55px] pr-1.5 pl-7 lg:mt-[38px] lg:h-[60px]">
+              {t.cta.label}
             </PillButton>
           </div>
         </div>
 
         {/* Mobile / tablet: rating under CTA, stack at the very bottom */}
         <div className="mt-[22px] flex h-[55.34px] items-center lg:hidden">
-          <Rating textClass="text-white/90" text={t.rating} />
+          <Rating textClass="text-white/90" content={t} />
         </div>
         <div className="flex-1 lg:hidden" />
-        <StackTags size="sm" className="gap-1.5 pl-[3px] lg:hidden [&>li]:h-[21.2px] [&>li]:border-[0.85px] [&>li]:text-[10.2px]" />
+        <StackTags size="sm" stack={t.stack} className="gap-1.5 pl-[3px] lg:hidden [&>li]:h-[21.2px] [&>li]:border-[0.85px] [&>li]:text-[10.2px]" />
       </div>
 
       {/* Desktop bottom row */}
       <div className="absolute inset-x-0 bottom-[62px] z-10 hidden lg:block">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between pr-[clamp(32px,4vw,58px)] pl-[clamp(24px,4.86vw,70px)]">
-          <Rating text={t.rating} />
-          <StackTags size="lg" className="gap-2.5 [&>li]:h-[33px] [&>li]:text-[12px]" />
+          <Rating content={t} />
+          <StackTags size="lg" stack={t.stack} className="gap-2.5 [&>li]:h-[33px] [&>li]:text-[12px]" />
         </div>
       </div>
     </section>
