@@ -14,8 +14,9 @@ const FLASH_TIMING: KeyframeAnimationOptions = { duration: 320, easing: "cubic-b
 /**
  * Screen recording layered over the project photo.
  * hover   — desktop: starts after the pointer has stayed on the card for `delay` ms, stops on leave.
+ *           The file is buffered once the card nears the viewport, so the video can appear right on hover.
  * visible — touch layouts: starts after the card has stayed ≥60% visible for `delay` ms, stops when it leaves.
- * The file starts loading when the countdown starts, so the first frame is ready when it ends. The photo
+ *           The file starts loading when the countdown starts. The photo
  * underneath stays visible until a video frame is actually presented, and whenever the video is not playing
  * (after stop, on load error, if autoplay is refused, with reduced motion).
  */
@@ -41,13 +42,15 @@ export function ProjectVideo({ src, trigger, delay, label }: { src: string; trig
       setShown(true);
       flashRef.current?.animate(FLASH_KEYFRAMES, FLASH_TIMING);
     };
+    const prepare = () => {
+      if (video.getAttribute("src")) return;
+      video.preload = "auto";
+      video.src = src;
+    };
     const start = () => {
       if (armed) return;
       armed = true;
-      if (!video.getAttribute("src")) {
-        video.preload = "auto";
-        video.src = src;
-      }
+      prepare();
       timer = window.setTimeout(() => {
         if (video.currentTime > 0) video.currentTime = 0; // hidden at this point, so the rewind is invisible
         video.play().catch(() => {}); // refused or interrupted: the photo stays
@@ -70,9 +73,20 @@ export function ProjectVideo({ src, trigger, delay, label }: { src: string; trig
 
     const onEnter = (e: PointerEvent) => e.pointerType !== "touch" && start();
     let observer: IntersectionObserver | undefined;
+    let warmup: IntersectionObserver | undefined;
     if (trigger === "hover") {
       card.addEventListener("pointerenter", onEnter);
       card.addEventListener("pointerleave", stop);
+      // Hidden layouts (display:none) never intersect, so only the visible bento buffers its videos
+      warmup = new IntersectionObserver(
+        ([entry]) => {
+          if (!entry.isIntersecting) return;
+          prepare();
+          warmup?.disconnect();
+        },
+        { rootMargin: "300px 0px" },
+      );
+      warmup.observe(card);
     } else {
       observer = new IntersectionObserver(
         ([entry]) => (entry.intersectionRatio >= VISIBLE_RATIO ? start() : stop()),
@@ -97,6 +111,7 @@ export function ProjectVideo({ src, trigger, delay, label }: { src: string; trig
       card.removeEventListener("pointerenter", onEnter);
       card.removeEventListener("pointerleave", stop);
       observer?.disconnect();
+      warmup?.disconnect();
       document.removeEventListener("visibilitychange", onPageVisibility);
     };
   }, [src, trigger, delay]);
