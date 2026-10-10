@@ -5,12 +5,14 @@ import { OPEN_LEAD_EVENT, type LeadPopupRequest } from "@/components/ui/LeadCard
 import { directionByIdFor } from "@/data/leads";
 import { ContactForm } from "./ContactForm";
 import type { Locale } from "@/i18n/locale";
+import { siteContent } from "@/content";
+import type { FormsContent } from "@/content/types";
 
 /**
  * Popup form opened from Services / Pricing (project request with a preselected direction)
  * and from the FAQ "Не знайшли відповідь?" card (question form).
  */
-export function LeadModal({ locale = "uk" }: { locale?: Locale }) {
+export function LeadModal({ locale = "uk", content = siteContent[locale].forms }: { locale?: Locale; content?: FormsContent }) {
   const [open, setOpen] = useState(false);
   const [request, setRequest] = useState<LeadPopupRequest>({ kind: "lead", preset: { direction: "web" } });
   // remount the form on every open so the preselected direction is applied fresh
@@ -48,9 +50,7 @@ export function LeadModal({ locale = "uk" }: { locale?: Locale }) {
 
   const label =
     request.kind === "question"
-      ? locale === "en"
-        ? "Still have questions?"
-        : "Залишилися питання?"
+      ? content.questionTitle
       : (request.preset.title ?? directionByIdFor(locale, request.preset.direction).popupTitle);
 
   return (
@@ -74,7 +74,7 @@ export function LeadModal({ locale = "uk" }: { locale?: Locale }) {
       >
         <button
           type="button"
-          aria-label={locale === "en" ? "Close form" : "Закрити форму"}
+          aria-label={content.closeLabel}
           onClick={() => setOpen(false)}
           className="absolute top-4 right-4 z-10 grid size-11 place-items-center rounded-full border border-white/15 bg-white/6 transition-[rotate,background-color] duration-300 hover:rotate-90 hover:bg-white/12 md:top-6 md:right-6"
         >
@@ -84,9 +84,9 @@ export function LeadModal({ locale = "uk" }: { locale?: Locale }) {
         </button>
         {openId > 0 &&
           (request.kind === "question" ? (
-            <ContactForm key={openId} variant="question" locale={locale} />
+            <ContactForm key={openId} variant="question" locale={locale} content={content} />
           ) : (
-            <ContactForm key={openId} variant="modal" preset={request.preset} locale={locale} />
+            <ContactForm key={openId} variant="modal" preset={request.preset} locale={locale} content={content} />
           ))}
       </div>
     </div>

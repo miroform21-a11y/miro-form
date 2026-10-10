@@ -4,6 +4,8 @@ import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { directionByIdFor, leadOptions, type LeadPreset } from "@/data/leads";
 import { routes, type Locale } from "@/i18n/locale";
+import { siteContent } from "@/content";
+import type { FormsContent } from "@/content/types";
 import { submitLead } from "@/lib/submitLead";
 import { ArrowShot } from "@/components/ui/ArrowShot";
 import { inputBase, legendClass } from "@/components/ui/formStyles";
@@ -12,63 +14,10 @@ import { contactError } from "@/lib/contact";
 
 type Errors = Partial<Record<"name" | "contact" | "message", string>>;
 
-const copy = {
-  uk: {
-    nameError: "Вкажіть, будь ласка, ваше ім’я",
-    messageError: "Напишіть, будь ласка, ваше питання",
-    popupNote: "Залиште свою заявку, і ми зв’яжемося з вами протягом 15 хвилин.",
-    sectionTitle: "Залиште заявку",
-    questionTitle: "Залишилися питання?",
-    questionNote: "Задайте їх тут — ми відповімо протягом 15 хвилин.",
-    sentQuestion: "Дякуємо! Питання отримано",
-    sentLead: "Дякуємо! Заявку отримано",
-    sentNote: "Відповімо протягом 15 хвилин у робочий час.",
-    name: "Ваше ім’я",
-    contact: "Телефон або @telegram",
-    contactQuestion: "Ваш Telegram або телефон",
-    option: "Оберіть, що саме вас цікавить",
-    projectType: "Тип проєкту",
-    budget: "Бюджет",
-    question: "Ваше питання",
-    message: "Коротко про проєкт",
-    sending: "Надсилаємо…",
-    sendQuestion: "Надіслати питання",
-    sendLead: "Надіслати заявку",
-    error: "Не вдалося надіслати. Спробуйте ще раз або напишіть нам у Telegram.",
-    consent: "Натискаючи кнопку, ви погоджуєтесь з",
-    privacy: "політикою конфіденційності",
-  },
-  en: {
-    nameError: "Please enter your name",
-    messageError: "Please type your question",
-    popupNote: "Leave a request and we’ll get back to you within 15 minutes.",
-    sectionTitle: "Send us a request",
-    questionTitle: "Still have questions?",
-    questionNote: "Ask them here — we’ll reply within 15 minutes.",
-    sentQuestion: "Thank you! Question received",
-    sentLead: "Thank you! Request received",
-    sentNote: "We’ll reply within 15 minutes during business hours.",
-    name: "Your name",
-    contact: "Phone number / WhatsApp",
-    contactQuestion: "Phone number / WhatsApp",
-    option: "Choose what you’re interested in",
-    projectType: "Project type",
-    budget: "Budget",
-    question: "Your question",
-    message: "Tell us briefly about your project",
-    sending: "Sending…",
-    sendQuestion: "Send question",
-    sendLead: "Send request",
-    error: "Couldn’t send. Please try again or message us on Telegram.",
-    consent: "By clicking the button, you agree to our",
-    privacy: "privacy policy",
-  },
-} satisfies Record<Locale, Record<string, string>>;
-
-function validate(name: string, contact: string, question: boolean, message: string, locale: Locale): Errors {
+function validate(name: string, contact: string, question: boolean, message: string, locale: Locale, t: FormsContent): Errors {
   const errors: Errors = {};
-  if (!question && name.trim().length < 2) errors.name = copy[locale].nameError;
-  if (question && message.trim().length < 3) errors.message = copy[locale].messageError;
+  if (!question && name.trim().length < 2) errors.name = t.nameError;
+  if (question && message.trim().length < 3) errors.message = t.messageError;
   const contactProblem = contactError(contact, locale);
   if (contactProblem) errors.contact = contactProblem;
   return errors;
@@ -138,10 +87,12 @@ type ContactFormProps = {
   /** Popup: which service opened it (and an optional preselected option) */
   preset?: LeadPreset;
   locale?: Locale;
+  /** Texts (defaults to the page language) */
+  content?: FormsContent;
 };
 
-export function ContactForm({ variant = "section", preset = { direction: "web" }, locale = "uk" }: ContactFormProps) {
-  const t = copy[locale];
+export function ContactForm({ variant = "section", preset = { direction: "web" }, locale = "uk", content = siteContent[locale].forms }: ContactFormProps) {
+  const t = content;
   const { projectTypes, budgets, defaultBudget } = leadOptions[locale];
   const section = variant === "section";
   const question = variant === "question";
@@ -167,7 +118,7 @@ export function ContactForm({ variant = "section", preset = { direction: "web" }
     e.preventDefault();
     if (sending.current) return;
     const trap = readHoneypot(e.currentTarget as HTMLFormElement);
-    const found = validate(name, contact, question, message, locale);
+    const found = validate(name, contact, question, message, locale, t);
     setErrors(found);
     if (Object.keys(found).length) return;
 
@@ -351,7 +302,7 @@ export function ContactForm({ variant = "section", preset = { direction: "web" }
       <p className="max-w-[205px] text-[11px] leading-body text-white/45 md:max-w-none md:text-[12px]">
         {t.consent}{" "}
         <a
-          href={routes[locale].privacy}
+          href={t.privacyHref}
           className="text-white/75 underline decoration-white/45 underline-offset-2 transition-colors hover:text-white hover:decoration-white"
         >
           {t.privacy}

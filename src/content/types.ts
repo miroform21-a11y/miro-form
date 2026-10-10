@@ -203,6 +203,55 @@ export type FooterContent = {
   privacy: ContentLink;
 };
 
+export type FormsContent = {
+  /** Heading of the Contacts section form */
+  sectionTitle: string;
+  /** Subtitle of the service / package popup (its title is the service or package name) */
+  popupNote: string;
+  /** FAQ question popup */
+  questionTitle: string;
+  questionNote: string;
+  /** Field labels / placeholders */
+  name: string;
+  contact: string;
+  contactQuestion: string;
+  option: string;
+  projectType: string;
+  budget: string;
+  question: string;
+  message: string;
+  /** Submit button states */
+  sending: string;
+  sendQuestion: string;
+  sendLead: string;
+  /** Validation and send errors (phone / Telegram format errors come from lib/contact.ts) */
+  nameError: string;
+  messageError: string;
+  error: string;
+  /** Success state inside the form (the user is then taken to the thank-you page) */
+  sentLead: string;
+  sentQuestion: string;
+  sentNote: string;
+  /** "<consent> <privacy link>." */
+  consent: string;
+  privacy: string;
+  privacyHref: string;
+  /** Screen-reader label of the popup close button */
+  closeLabel: string;
+};
+
+type LeadOrQuestion = { lead: string; question: string };
+
+export type ThankYouContent = {
+  eyebrow: LeadOrQuestion;
+  srTitle: LeadOrQuestion;
+  /** Pixel heading lines (keep them short) */
+  line1: string;
+  line2: LeadOrQuestion;
+  text: LeadOrQuestion;
+  back: ContentLink;
+};
+
 export type SiteContent = {
   header: HeaderContent;
   hero: HeroContent;
@@ -216,4 +265,6 @@ export type SiteContent = {
   faq: FaqContent;
   contact: ContactContent;
   footer: FooterContent;
+  forms: FormsContent;
+  thankYou: ThankYouContent;
 };
