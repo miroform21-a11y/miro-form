@@ -3,6 +3,9 @@
  * The public components render exactly these values; the future /admin edits them.
  */
 
+import type { Service } from "@/data/services";
+import type { Project } from "@/data/projects";
+
 /** A button / link: visible text + where it leads ("#contact", "/en", "https://…") */
 export type ContentLink = { label: string; href: string };
 
@@ -39,7 +42,39 @@ export type HeroContent = {
   stack: { label: string; w?: [number, number] }[];
 };
 
+export type ServicesContent = {
+  tag: string;
+  /** Section heading split as in Figma: on phones one sentence, on desktop three lines with the logos pill in line 2 */
+  heading: {
+    mobile: { before: string; bold: string; after: string };
+    desktop: { line1: string; line1Bold: string; line2BoldBeforeLogos: string; line2BoldAfterLogos: string; line3: string };
+  };
+  quote: string;
+  /** Decor cursor labels (fixed label widths — keep them short) and the letter on the 3D key */
+  cursorSite: string;
+  cursorDesign: string;
+  keyLetter: string;
+  /** Screen-reader label of a card: "<card title> — <leadLabel>" */
+  leadLabel: string;
+  cards: Service[];
+};
+
+export type WorksContent = {
+  tag: string;
+  title: string;
+  all: ContentLink;
+  /** Counter "( 06 / 40+ )" — the total of delivered projects */
+  total: string;
+  /** Exactly six slots: the desktop bento rows and the phone card geometry are tied to the slot index */
+  projects: Project[];
+  /** Screen-reader / alt suffixes of a project card */
+  card: { screenshot: string; video: string; open: string };
+  slider: { label: string; slides: string; slide: string };
+};
+
 export type SiteContent = {
   header: HeaderContent;
   hero: HeroContent;
+  services: ServicesContent;
+  works: WorksContent;
 };
