@@ -4,13 +4,27 @@ import { PillButton } from "@/components/ui/PillButton";
 import { BriefForm } from "@/components/brief/BriefForm";
 import { routes, type Locale } from "@/i18n/locale";
 import { briefContent } from "@/content";
-import type { BriefPageContent } from "@/content/types";
+import type { BriefPageContent, BriefUiContent } from "@/content/types";
+import type { BriefSchema } from "@/data/brief";
 
 const pad = "px-5 md:px-8 lg:px-[clamp(40px,6.25vw,90px)]";
 
 
 /** The /brief page (and /en/brief): intro + the wizard. */
-export function BriefPage({ locale = "uk", content = briefContent[locale].page }: { locale?: Locale; content?: BriefPageContent }) {
+export function BriefPage({
+  locale = "uk",
+  content = briefContent[locale].page,
+  uiContent,
+  schema,
+  initialStep,
+}: {
+  locale?: Locale;
+  content?: BriefPageContent;
+  /** wizard texts / questionnaire / first step — used by the admin preview */
+  uiContent?: BriefUiContent;
+  schema?: BriefSchema;
+  initialStep?: number;
+}) {
   const t = content;
   const home = routes[locale].home;
   return (
@@ -74,7 +88,7 @@ export function BriefPage({ locale = "uk", content = briefContent[locale].page }
           </p>
         </header>
 
-        <BriefForm locale={locale} />
+        <BriefForm locale={locale} content={uiContent} schema={schema} initialStep={initialStep} />
 
         <p className="py-12 text-center text-[13px] leading-body text-white/40">© 2026 MIROFORM®</p>
       </div>

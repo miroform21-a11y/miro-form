@@ -2,7 +2,7 @@
 
 import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { directionByIdFor, leadOptions, type LeadPreset } from "@/data/leads";
+import type { LeadPreset } from "@/data/leads";
 import { routes, type Locale } from "@/i18n/locale";
 import { siteContent } from "@/content";
 import type { FormsContent } from "@/content/types";
@@ -93,11 +93,11 @@ type ContactFormProps = {
 
 export function ContactForm({ variant = "section", preset = { direction: "web" }, locale = "uk", content = siteContent[locale].forms }: ContactFormProps) {
   const t = content;
-  const { projectTypes, budgets, defaultBudget } = leadOptions[locale];
+  const { projectTypes, budgets, defaultBudget, directions } = t.options;
   const section = variant === "section";
   const question = variant === "question";
   const id = section ? "lead" : `modal-${variant}`;
-  const service = directionByIdFor(locale, preset.direction);
+  const service = directions.find((d) => d.id === preset.direction) ?? directions[0];
 
   const title = section ? t.sectionTitle : question ? t.questionTitle : (preset.title ?? service.popupTitle);
   const note = question ? t.questionNote : t.popupNote;

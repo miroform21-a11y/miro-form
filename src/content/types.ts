@@ -10,6 +10,7 @@ import type { Step } from "@/data/process";
 import type { Plan, pricingByLocale } from "@/data/pricing";
 import type { Review } from "@/data/reviews";
 import type { FaqItem } from "@/data/faq";
+import type { DirectionId } from "@/data/leads";
 
 /** A button / link: visible text + where it leads ("#contact", "/en", "https://…") */
 export type ContentLink = { label: string; href: string };
@@ -238,6 +239,13 @@ export type FormsContent = {
   privacyHref: string;
   /** Screen-reader label of the popup close button */
   closeLabel: string;
+  /** Choices of the Contacts form and of the service popups (one direction per service card) */
+  options: {
+    projectTypes: string[];
+    budgets: string[];
+    defaultBudget: string;
+    directions: { id: DirectionId; popupTitle: string; options: string[] }[];
+  };
 };
 
 type LeadOrQuestion = { lead: string; question: string };

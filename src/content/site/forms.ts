@@ -1,9 +1,18 @@
+import { leadOptions } from "@/data/leads";
 import { routes, type Locale } from "@/i18n/locale";
 import type { FormsContent, ThankYouContent } from "../types";
 
+/** Option lists of one language (own copies, so editing one language never changes the other) */
+const optionsFor = (l: Locale): FormsContent["options"] => ({
+  projectTypes: [...leadOptions[l].projectTypes],
+  budgets: [...leadOptions[l].budgets],
+  defaultBudget: leadOptions[l].defaultBudget,
+  directions: leadOptions[l].directions.map((d) => ({ id: d.id, popupTitle: d.popupTitle, options: [...d.options] })),
+});
+
 /**
  * Texts of the lead forms: the Contacts section form, the service / package popup and the FAQ question popup.
- * The option lists (project types, budgets, popup services) stay in data/leads.ts — /api/lead accepts only those values.
+ * Note: /api/lead validates the chosen options against data/leads.ts (the defaults below), not against edits.
  */
 export const formsContent: Record<Locale, FormsContent> = {
   uk: {
@@ -32,6 +41,7 @@ export const formsContent: Record<Locale, FormsContent> = {
     privacy: "політикою конфіденційності",
     privacyHref: routes.uk.privacy,
     closeLabel: "Закрити форму",
+    options: optionsFor("uk"),
   },
   en: {
     sectionTitle: "Send us a request",
@@ -59,6 +69,7 @@ export const formsContent: Record<Locale, FormsContent> = {
     privacy: "privacy policy",
     privacyHref: routes.en.privacy,
     closeLabel: "Close form",
+    options: optionsFor("en"),
   },
 };
 

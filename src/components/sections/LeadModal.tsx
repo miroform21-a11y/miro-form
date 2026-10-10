@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { OPEN_LEAD_EVENT, type LeadPopupRequest } from "@/components/ui/LeadCard";
-import { directionByIdFor } from "@/data/leads";
 import { ContactForm } from "./ContactForm";
 import type { Locale } from "@/i18n/locale";
 import { siteContent } from "@/content";
@@ -51,7 +50,7 @@ export function LeadModal({ locale = "uk", content = siteContent[locale].forms }
   const label =
     request.kind === "question"
       ? content.questionTitle
-      : (request.preset.title ?? directionByIdFor(locale, request.preset.direction).popupTitle);
+      : (request.preset.title ?? content.options.directions.find((d) => d.id === request.preset.direction)?.popupTitle);
 
   return (
     <div

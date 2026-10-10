@@ -548,24 +548,35 @@ const ClockIcon = () => (
 /* Wizard                                                              */
 /* ------------------------------------------------------------------ */
 
-export function BriefForm({ locale = "uk", content = briefContent[locale].ui }: { locale?: Locale; content?: BriefUiContent }) {
-  const schema = briefSchemas[locale];
+export function BriefForm({
+  locale = "uk",
+  content = briefContent[locale].ui,
+  schema = briefSchemas[locale],
+  initialStep = 0,
+}: {
+  locale?: Locale;
+  content?: BriefUiContent;
+  /** The questionnaire (defaults to the published one of the language) */
+  schema?: BriefSchema;
+  /** Step opened first (the admin preview shows the step being edited) */
+  initialStep?: number;
+}) {
   const t = content;
   return (
     <BriefLocale.Provider value={{ locale, t, schema }}>
-      <Wizard />
+      <Wizard initialStep={initialStep} />
     </BriefLocale.Provider>
   );
 }
 
-function Wizard() {
+function Wizard({ initialStep }: { initialStep: number }) {
   const { locale, t, schema } = useBriefLocale();
   const briefSteps = schema.steps;
   const LAST = briefSteps.length - 1;
   const [answers, setAnswers] = useState<BriefAnswers>(() => defaultAnswers(briefSteps));
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(initialStep);
   /** Furthest step opened so far — the steps before it are marked as passed in the side list */
-  const [furthest, setFurthest] = useState(0);
+  const [furthest, setFurthest] = useState(initialStep);
   const [errors, setErrors] = useState<Errors>({});
   const [status, setStatus] = useState<"idle" | "sending" | "error" | "limited" | "sent">("idle");
   const [errorCode, setErrorCode] = useState("");

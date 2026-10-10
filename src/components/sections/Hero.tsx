@@ -4,7 +4,7 @@ import { PillButton } from "@/components/ui/PillButton";
 import { HeroParallax } from "./HeroParallax";
 import type { Locale } from "@/i18n/locale";
 import { siteContent } from "@/content";
-import type { HeroContent } from "@/content/types";
+import type { HeaderContent, HeroContent } from "@/content/types";
 
 export function AvatarStack({ avatars, size = 46, borderColor = "#050505" }: { avatars: readonly string[]; size?: number; borderColor?: string }) {
   return (
@@ -51,7 +51,15 @@ function StackTags({ className = "", size, stack }: { className?: string; size: 
   );
 }
 
-export function Hero({ locale = "uk", content = siteContent[locale].hero }: { locale?: Locale; content?: HeroContent }) {
+export function Hero({
+  locale = "uk",
+  content = siteContent[locale].hero,
+  headerContent = siteContent[locale].header,
+}: {
+  locale?: Locale;
+  content?: HeroContent;
+  headerContent?: HeaderContent;
+}) {
   const t = content;
   return (
     <section
@@ -120,7 +128,7 @@ export function Hero({ locale = "uk", content = siteContent[locale].hero }: { lo
 
       {/* ---------- Content ---------- */}
       <div className="relative z-10 mx-auto flex h-full max-w-[1440px] flex-col px-5 pt-[24.2px] pb-4 max-lg:min-h-[inherit] md:px-8 lg:px-[clamp(40px,6.25vw,90px)] lg:pt-7 lg:pb-0">
-        <Header locale={locale} />
+        <Header locale={locale} content={headerContent} />
 
         <div className="mt-[24.2px] flex flex-col lg:mt-[clamp(48px,5.56vw,80px)] lg:w-[calc(100%+19px)] lg:flex-row lg:items-start lg:justify-between">
           <div className="flex flex-col whitespace-nowrap">

@@ -4,9 +4,17 @@ import { Reveal } from "@/components/ui/Reveal";
 import { ContactForm } from "./ContactForm";
 import type { Locale } from "@/i18n/locale";
 import { siteContent } from "@/content";
-import type { ContactContent } from "@/content/types";
+import type { ContactContent, FormsContent } from "@/content/types";
 
-export function Contact({ locale = "uk", content = siteContent[locale].contact }: { locale?: Locale; content?: ContactContent }) {
+export function Contact({
+  locale = "uk",
+  content = siteContent[locale].contact,
+  formsContent = siteContent[locale].forms,
+}: {
+  locale?: Locale;
+  content?: ContactContent;
+  formsContent?: FormsContent;
+}) {
   const t = content;
   return (
     <section id="contact" className="relative bg-ink px-2.5 pt-6 pb-[72px] md:px-[38px] md:py-[55px]">
@@ -87,7 +95,7 @@ export function Contact({ locale = "uk", content = siteContent[locale].contact }
 
         {/* Form */}
         <Reveal delay={120} className="relative w-full md:max-w-[620px] xl:w-[588px] xl:shrink-0">
-          <ContactForm locale={locale} />
+          <ContactForm locale={locale} content={formsContent} />
         </Reveal>
       </div>
     </section>
