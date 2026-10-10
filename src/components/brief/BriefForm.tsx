@@ -86,7 +86,7 @@ const copy = {
     removeLink: "Remove link",
     addLink: "+ Add link",
     phone: "Phone",
-    phonePlaceholder: "+1 (555) 123-4567",
+    phonePlaceholder: "+38 073 021 77 21",
     socials: "Social media",
     socialNetwork: "Social network",
     change: "Change",
@@ -586,7 +586,7 @@ function Notice({ notice }: { notice: BriefNotice }) {
       href={notice.href}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={`${notice.text} ${t.openTelegram}`}
+      aria-label={`${notice.text} ${notice.linkLabel ?? t.openTelegram}`}
       className={`${box} transition-[border-color,background-color,translate] duration-300 ease-(--ease-smooth) hover:-translate-y-0.5 hover:border-lime/60 hover:bg-lime/[0.09] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-lime active:translate-y-0`}
     >
       {content}
@@ -891,6 +891,7 @@ function Wizard() {
 
             <div className="mt-7 flex flex-col gap-6 md:mt-9 md:gap-7">
               {current.notice && <Notice notice={current.notice} />}
+              {current.extraNotices?.map((n) => <Notice key={n.text} notice={n} />)}
               {current.fields.map((f) =>
                 f.showIf ? (
                   <Reveal key={f.key} show={isShown(f, answers)}>

@@ -8,12 +8,15 @@ export const siteName = "MIROFORM";
 
 /** Static social preview (public/og-image.png, 1200×630) */
 export const ogImage = { url: "/og-image.png", width: 1200, height: 630, alt: "MIROFORM — розробка сайтів, дизайн та AI-рішення під ключ" };
-const ogImageEn = { ...ogImage, alt: "MIROFORM — websites, design and AI solutions" };
+/** English social previews (public/og-image-en.png, public/og-brief-en.png, 1200×630) — never the Ukrainian image */
+export const ogImageEn = { url: "/og-image-en.png", width: 1200, height: 630, alt: "MIROFORM — websites that sell. Web development, web design and AI solutions" };
+export const ogImageBriefEn = { url: "/og-brief-en.png", width: 1200, height: 630, alt: "MIROFORM project brief — tell us about your idea" };
 
 export const absoluteUrl = (path = "/") => new URL(path, siteUrl).toString().replace(/\/$/, "");
 
 /** Real spellings of the brand name (Latin / Cyrillic) — used as schema.org alternateName. */
 const brandSpellings = ["Miroform", "Miro Form", "МіроФорм", "МироФорм"];
+const latinSpellings = brandSpellings.filter((s) => /^[\x20-\x7E]+$/.test(s));
 
 const orgId = `${siteUrl}/#organization`;
 const websiteId = `${siteUrl}/#website`;
@@ -31,16 +34,31 @@ export function languageAlternates(path: string): Record<string, string> | undef
  * Per-page metadata: unique title/description, canonical + hreflang, Open Graph and Twitter card.
  * English pages (locale "en") get en_US Open Graph.
  */
-export function pageMetadata({ title, description, path, locale = "uk" }: { title: string; description: string; path: string; locale?: Locale }): Metadata {
+export function pageMetadata({
+  title,
+  description,
+  path,
+  locale = "uk",
+  image,
+}: {
+  title: string;
+  description: string;
+  path: string;
+  locale?: Locale;
+  /** English pages only: a page-specific preview instead of ogImageEn */
+  image?: typeof ogImageEn;
+}): Metadata {
   const alternates = { canonical: path, languages: languageAlternates(path) };
-  if (locale === "en")
+  if (locale === "en") {
+    const preview = image ?? ogImageEn;
     return {
       title: { absolute: title },
       description,
       alternates,
-      openGraph: { title, description, url: path, type: "website", locale: "en_US", alternateLocale: "uk_UA", siteName, images: [ogImageEn] },
-      twitter: { card: "summary_large_image", title, description, images: [ogImage.url] },
+      openGraph: { title, description, url: path, type: "website", locale: "en_US", alternateLocale: "uk_UA", siteName, images: [preview] },
+      twitter: { card: "summary_large_image", title, description, images: [preview.url] },
     };
+  }
   return {
     title: { absolute: title },
     description,
@@ -108,11 +126,14 @@ export function faqJsonLd(items: { question: string; answer: string }[]) {
 export const siteJsonLdEn = {
   "@context": "https://schema.org",
   "@graph": [
+    // English text only (no Cyrillic brand spellings or Ukrainian area name), so nothing on /en reads as another language
     {
       ...siteJsonLd["@graph"][0],
+      alternateName: latinSpellings,
       description: "Digital studio: turnkey design, web development and AI solutions for businesses.",
-      contactPoint: { ...siteJsonLd["@graph"][0].contactPoint, availableLanguage: ["uk", "en"] },
+      areaServed: undefined,
+      contactPoint: { ...siteJsonLd["@graph"][0].contactPoint, areaServed: undefined, availableLanguage: ["uk", "en"] },
     },
-    { ...siteJsonLd["@graph"][1], url: absoluteUrl("/en"), inLanguage: "en" },
+    { ...siteJsonLd["@graph"][1], url: absoluteUrl("/en"), inLanguage: "en", alternateName: latinSpellings },
   ],
 };

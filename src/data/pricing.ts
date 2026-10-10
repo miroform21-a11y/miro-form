@@ -70,8 +70,8 @@ export const discounts: { value: string; title: string; lines: [string, string];
 /* ---------------- English version ---------------- */
 
 /**
- * US prices are set separately from the Ukrainian ones and are not filled in yet.
- * An empty `price` shows "Custom quote" in the price slot; enter e.g. "$1,500" to show "From $1,500".
+ * US prices, set separately from the Ukrainian ones ("From $990").
+ * An empty `price` would show "Custom quote" in the price slot instead.
  */
 const plansEn: Plan[] = [
   {
@@ -83,7 +83,7 @@ const plansEn: Plan[] = [
     ],
     title: ["Landing Page"],
     description: "A one-page site for a product, service or ad campaign. Up to 10 well-crafted sections and a custom design. Launch in as little as 7 days.",
-    price: "", // US price — to be provided
+    price: "$990",
     lead: { direction: "web", option: "Landing page", title: "Landing Page" },
   },
   {
@@ -93,7 +93,7 @@ const plansEn: Plan[] = [
     title: ["Multi-page", " website"],
     description: "A multi-page website or online store for a company or brand. Admin panel, animations and CRM. Timeline: from 3 weeks.",
     mobileDescription: ["A multi-page website or online store for a company or brand. Admin panel, animations and CRM.", "Timeline: from 3 weeks."],
-    price: "", // US price — to be provided
+    price: "$3,990",
     lead: { direction: "web", option: "Multi-page website", title: "Multi-page website" },
   },
 ];

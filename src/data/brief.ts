@@ -63,6 +63,8 @@ export type BriefNotice = {
   href?: string;
   /** Colour on phones (below md); lime from md up */
   mobileTone?: "blue";
+  /** What the link opens, for screen readers (defaults to "Telegram MIROFORM") */
+  linkLabel?: string;
 };
 
 export type BriefStep = {
@@ -72,6 +74,8 @@ export type BriefStep = {
   hint: string;
   fields: BriefField[];
   notice?: BriefNotice;
+  /** More plates under `notice` (the English brief: "send materials via WhatsApp") */
+  extraNotices?: BriefNotice[];
   /** Its required fields must be filled in before the brief is sent */
   blocking?: boolean;
 };

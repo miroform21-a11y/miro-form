@@ -16,7 +16,7 @@ const copy = {
   en: {
     askLabel: "Didn’t find your answer? Ask a question",
     ask: ["Didn’t find", "your answer?"],
-    askText: "Message us on Telegram — we reply within 15 minutes during business hours.",
+    askText: "Message us on Telegram and we’ll reply within 15 minutes during business hours.",
     askButton: "Ask a question",
     title: ["Questions", "& answers"],
   },

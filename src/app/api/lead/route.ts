@@ -50,7 +50,7 @@ function parse(body: Record<string, unknown>, locale: Locale): Lead | null {
   const contact = text(body.contact, 40);
   const direction = text(body.direction, 60);
   const option = text(body.option, 60);
-  const budget = text(body.budget, 20);
+  const budget = text(body.budget, 40);
   const message = text(body.message, 3000);
   if ([name, contact, direction, option, budget, message].some((v) => v === null)) return null;
 

@@ -50,25 +50,25 @@ const faqEn: FaqItem[] = [
   {
     question: "How long does a project take?",
     answer:
-      "Landing page — from 7 days. Multi-page website — from 3 weeks. AI automation — once we’ve analyzed the task. Exact timelines are set in the contract.",
+      "A landing page takes from 7 days, a multi-page website from 3 weeks. AI automation depends on the task analysis. Exact timelines are set in the contract.",
     answerLines: [
-      "Landing page — from 7 days. Multi-page website — from 3 weeks.",
-      "AI automation — once we’ve analyzed the task. Exact timelines are set in the contract.",
+      "A landing page takes from 7 days, a multi-page website from 3 weeks.",
+      "AI automation depends on the task analysis. Exact timelines are set in the contract.",
     ],
   },
   {
     question: "Can we start from scratch, with no spec or logo?",
-    answer: "Yes. We’ll help you define the format, structure, style and features you need — from the brief to the finished product.",
+    answer: "Yes. We’ll help you define the format, structure, style and features you need, from the brief to the finished product.",
   },
   {
     question: "What’s included in development?",
     mobileLines: ["What’s included", "in development?"],
     answer:
-      "Everything from research and structure to custom design, development and launch. Admin panel, forms and domain setup — a fully turnkey project.",
+      "Everything from research and structure to custom design, development and launch. Admin panel, forms and domain setup are included, so you get a fully turnkey project.",
   },
   {
     question: "What do you build with?",
-    answer: "Figma, Webflow, Framer and custom development on Next.js with clean code — we choose the stack to fit the task.",
+    answer: "Figma, Webflow, Framer and custom development on Next.js with clean code. We choose the stack to fit the task.",
   },
   {
     question: "Is design included in the price?",

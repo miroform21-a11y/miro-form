@@ -17,7 +17,7 @@ const bento = (projects: Project[]) =>
 
 const copy = {
   uk: { tag: "Роботи", title: "Наші проєкти", all: "Усі роботи" },
-  en: { tag: "Work", title: "Our projects", all: "All projects" },
+  en: { tag: "Portfolio", title: "Our Projects", all: "All projects" },
 } satisfies Record<Locale, Record<string, string>>;
 
 export function Works({ locale = "uk" }: { locale?: Locale }) {

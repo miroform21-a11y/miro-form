@@ -4,7 +4,7 @@ import { fontVariables } from "../fonts";
 import { SmoothScroll } from "@/components/ui/SmoothScroll";
 import { Preloader } from "@/components/ui/Preloader";
 import { JsonLd } from "@/components/ui/JsonLd";
-import { ogImage, siteJsonLdEn, siteName, siteUrl } from "@/lib/seo";
+import { ogImageEn, siteJsonLdEn, siteName, siteUrl } from "@/lib/seo";
 
 /**
  * Defaults for the English routes (/en/...); indexable pages override title/description/canonical via
@@ -15,8 +15,8 @@ export const metadata: Metadata = {
   title: "MIROFORM — Websites, design and AI solutions",
   description: "MIROFORM is a digital studio for design, web development and AI solutions. From idea to your first lead in as little as 7 days.",
   applicationName: siteName,
-  openGraph: { type: "website", locale: "en_US", siteName, images: [{ ...ogImage, alt: "MIROFORM — websites, design and AI solutions" }] },
-  twitter: { card: "summary_large_image", images: [ogImage.url] },
+  openGraph: { type: "website", locale: "en_US", siteName, images: [ogImageEn] },
+  twitter: { card: "summary_large_image", images: [ogImageEn.url] },
   formatDetection: { telephone: false },
 };
 

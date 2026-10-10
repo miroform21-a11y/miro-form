@@ -69,7 +69,7 @@ function Price({ value, size, animate = false, locale }: { value: string; size: 
     <p className={`flex items-end whitespace-nowrap ${size === "lg" ? "gap-2.5" : "gap-2"}`}>
       <span className="text-[14px] leading-body text-ink-2/60">{value ? t.from : t.quote[0]}</span>
       <span
-        className={`font-display leading-none font-normal tracking-[-0.04em] text-ink-2 ${size === "lg" ? "text-[42px]" : "text-[36px]"}`}
+        className={`font-display leading-none font-normal tracking-[-0.04em] text-ink-2 ${size === "lg" ? (locale === "en" ? "text-[42px] max-[1439px]:text-[38px]" : "text-[42px]") : "text-[36px]"}`}
       >
         {!value ? t.quote[1] : animate ? <PriceCounter value={value} /> : value}
       </span>
@@ -362,8 +362,9 @@ function DesktopPlanCard({ plan, locale }: { plan: Plan; locale: Locale }) {
         </div>
       </div>
 
-      <div className="relative flex items-center gap-7">
-        <PillButton as="span" variant={isMulti ? "white" : "lime"} className="h-[60px] w-[250px] pr-1.5 pl-7">
+      <div className={locale === "en" ? "relative flex items-center gap-7 max-[1439px]:gap-5" : "relative flex items-center gap-7"}>
+        {/* the English label is longer than the 250px Figma button: let it grow so the arrow circle stays inside */}
+        <PillButton as="span" variant={isMulti ? "white" : "lime"} className={locale === "en" ? "h-[60px] w-auto min-w-[250px] shrink-0 pr-1.5 pl-7" : "h-[60px] w-[250px] pr-1.5 pl-7"}>
           {t.choose}
         </PillButton>
         <Price value={plan.price} size="lg" locale={locale} />

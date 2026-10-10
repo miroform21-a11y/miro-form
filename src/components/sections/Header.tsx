@@ -129,12 +129,17 @@ export function Header({ locale = "uk" }: { locale?: Locale }) {
       </div>
 
       <div className="flex items-center gap-2.5 md:gap-6 xl:gap-[clamp(16px,calc((100vw-1280px)*0.156+16px),41px)]">
-        <Pinned className="xl:hidden">
-          <LangSwitch size="sm" solid={scrolled} className={open ? "invisible" : ""} locale={locale} />
-        </Pinned>
-        <Pinned className="hidden xl:block">
-          <LangSwitch solid={scrolled} locale={locale} />
-        </Pinned>
+        {/* the English version is for US visitors: no switch to Ukrainian there */}
+        {locale === "uk" && (
+          <>
+            <Pinned className="xl:hidden">
+              <LangSwitch size="sm" solid={scrolled} className={open ? "invisible" : ""} />
+            </Pinned>
+            <Pinned className="hidden xl:block">
+              <LangSwitch solid={scrolled} />
+            </Pinned>
+          </>
+        )}
         <div className="hidden md:block">
           <PillButton href="#contact" circleSize={44} className="h-[52px] w-[225px] pr-[9px] pl-[31px]">
             {t.cta}
@@ -203,7 +208,7 @@ function MobileMenu({ open, onClose, locale }: { open: boolean; onClose: () => v
           />
         </a>
         <div className="flex items-center gap-2.5">
-          <LangSwitch size="sm" locale={locale} />
+          {locale === "uk" && <LangSwitch size="sm" />}
           <button
             type="button"
             aria-label={t.closeMenu}

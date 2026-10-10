@@ -49,7 +49,7 @@ const briefStepsEn: BriefStep[] = [
         type: "choice",
         label: "What kind of website do you need?",
         required: true,
-        options: ["One-page website (landing page)", "Multi-page website", "Online store", "Other", "Not sure yet, I need a consultation"],
+        options: ["Landing Page", "Multi-page website", "Online store", "Other", "Not sure yet, I need a consultation"],
       },
       { key: "project_type_other", type: "text", label: "What exactly do you need?", showIf: { key: "project_type", values: ["Other"] } },
       {
@@ -171,6 +171,14 @@ const briefStepsEn: BriefStep[] = [
     title: "Materials and preferences",
     hint: "What’s already ready for the website.",
     notice: { icon: "paperclip", text: "You can send us materials separately on Telegram after completing the brief.", href: socialLinks.telegram },
+    extraNotices: [
+      {
+        icon: "paperclip",
+        text: "You can also send your project materials via WhatsApp.",
+        href: socialLinks.whatsapp,
+        linkLabel: "Open MIROFORM on WhatsApp in a new tab",
+      },
+    ],
     fields: [
       {
         key: "materials",
@@ -204,9 +212,9 @@ const briefStepsEn: BriefStep[] = [
         type: "choice",
         label: "Approximate project budget",
         required: true,
-        // US ranges: separate from the Ukrainian brief, same numbers for now
-        options: ["$500–1,500", "$1,500–3,000", "$3,000–5,000", "Installments", "I need a consultation"],
-        default: "$500–1,500",
+        // US ranges — the same as in the home page form (data/leads.ts), separate from the Ukrainian brief
+        options: ["Up to $1,500", "From $1,500 to $3,000", "From $3,000 to $7,000", "Installment payments", "I need a consultation"],
+        default: "Up to $1,500",
       },
       {
         key: "deadline",
@@ -225,7 +233,7 @@ const briefStepsEn: BriefStep[] = [
       {
         key: "extra",
         type: "textarea",
-        label: "Anything else we should know about your project?",
+        label: "Anything else we should know?",
         hint: "Share anything that, in your opinion, will help us better understand the task and take important details into account while building the website.",
       },
     ],
@@ -238,8 +246,9 @@ const briefStepsEn: BriefStep[] = [
     blocking: true,
     fields: [
       { key: "name", type: "text", label: "Your name", required: true, autoComplete: "name", placeholder: "How should we address you?" },
-      { key: "contact", type: "contact", label: "Phone or Telegram", required: true, placeholder: "Phone or @username" },
-      { key: "contact_method", type: "choice", label: "Preferred contact method", required: true, options: ["Phone call", "Telegram", "WhatsApp", "Other"] },
+      { key: "contact", type: "contact", label: "Phone number / WhatsApp", required: true, placeholder: "+38 073 021 77 21" },
+      // no "Phone call": calls to US clients can't be promised
+      { key: "contact_method", type: "choice", label: "Preferred contact method", required: true, options: ["WhatsApp", "Telegram", "Other"] },
       {
         key: "contact_handle",
         type: "text",

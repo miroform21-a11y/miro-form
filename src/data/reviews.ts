@@ -96,22 +96,22 @@ const reviewCopyEn: Record<string, Pick<Review, "text" | "name"> & Partial<Pick<
     name: "Oleksandr K.",
   },
   maryna: {
-    text: "They got our vibe from the very first brief. Court bookings now go through the site — it saves us so much time.",
+    text: "They got our vibe from the very first brief. Court bookings now go through the site, which saves us so much time.",
     name: "Maryna L.",
   },
   anna: { text: "Incredibly detail-oriented: every animation, every screen. They launched even faster than promised.", name: "Anna Sh." },
   dmytro: {
-    text: "What we got is more than a website — it’s a well-oiled system: CRM, Telegram bot and analytics all work perfectly.",
+    text: "What we got is more than a website. It’s a well-oiled system: CRM, Telegram bot and analytics all work perfectly.",
     mobileText: "Not just a website but a system: CRM, Telegram bot and analytics run like clockwork.",
     name: "Dmytro P.",
   },
   viktor: {
-    text: "They built the landing page for our investment project in two weeks. Serious and modern — investors get it instantly.",
+    text: "They built the landing page for our investment project in two weeks. Serious and modern, so investors get it instantly.",
     name: "Viktor S.",
     initials: "VS",
   },
   olena: {
-    text: "Online court bookings grew several-fold. The admin is easy — we update schedules and prices ourselves in a minute.",
+    text: "Online court bookings grew several-fold. The admin panel is easy: we update schedules and prices ourselves in a minute.",
     name: "Olena R.",
     initials: "OR",
   },

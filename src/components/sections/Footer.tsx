@@ -28,7 +28,7 @@ const copy = {
   en: {
     nav: [
       { label: "Services", href: "#services" },
-      { label: "Work", href: "#works" },
+      { label: "Projects", href: "#works" },
       { label: "About", href: "#about" },
       { label: "Pricing", href: "#pricing" },
       { label: "FAQ", href: "#faq" },

@@ -26,7 +26,7 @@ const copy = {
     readBefore: "Seven years of craft — a new",
     readAfter: "form, a new name.",
     projects: "Projects delivered",
-    years: "Years in digital",
+    years: "Years of experience",
     fullCycle: "Full-cycle approach: research, design, development, launch and support — together, from idea to results.",
   },
 } satisfies Record<Locale, Record<string, string>>;

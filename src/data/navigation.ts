@@ -30,7 +30,7 @@ export const contacts = {
 
 const navLinksEn = [
   { label: "Services", href: "#services" },
-  { label: "Work", href: "#works" },
+  { label: "Projects", href: "#works" },
   { label: "About", href: "#about" },
   { label: "Process", href: "#process" },
   { label: "FAQ", href: "#faq" },
