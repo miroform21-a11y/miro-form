@@ -12,12 +12,12 @@ import { Footer } from "@/components/sections/Footer";
 import { LeadModal } from "@/components/sections/LeadModal";
 import { JsonLd } from "@/components/ui/JsonLd";
 import { faqByLocale } from "@/data/faq";
-import { faqJsonLd, pageMetadata } from "@/lib/seo";
+import { faqJsonLd, offerCatalogJsonLd, pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata({
-  title: "Turnkey Website Development for Business — MIROFORM",
+  title: "Turnkey Website & Landing Page Development — MIROFORM",
   description:
-    "We build landing pages, corporate websites and online stores, turnkey. Modern design, development, AI and Telegram integrations. From idea to launch in as little as 7 days.",
+    "Turnkey websites and landing pages for business: design, development, AI and Telegram integrations. Landing pages from $990, launch in as little as 7 days.",
   path: "/en",
   locale: "en",
 });
@@ -40,7 +40,7 @@ export default function EnglishHome() {
       </main>
       <Footer locale="en" />
       <LeadModal locale="en" />
-      <JsonLd data={{ "@context": "https://schema.org", ...faqJsonLd(faqByLocale.en) }} />
+      <JsonLd data={{ "@context": "https://schema.org", "@graph": [faqJsonLd(faqByLocale.en), offerCatalogJsonLd("en")] }} />
     </>
   );
 }

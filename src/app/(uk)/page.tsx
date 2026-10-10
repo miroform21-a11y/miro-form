@@ -12,12 +12,12 @@ import { Footer } from "@/components/sections/Footer";
 import { LeadModal } from "@/components/sections/LeadModal";
 import { JsonLd } from "@/components/ui/JsonLd";
 import { faq } from "@/data/faq";
-import { faqJsonLd, pageMetadata } from "@/lib/seo";
+import { faqJsonLd, offerCatalogJsonLd, pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata({
-  title: "Розробка сайтів під ключ для бізнесу — MIROFORM",
+  title: "Створення сайтів і лендінгів під ключ — від $390 | MIROFORM",
   description:
-    "Створюємо лендінги, корпоративні сайти та інтернет-магазини під ключ. Сучасний дизайн, розробка й інтеграції з AI та Telegram. Від ідеї до запуску — від 7 днів.",
+    "Розробка сайтів і лендінгів під ключ для бізнесу: дизайн, розробка, AI та Telegram-інтеграції. Лендінг від $390, запуск від 7 днів, фіксована ціна в договорі.",
   path: "/",
 });
 
@@ -38,7 +38,7 @@ export default function Home() {
       </main>
       <Footer />
       <LeadModal />
-      <JsonLd data={{ "@context": "https://schema.org", ...faqJsonLd(faq) }} />
+      <JsonLd data={{ "@context": "https://schema.org", "@graph": [faqJsonLd(faq), offerCatalogJsonLd("uk")] }} />
     </>
   );
 }

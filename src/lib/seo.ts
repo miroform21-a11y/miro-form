@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { contacts, founderInstagram, socialLinks } from "@/data/navigation";
 import { routes, type Locale } from "@/i18n/locale";
+import { pricingByLocale } from "@/data/pricing";
 
 /** Production origin (miro-form.com and http:// both 308-redirect here on Vercel). */
 export const siteUrl = "https://www.miro-form.com";
@@ -120,6 +121,26 @@ export function faqJsonLd(items: { question: string; answer: string }[]) {
       acceptedAnswer: { "@type": "Answer", text: q.answer },
     })),
   };
+}
+
+const catalogName: Record<Locale, string> = {
+  uk: "Створення сайтів і лендінгів під ключ",
+  en: "Turnkey websites and landing pages",
+};
+
+/**
+ * The published packages (data/pricing.ts — the same data as the visible price cards) as an OfferCatalog of the
+ * Organization: "from" prices → PriceSpecification.minPrice in USD. Plans without a price are left out.
+ */
+export function offerCatalogJsonLd(locale: Locale) {
+  const offers = pricingByLocale[locale].plans
+    .filter((p) => p.price)
+    .map((p) => ({
+      "@type": "Offer",
+      itemOffered: { "@type": "Service", name: p.title.join("").replace(/\s+/g, " ").trim(), description: p.description, provider: { "@id": orgId } },
+      priceSpecification: { "@type": "PriceSpecification", minPrice: Number(p.price.replace(/[^\d]/g, "")), priceCurrency: "USD" },
+    }));
+  return { "@type": "Organization", "@id": orgId, hasOfferCatalog: { "@type": "OfferCatalog", name: catalogName[locale], itemListElement: offers } };
 }
 
 /** The same Organization + WebSite graph for the English root layout, with English text. */
