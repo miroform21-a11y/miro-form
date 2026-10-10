@@ -170,6 +170,39 @@ export type FaqContent = {
   askCard: { label: string; title: [string, string]; text: string; button: string };
 };
 
+export type ContactContent = {
+  tag: string;
+  eyebrow: string;
+  /** Three lines, the third in lime */
+  title: [string, string, string];
+  lead: string;
+  /** Messenger pills, in display order */
+  messengers: ContentLink[];
+};
+
+/** Company contact details as shown on a page of one language */
+export type CompanyContacts = { email: string; phone: string; phoneHref: string; legalName: string; legalId: string };
+
+export type FooterContent = {
+  /** aria-label of the logo link */
+  home: string;
+  tagline: string;
+  cta: ContentLink;
+  navLabel: string;
+  navTitle: string;
+  nav: ContentLink[];
+  servicesTitle: string;
+  services: string[];
+  /** Where the service items lead */
+  servicesHref: string;
+  contactsTitle: string;
+  contacts: CompanyContacts;
+  /** Round social buttons: short label, accessible name, link */
+  socials: { label: string; name: string; href: string }[];
+  rights: string;
+  privacy: ContentLink;
+};
+
 export type SiteContent = {
   header: HeaderContent;
   hero: HeroContent;
@@ -181,4 +214,6 @@ export type SiteContent = {
   pricing: PricingContent;
   reviews: ReviewsContent;
   faq: FaqContent;
+  contact: ContactContent;
+  footer: FooterContent;
 };

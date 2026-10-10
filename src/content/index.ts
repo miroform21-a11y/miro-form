@@ -10,6 +10,8 @@ import { processContent } from "./site/process";
 import { pricingContent } from "./site/pricing";
 import { reviewsContent } from "./site/reviews";
 import { faqContent } from "./site/faq";
+import { contactContent } from "./site/contact";
+import { footerContent } from "./site/footer";
 
 /**
  * Editable site content, one independent object per language. This is the single source the public
@@ -26,6 +28,8 @@ const forLocale = (l: Locale): SiteContent => ({
   pricing: pricingContent[l],
   reviews: reviewsContent[l],
   faq: faqContent[l],
+  contact: contactContent[l],
+  footer: footerContent[l],
 });
 
 export const siteContent: Record<Locale, SiteContent> = { uk: forLocale("uk"), en: forLocale("en") };

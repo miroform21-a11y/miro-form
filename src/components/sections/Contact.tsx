@@ -1,34 +1,13 @@
 import Image from "next/image";
-import { socialLinks } from "@/data/navigation";
 import { SectionTag } from "@/components/ui/SectionTag";
 import { Reveal } from "@/components/ui/Reveal";
 import { ContactForm } from "./ContactForm";
 import type { Locale } from "@/i18n/locale";
+import { siteContent } from "@/content";
+import type { ContactContent } from "@/content/types";
 
-const copy = {
-  uk: {
-    tag: "Контакти",
-    title: ["Маєте ідею?", "Розкажіть", "нам про неї"],
-    lead: "Відповімо протягом 15 хвилин та запропонуємо оптимальне рішення для вашого проєкту.",
-  },
-  en: {
-    tag: "Contact",
-    title: ["Got an idea?", "Tell us", "all about it"],
-    lead: "We’ll reply within 15 minutes and suggest the best solution for your project.",
-  },
-} satisfies Record<Locale, unknown>;
-
-const messengers = [
-  { label: "Telegram", href: socialLinks.telegram },
-  { label: "WhatsApp", href: socialLinks.whatsapp },
-  { label: "Instagram", href: socialLinks.instagram },
-];
-
-/** US audience: WhatsApp first, Telegram last */
-const messengersEn = [messengers[1], messengers[2], messengers[0]];
-
-export function Contact({ locale = "uk" }: { locale?: Locale }) {
-  const t = copy[locale];
+export function Contact({ locale = "uk", content = siteContent[locale].contact }: { locale?: Locale; content?: ContactContent }) {
+  const t = content;
   return (
     <section id="contact" className="relative bg-ink px-2.5 pt-6 pb-[72px] md:px-[38px] md:py-[55px]">
       {/* English budget chips wrap to a second row, so the English card may grow past the 806px Figma height */}
@@ -76,7 +55,7 @@ export function Contact({ locale = "uk" }: { locale?: Locale }) {
         <Reveal className="relative flex min-w-0 flex-col gap-4 pl-1.5 md:pl-0 xl:h-[424px] xl:max-w-[537px] xl:flex-1 xl:gap-7 xl:pt-[17px]">
           <div className="flex flex-col gap-4 xl:gap-6">
             <SectionTag className="self-start pr-[26px] xl:pr-[30px]">{t.tag}</SectionTag>
-            <p className="font-pixel text-[11px] leading-pixel whitespace-nowrap text-white/60 xl:text-[13px]">Make the right decision</p>
+            <p className="font-pixel text-[11px] leading-pixel whitespace-nowrap text-white/60 xl:text-[13px]">{t.eyebrow}</p>
           </div>
           <h2 className="font-display text-[36px] leading-[38px] font-bold md:leading-[1.05] tracking-[-0.03em] whitespace-nowrap text-white md:text-[52px] xl:text-[58px]">
             {t.title[0]}
@@ -90,7 +69,7 @@ export function Contact({ locale = "uk" }: { locale?: Locale }) {
               {t.lead}
             </p>
             <ul className="flex flex-wrap gap-1.5 xl:gap-4">
-              {(locale === "en" ? messengersEn : messengers).map((m) => (
+              {t.messengers.map((m) => (
                 <li key={m.label}>
                   <a
                     href={m.href}
