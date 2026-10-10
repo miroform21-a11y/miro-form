@@ -13,11 +13,10 @@ import { LeadModal } from "@/components/sections/LeadModal";
 import { JsonLd } from "@/components/ui/JsonLd";
 import { faq } from "@/data/faq";
 import { faqJsonLd, offerCatalogJsonLd, pageMetadata } from "@/lib/seo";
+import { siteContent } from "@/content";
 
 export const metadata = pageMetadata({
-  title: "Створення сайтів і лендінгів під ключ — від $390 | MIROFORM",
-  description:
-    "Розробка сайтів і лендінгів під ключ для бізнесу: дизайн, розробка, AI та Telegram-інтеграції. Лендінг від $390, запуск від 7 днів, фіксована ціна в договорі.",
+  ...siteContent.uk.seo.home,
   path: "/",
 });
 

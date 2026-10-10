@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
+import { siteContent } from "@/content";
 import { PrivacyPolicy } from "@/components/pages/PrivacyPolicy";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Privacy Policy — MIROFORM",
-  description: "How MIROFORM collects, uses and protects the personal data of website visitors.",
+  ...siteContent.en.seo.privacy,
   path: "/en/privacy-policy",
   locale: "en",
 });

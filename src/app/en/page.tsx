@@ -13,11 +13,10 @@ import { LeadModal } from "@/components/sections/LeadModal";
 import { JsonLd } from "@/components/ui/JsonLd";
 import { faqByLocale } from "@/data/faq";
 import { faqJsonLd, offerCatalogJsonLd, pageMetadata } from "@/lib/seo";
+import { siteContent } from "@/content";
 
 export const metadata = pageMetadata({
-  title: "Turnkey Website & Landing Page Development — MIROFORM",
-  description:
-    "Turnkey websites and landing pages for business: design, development, AI and Telegram integrations. Landing pages from $990, launch in as little as 7 days.",
+  ...siteContent.en.seo.home,
   path: "/en",
   locale: "en",
 });

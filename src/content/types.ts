@@ -254,6 +254,10 @@ export type ThankYouContent = {
 
 export type PrivacyContent = { back: string; title: string; sections: { title: string; body: string[] }[] };
 
+export type PageSeo = { title: string; description: string };
+/** One entry per public page of the language (brief and thank-you pages are noindex) */
+export type SeoContent = { home: PageSeo; privacy: PageSeo; brief: PageSeo; thankYou: PageSeo };
+
 export type SiteContent = {
   header: HeaderContent;
   hero: HeroContent;
@@ -270,6 +274,7 @@ export type SiteContent = {
   forms: FormsContent;
   thankYou: ThankYouContent;
   privacy: PrivacyContent;
+  seo: SeoContent;
 };
 
 /* ---------- Brief (/brief, /en/brief) ---------- */

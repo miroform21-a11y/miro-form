@@ -14,6 +14,7 @@ import { contactContent } from "./site/contact";
 import { footerContent } from "./site/footer";
 import { formsContent, thankYouContent } from "./site/forms";
 import { privacyContent } from "./site/privacy";
+import { seoContent } from "./site/seo";
 import { briefPageContent } from "./brief/page";
 import { briefUiContent } from "./brief/ui";
 
@@ -37,6 +38,7 @@ const siteFor = (l: Locale): SiteContent => ({
   forms: formsContent[l],
   thankYou: thankYouContent[l],
   privacy: privacyContent[l],
+  seo: seoContent[l],
 });
 
 export const siteContent: Record<Locale, SiteContent> = { uk: siteFor("uk"), en: siteFor("en") };

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { ThankYou } from "@/components/pages/ThankYou";
+import { siteContent } from "@/content";
 
 export const metadata: Metadata = {
-  title: "Thank you — MIROFORM",
-  description: "We’ve received your request and will get back to you shortly.",
+  ...siteContent.en.seo.thankYou,
   robots: { index: false, follow: false },
 };
 
