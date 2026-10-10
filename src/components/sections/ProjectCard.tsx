@@ -22,7 +22,7 @@ function Media({ project, crop, sizes, radius, mobile }: { project: Project; cro
         <ProjectVideo
           src={videoSrc}
           trigger={mobile ? "visible" : "hover"}
-          delay={mobile ? 4000 : 3000}
+          delay={2000}
           label={`${project.title} — відео сайту`}
         />
       )}

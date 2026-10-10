@@ -25,7 +25,7 @@ export const projects: Project[] = [
     description: "Стиль. Комфорт. Свобода руху",
     tags: ["Landing Page", "Figma", "Framer"],
     image: { src: "/images/works/car-rental.png", width: 1256, height: 1908 },
-    video: { desktop: "/videos/prestige-rent-preview.mp4", mobile: "/videos/prestige-rent-preview-540.mp4" },
+    video: { desktop: "/videos/prestige-rent-preview.mp4", mobile: "/videos/prestige-rent-preview-mobile.mp4" },
     crop: { left: 0, top: 0, width: 99.99, height: 269.07 },
     mobileCrop: { left: 0, top: 0, width: 100, height: 245.16 },
     titleSize: [30, 20],
