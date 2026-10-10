@@ -2,20 +2,25 @@ import Image from "next/image";
 import type { CSSProperties } from "react";
 import type { Project, ProjectCrop } from "@/data/projects";
 import { ArrowShot } from "@/components/ui/ArrowShot";
+import { ProjectVideo } from "./ProjectVideo";
 
 function Media({ project, crop, sizes, radius }: { project: Project; crop: ProjectCrop; sizes: string; radius: string }) {
   const { src, width, height } = project.image;
   return (
     <div className={`relative min-h-0 w-full flex-1 overflow-hidden ${radius}`}>
-      <Image
-        src={src}
-        alt={`${project.title} — скріншот сайту`}
-        width={width}
-        height={height}
-        sizes={sizes}
-        className="absolute max-w-none"
-        style={{ left: `${crop.left}%`, top: `${crop.top}%`, width: `${crop.width}%`, height: `${crop.height}%` }}
-      />
+      {project.video ? (
+        <ProjectVideo {...project.video} label={`${project.title} — відео сайту`} />
+      ) : (
+        <Image
+          src={src}
+          alt={`${project.title} — скріншот сайту`}
+          width={width}
+          height={height}
+          sizes={sizes}
+          className="absolute max-w-none"
+          style={{ left: `${crop.left}%`, top: `${crop.top}%`, width: `${crop.width}%`, height: `${crop.height}%` }}
+        />
+      )}
     </div>
   );
 }

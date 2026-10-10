@@ -9,6 +9,8 @@ export type Project = {
   mobileDescription?: string;
   tags: string[];
   image: { src: string; width: number; height: number };
+  /** Optional looping screen recording shown instead of `image` (remove to fall back to the photo) */
+  video?: { src: string; mobileSrc: string; poster: string };
   crop: ProjectCrop;
   mobileCrop: ProjectCrop;
   /** Title font sizes from Figma: desktop / mobile */
@@ -23,6 +25,7 @@ export const projects: Project[] = [
     description: "Стиль. Комфорт. Свобода руху",
     tags: ["Landing Page", "Figma", "Framer"],
     image: { src: "/images/works/car-rental.png", width: 1256, height: 1908 },
+    video: { src: "/videos/prestige-rent-preview.mp4", mobileSrc: "/videos/prestige-rent-preview-540.mp4", poster: "/videos/prestige-rent-preview-poster.webp" },
     crop: { left: 0, top: 0, width: 99.99, height: 269.07 },
     mobileCrop: { left: 0, top: 0, width: 100, height: 245.16 },
     titleSize: [30, 20],
