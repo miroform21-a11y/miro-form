@@ -2,25 +2,10 @@
 
 import Image from "next/image";
 import { useId, useState } from "react";
-import { faqByLocale, type FaqItem } from "@/data/faq";
+import type { FaqItem } from "@/data/faq";
 import type { Locale } from "@/i18n/locale";
-
-const copy = {
-  uk: {
-    askLabel: "Не знайшли відповідь? Поставити питання",
-    ask: ["Не знайшли", "відповідь?"],
-    askText: "Напишіть нам у Telegram — відповімо протягом 15 хвилин у робочий час.",
-    askButton: "Поставити питання",
-    title: ["Питання", "та відповіді"],
-  },
-  en: {
-    askLabel: "Didn’t find your answer? Ask a question",
-    ask: ["Didn’t find", "your answer?"],
-    askText: "Message us on Telegram and we’ll reply within 15 minutes during business hours.",
-    askButton: "Ask a question",
-    title: ["Questions", "& answers"],
-  },
-} satisfies Record<Locale, unknown>;
+import { siteContent } from "@/content";
+import type { FaqContent } from "@/content/types";
 import { SectionTag } from "@/components/ui/SectionTag";
 import { Reveal } from "@/components/ui/Reveal";
 import { PillButton } from "@/components/ui/PillButton";
@@ -126,25 +111,24 @@ function FaqRow({ item, index, open, onToggle }: { item: FaqItem; index: number;
   );
 }
 
-function AskCard({ locale }: { locale: Locale }) {
-  const t = copy[locale];
+function AskCard({ card }: { card: FaqContent["askCard"] }) {
   return (
     <LeadCard
       question
-      label={t.askLabel}
+      label={card.label}
       className="relative flex h-[398px] flex-col gap-5 overflow-hidden rounded-[32px] border border-white/8 bg-[#111] px-6 pt-7 transition-[translate,border-color,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 hover:border-lime/35 hover:shadow-[0_24px_60px_-30px_rgba(174,238,5,0.35)] active:-translate-y-1 md:h-[471px] md:px-[30px] md:pt-[39px]">
       <div className="relative flex flex-col gap-3.5 md:gap-5">
         <p className="font-display text-[18px] leading-display font-semibold text-white md:text-[20px]">
-          {t.ask[0]}
+          {card.title[0]}
           <br />
-          {t.ask[1]}
+          {card.title[1]}
         </p>
         <p className="text-[14px] leading-[1.5] text-white/80 md:max-w-[319px] md:text-[15px]">
-          {t.askText}
+          {card.text}
         </p>
       </div>
       <PillButton as="span" circleSize={44} gap={10} className="relative h-[60px] w-[273px] pr-2 pl-[27px]">
-        {t.askButton}
+        {card.button}
       </PillButton>
       <div className="pointer-events-none absolute right-[-5px] bottom-[-7px] left-[-5px] h-[185px] overflow-hidden rounded-[24px] md:right-[-1px] md:bottom-[-3px] md:h-[228px]">
         <Image
@@ -160,9 +144,9 @@ function AskCard({ locale }: { locale: Locale }) {
   );
 }
 
-export function Faq({ locale = "uk" }: { locale?: Locale }) {
-  const t = copy[locale];
-  const faq = faqByLocale[locale];
+export function Faq({ locale = "uk", content = siteContent[locale].faq }: { locale?: Locale; content?: FaqContent }) {
+  const t = content;
+  const faq = t.items;
   const [openIndex, setOpenIndex] = useState(0);
 
   return (
@@ -187,7 +171,7 @@ export function Faq({ locale = "uk" }: { locale?: Locale }) {
             </h2>
           </Reveal>
           <Reveal className="hidden lg:block">
-            <AskCard locale={locale} />
+            <AskCard card={t.askCard} />
           </Reveal>
         </div>
 
@@ -199,7 +183,7 @@ export function Faq({ locale = "uk" }: { locale?: Locale }) {
         </Reveal>
 
         <Reveal className="lg:hidden">
-          <AskCard locale={locale} />
+          <AskCard card={t.askCard} />
         </Reveal>
       </div>
     </section>

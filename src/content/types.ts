@@ -8,6 +8,8 @@ import type { Project } from "@/data/projects";
 import type { Fact } from "@/data/facts";
 import type { Step } from "@/data/process";
 import type { Plan, pricingByLocale } from "@/data/pricing";
+import type { Review } from "@/data/reviews";
+import type { FaqItem } from "@/data/faq";
 
 /** A button / link: visible text + where it leads ("#contact", "/en", "https://…") */
 export type ContentLink = { label: string; href: string };
@@ -138,6 +140,36 @@ export type PricingContent = {
   discounts: PricingData["discounts"];
 };
 
+export type ReviewsContent = {
+  tag: string;
+  title: string;
+  /** Screen-reader labels of the arrows and the phone carousel */
+  prev: string;
+  next: string;
+  carousel: string;
+  /** Screen-reader label of the five stars */
+  starsLabel: string;
+  /** Desktop shows pages of 4, tablet pages of 2, phones a slider */
+  items: Review[];
+  ratingCard: {
+    score: number;
+    caption: string;
+    clients: number;
+    clientsSuffix: string;
+    /** "<clients>+ <line 1>" / "<line 2>" */
+    clientsLines: [string, string];
+    /** Four face photos (a separate set from the hero avatars) */
+    faces: string[];
+  };
+};
+
+export type FaqContent = {
+  title: [string, string];
+  /** Also rendered as FAQPage structured data on the home page */
+  items: FaqItem[];
+  askCard: { label: string; title: [string, string]; text: string; button: string };
+};
+
 export type SiteContent = {
   header: HeaderContent;
   hero: HeroContent;
@@ -147,4 +179,6 @@ export type SiteContent = {
   facts: FactsContent;
   process: ProcessContent;
   pricing: PricingContent;
+  reviews: ReviewsContent;
+  faq: FaqContent;
 };
