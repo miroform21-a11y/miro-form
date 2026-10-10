@@ -1,10 +1,21 @@
 import type { MetadataRoute } from "next";
-import { absoluteUrl } from "@/lib/seo";
+import { absoluteUrl, languageAlternates } from "@/lib/seo";
 
-/** Only indexable pages: /brief, /thank-you and /en are noindex and stay out. */
+/** Only indexable pages (Ukrainian + English, linked with hreflang): /brief, /thank-you and their /en versions are noindex and stay out. */
 export default function sitemap(): MetadataRoute.Sitemap {
+  const entry = (path: string, changeFrequency: "monthly" | "yearly", priority: number) => {
+    const languages = languageAlternates(path);
+    return {
+      url: absoluteUrl(path),
+      changeFrequency,
+      priority,
+      ...(languages && { alternates: { languages: Object.fromEntries(Object.entries(languages).map(([l, p]) => [l, absoluteUrl(p)])) } }),
+    };
+  };
   return [
-    { url: absoluteUrl("/"), changeFrequency: "monthly", priority: 1 },
-    { url: absoluteUrl("/privacy"), changeFrequency: "yearly", priority: 0.2 },
+    entry("/", "monthly", 1),
+    entry("/en", "monthly", 0.9),
+    entry("/privacy", "yearly", 0.2),
+    entry("/en/privacy-policy", "yearly", 0.2),
   ];
 }

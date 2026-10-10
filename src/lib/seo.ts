@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { contacts, founderInstagram, socialLinks } from "@/data/navigation";
-import type { Locale } from "@/i18n/locale";
+import { routes, type Locale } from "@/i18n/locale";
 
 /** Production origin (miro-form.com and http:// both 308-redirect here on Vercel). */
 export const siteUrl = "https://www.miro-form.com";
@@ -18,24 +18,33 @@ const brandSpellings = ["Miroform", "Miro Form", "МіроФорм", "МироФ
 const orgId = `${siteUrl}/#organization`;
 const websiteId = `${siteUrl}/#website`;
 
+/** Indexable pages that exist in both languages (they link to each other with hreflang) */
+const translatedPages = ["home", "privacy"] as const;
+
+/** hreflang alternates for a page that has a translation; Ukrainian is the default (x-default). */
+export function languageAlternates(path: string): Record<string, string> | undefined {
+  const key = translatedPages.find((k) => routes.uk[k] === path || routes.en[k] === path);
+  return key && { uk: routes.uk[key], en: routes.en[key], "x-default": routes.uk[key] };
+}
+
 /**
- * Per-page metadata: unique title/description, canonical, Open Graph and Twitter card.
- * English pages (locale "en") get en_US Open Graph and stay noindex until the English version is approved.
+ * Per-page metadata: unique title/description, canonical + hreflang, Open Graph and Twitter card.
+ * English pages (locale "en") get en_US Open Graph.
  */
 export function pageMetadata({ title, description, path, locale = "uk" }: { title: string; description: string; path: string; locale?: Locale }): Metadata {
+  const alternates = { canonical: path, languages: languageAlternates(path) };
   if (locale === "en")
     return {
       title: { absolute: title },
       description,
-      alternates: { canonical: path },
-      robots: { index: false, follow: false },
-      openGraph: { title, description, url: path, type: "website", locale: "en_US", siteName, images: [ogImageEn] },
+      alternates,
+      openGraph: { title, description, url: path, type: "website", locale: "en_US", alternateLocale: "uk_UA", siteName, images: [ogImageEn] },
       twitter: { card: "summary_large_image", title, description, images: [ogImage.url] },
     };
   return {
     title: { absolute: title },
     description,
-    alternates: { canonical: path },
+    alternates,
     openGraph: {
       title,
       description,

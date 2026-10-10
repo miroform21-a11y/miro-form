@@ -7,8 +7,8 @@ import { JsonLd } from "@/components/ui/JsonLd";
 import { ogImage, siteJsonLdEn, siteName, siteUrl } from "@/lib/seo";
 
 /**
- * Defaults for the English routes (/en/...). The whole English version stays noindex until it is approved;
- * pages override title/description via pageMetadata(..., "en").
+ * Defaults for the English routes (/en/...); indexable pages override title/description/canonical via
+ * pageMetadata(..., "en"). Service pages (/en/brief, /en/thank-you) set noindex themselves, as on the Ukrainian site.
  */
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -18,7 +18,6 @@ export const metadata: Metadata = {
   openGraph: { type: "website", locale: "en_US", siteName, images: [{ ...ogImage, alt: "MIROFORM — websites, design and AI solutions" }] },
   twitter: { card: "summary_large_image", images: [ogImage.url] },
   formatDetection: { telephone: false },
-  robots: { index: false, follow: false },
 };
 
 export const viewport: Viewport = {
