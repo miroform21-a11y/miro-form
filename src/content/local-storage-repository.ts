@@ -8,7 +8,7 @@ import { SaveError, type ContentArea, type ContentRepository, type LoadResult } 
  * Every entry carries the content schema version: when the shape of the content changes in code,
  * bump CONTENT_SCHEMA_VERSION so old drafts are reported as outdated instead of being silently mixed in.
  */
-export const CONTENT_SCHEMA_VERSION = 1;
+export const CONTENT_SCHEMA_VERSION = 2; // 2: the brief area holds the questionnaire (options with ids)
 
 const KEY_PREFIX = "miroform-admin-demo";
 export const storageKey = (area: ContentArea, locale: Locale) => `${KEY_PREFIX}:v${CONTENT_SCHEMA_VERSION}:${area}:${locale}`;

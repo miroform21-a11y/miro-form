@@ -292,8 +292,11 @@ export type { BriefPageContent } from "./brief/page";
 import type { BriefUiContent } from "./brief/ui";
 import type { BriefPageContent } from "./brief/page";
 
+import type { BriefSchema } from "@/data/brief";
+
 /**
- * Texts of the brief page and wizard. The questionnaire itself (steps, fields, options, conditions) stays in
- * data/brief.ts and data/briefEn.ts: /api/brief validates answers against it.
+ * The brief area: page texts, wizard texts and the questionnaire (steps, fields, options with stable ids,
+ * conditions). The published questionnaire is defined in data/brief.ts and data/briefEn.ts — /api/brief
+ * validates answers against those, so an edited copy here is only shown in the admin preview for now.
  */
-export type BriefContent = { page: BriefPageContent; ui: BriefUiContent };
+export type BriefContent = { page: BriefPageContent; ui: BriefUiContent; schema: BriefSchema };

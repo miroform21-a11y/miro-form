@@ -20,7 +20,13 @@ export type BriefSiteContacts = { phone: string; email: string; socials: BriefSo
 export type BriefValue = string | string[] | BriefLink[] | BriefSiteContacts;
 export type BriefAnswers = Record<string, BriefValue>;
 
-/** Show a field only when another answer equals / includes one of `values`. */
+/**
+ * A choice option: `id` is stable (answers, conditions and defaults refer to it), `label` is what the client sees
+ * and what the Telegram message shows. Renaming an option therefore never breaks a condition.
+ */
+export type BriefOption = { id: string; label: string };
+
+/** Show a field only when another answer equals / includes one of `values` (option ids). */
 export type ShowIf = { key: string; values: readonly string[] };
 
 type Base = {
@@ -43,12 +49,13 @@ export type BriefField =
       /** A one-click alternative that counts as an answer ("Поки не маю побажань…"), stored under `${key}_skip` */
       skip?: string;
     })
-  | (Base & { type: "choice"; options: readonly string[]; default?: string })
+  | (Base & { type: "choice"; options: readonly BriefOption[]; /** option id */ default?: string })
   | (Base & {
       type: "multi";
-      options: readonly string[];
+      options: readonly BriefOption[];
+      /** option ids */
       default?: readonly string[];
-      /** Can't be combined with the other options, except those listed in `independent` */
+      /** Can't be combined with the other options, except those listed in `independent` (option ids) */
       exclusive?: string;
       independent?: readonly string[];
     })
@@ -67,6 +74,13 @@ export type BriefNotice = {
   linkLabel?: string;
 };
 
+/**
+ * The questionnaires below are written with option labels (easier to read and translate); withOptionIds()
+ * turns them into BriefStep[] with stable ids and rewrites every condition / default to those ids.
+ */
+type SourceField<F> = F extends { options: readonly BriefOption[] } ? Omit<F, "options"> & { options: readonly string[] } : F;
+export type BriefStepSource = Omit<BriefStep, "fields"> & { fields: SourceField<BriefField>[] };
+
 export type BriefStep = {
   id: string;
   number: string;
@@ -84,7 +98,7 @@ const yesNo = ["Так", "Ні"] as const;
 export const NOTHING_YET = "Поки нічого немає";
 export const TURNKEY = "Хочу проєкт під ключ";
 
-export const briefSteps: BriefStep[] = [
+const briefStepsSource: BriefStepSource[] = [
   {
     id: "general",
     number: "01",
@@ -327,6 +341,49 @@ export const briefSteps: BriefStep[] = [
     ],
   },
 ];
+
+/** Option ids: "o1", "o2"… in the order of the original list (new options added later get the next free number). */
+export function withOptionIds(steps: BriefStepSource[]): BriefStep[] {
+  const ids = new Map<string, Map<string, string>>(); // field key → label → id
+  for (const s of steps)
+    for (const f of s.fields) if ("options" in f) ids.set(f.key, new Map(f.options.map((label, i) => [label, `o${i + 1}`])));
+  const idOf = (key: string, label: string) => {
+    const id = ids.get(key)?.get(label);
+    if (!id) throw new Error(`brief: "${label}" is not an option of "${key}"`);
+    return id;
+  };
+  return steps.map((s) => ({
+    ...s,
+    fields: s.fields.map((src) => {
+      const f = { ...src } as Record<string, unknown> & SourceField<BriefField>;
+      if (f.showIf) f.showIf = { key: f.showIf.key, values: f.showIf.values.map((v) => idOf(f.showIf!.key, v)) };
+      if (f.type === "choice" || f.type === "multi") {
+        const key = f.key;
+        const out: Record<string, unknown> = { ...f, options: f.options.map((label) => ({ id: idOf(key, label), label })) };
+        if (f.type === "choice" && f.default) out.default = idOf(key, f.default);
+        if (f.type === "multi") {
+          if (f.default) out.default = f.default.map((v) => idOf(key, v));
+          if (f.exclusive) out.exclusive = idOf(key, f.exclusive);
+          if (f.independent) out.independent = f.independent.map((v) => idOf(key, v));
+        }
+        return out as BriefField;
+      }
+      return f as BriefField;
+    }),
+  }));
+}
+
+export const briefSteps: BriefStep[] = withOptionIds(briefStepsSource);
+
+/** Label of an option id (or the value itself when it is not an option, e.g. a legacy label) */
+export const optionLabel = (field: BriefField, value: string) => ("options" in field ? (field.options.find((o) => o.id === value)?.label ?? value) : value);
+
+/**
+ * The option a submitted value means: its id, or — for briefs sent by a page opened before ids existed — its label.
+ * undefined when it is not an option of this field.
+ */
+export const optionId = (field: BriefField, value: unknown) =>
+  typeof value === "string" && "options" in field ? (field.options.find((o) => o.id === value) ?? field.options.find((o) => o.label === value))?.id : undefined;
 
 /**
  * Everything that differs between the Ukrainian and the English brief: the steps (same keys, translated

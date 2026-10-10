@@ -153,9 +153,9 @@ function Chips({
       <Label field={field} id={id} extra={multi ? t.several : undefined} />
       <Hint text={field.hint} />
       <div className="flex flex-wrap gap-2">
-        {field.options.map((v) => (
-          <Chip key={v} on={isOn(v)} multi={multi} onClick={() => toggle(v)}>
-            {v}
+        {field.options.map((o) => (
+          <Chip key={o.id} on={isOn(o.id)} multi={multi} onClick={() => toggle(o.id)}>
+            {o.label}
           </Chip>
         ))}
       </div>

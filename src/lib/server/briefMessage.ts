@@ -1,4 +1,4 @@
-import { briefSchemaUk, skipKey, type BriefAnswers, type BriefField, type BriefLink, type BriefSchema, type BriefSiteContacts } from "@/data/brief";
+import { briefSchemaUk, optionLabel, skipKey, type BriefAnswers, type BriefField, type BriefLink, type BriefSchema, type BriefSiteContacts } from "@/data/brief";
 
 /**
  * Telegram message for a brief (parse_mode "HTML"): five sections with bold headings and field names,
@@ -119,7 +119,8 @@ function valueLines(field: BriefField, answers: BriefAnswers, schema: BriefSchem
     ].filter(Boolean) as string[];
     return lines.length ? lines : null;
   }
-  const text = Array.isArray(v) ? (v as string[]).join(", ") : (v as string);
+  // choices are stored as option ids — the message shows their labels
+  const text = Array.isArray(v) ? (v as string[]).map((x) => optionLabel(field, x)).join(", ") : optionLabel(field, v as string);
   return text.trim() ? [text] : null; // plain text — escaped (and split if huge) by the caller
 }
 

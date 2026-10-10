@@ -1,4 +1,4 @@
-import { BRIEF_LIMITS, MAX_LINKS, MAX_SOCIALS, isShown, sendErrors, skipKey, type BriefAnswers, type BriefField, type BriefSchema, type BriefValue } from "@/data/brief";
+import { BRIEF_LIMITS, MAX_LINKS, MAX_SOCIALS, isShown, optionId, sendErrors, skipKey, type BriefAnswers, type BriefField, type BriefSchema, type BriefValue } from "@/data/brief";
 import { briefSchemas } from "@/data/briefEn";
 import { claimOnce, releaseClaim, withinRateLimit } from "@/lib/server/limits";
 import { sendTelegramHtml, telegramConfigured } from "@/lib/server/telegram";
@@ -26,12 +26,14 @@ function parseValue(field: BriefField, raw: unknown, schema: BriefSchema): Brief
       const v = text(raw, field.type === "textarea" ? BRIEF_LIMITS.textarea : BRIEF_LIMITS.text);
       return v === null ? null : v || undefined;
     }
+    // options arrive as ids (a page opened before ids existed sends labels — accepted and mapped to ids)
     case "choice":
-      return typeof raw === "string" && field.options.includes(raw) ? raw : null;
+      return optionId(field, raw) ?? null;
     case "multi": {
       if (!Array.isArray(raw) || raw.length > field.options.length) return null;
-      if (!raw.every((v) => typeof v === "string" && field.options.includes(v))) return null;
-      const list = [...new Set(raw as string[])];
+      const ids = raw.map((v) => optionId(field, v));
+      if (!ids.every((v): v is string => v !== undefined)) return null;
+      const list = [...new Set(ids)];
       // "nothing yet" + real materials is contradictory ("turnkey" is independent of both)
       const independent = field.independent ?? [];
       if (field.exclusive && list.includes(field.exclusive) && list.some((v) => v !== field.exclusive && !independent.includes(v))) return null;
@@ -117,7 +119,8 @@ export async function POST(request: Request) {
     }
 
     // the same brief resent within 10 minutes (double click, retry after a slow response) is delivered once
-    const fingerprint = sha256(JSON.stringify(["brief", answers]));
+    // answers hold option ids (the same in both languages), so the language is part of the fingerprint
+    const fingerprint = sha256(JSON.stringify(["brief", schema.locale, answers]));
     if (!(await claimOnce(fingerprint, 600))) return reply(200);
 
     if (!(await sendTelegramHtml(buildBriefMessages(answers, `${kyivTime()} (Київ)`, schema)))) {

@@ -17,6 +17,7 @@ import { privacyContent } from "./site/privacy";
 import { seoContent } from "./site/seo";
 import { briefPageContent } from "./brief/page";
 import { briefUiContent } from "./brief/ui";
+import { briefSchemas } from "@/data/briefEn";
 
 /**
  * Editable content, one independent object per language. This is the single source the public
@@ -43,10 +44,10 @@ const siteFor = (l: Locale): SiteContent => ({
 
 export const siteContent: Record<Locale, SiteContent> = { uk: siteFor("uk"), en: siteFor("en") };
 
-/** The brief area: page texts + wizard texts per language (questions: data/brief.ts, data/briefEn.ts) */
+/** The brief area per language: page texts, wizard texts and the questionnaire (data/brief.ts, data/briefEn.ts) */
 export const briefContent: Record<Locale, BriefContent> = {
-  uk: { page: briefPageContent.uk, ui: briefUiContent.uk },
-  en: { page: briefPageContent.en, ui: briefUiContent.en },
+  uk: { page: briefPageContent.uk, ui: briefUiContent.uk, schema: briefSchemas.uk },
+  en: { page: briefPageContent.en, ui: briefUiContent.en, schema: briefSchemas.en },
 };
 
 export type { BriefContent, SiteContent } from "./types";
