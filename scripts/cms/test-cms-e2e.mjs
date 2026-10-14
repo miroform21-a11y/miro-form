@@ -108,8 +108,10 @@ const photo = await sharp({ create: { width: 800, height: 1000, channels: 3, bac
 await pa.goto(BASE + "/admin/uk/site/about");
 await pa.waitForTimeout(2500);
 await pa.locator("input[type=file]").first().setInputFiles({ name: "founder-test.png", mimeType: "image/png", buffer: photo });
-await pa.waitForTimeout(6000);
-const thumb = await pa.getByAltText("Фото Founder — десктоп и планшет: текущее изображение").getAttribute("src");
+// upload = resize in the browser + storage + server check: wait until the editor shows the new file (up to 30 s)
+const thumbEl = pa.getByAltText("Фото Founder — десктоп и планшет: текущее изображение");
+for (let i = 0; i < 60 && !((await thumbEl.getAttribute("src")) ?? "").includes("/object/sign/"); i++) await pa.waitForTimeout(500);
+const thumb = await thumbEl.getAttribute("src");
 check("uploaded photo shown in the editor through a signed URL", !!thumb && thumb.includes("/storage/v1/object/sign/cms-drafts/"), thumb?.slice(0, 80));
 const frame = pa.frameLocator("iframe[title^='Предпросмотр']");
 await frame.locator("a[aria-label*='Founder']").waitFor({ timeout: 20000 });

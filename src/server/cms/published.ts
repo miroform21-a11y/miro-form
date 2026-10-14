@@ -19,6 +19,12 @@ import { publicReadConfig } from "./env";
 
 export const CMS_PUBLISHED_TAG = "cms-published";
 const REVALIDATE_SECONDS = 600;
+/**
+ * Part of the cache key (headers are): a build or a restarted server never reuses a response cached by another
+ * process. Locally Next keeps tag expirations (updateTag) in memory while cached responses live on disk, so without
+ * this a fresh build could pick up content fetched before a later publication.
+ */
+const PROCESS_STAMP = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
 export type Published = { snapshot: CmsSnapshot; publicationId: number | null; source: "cms" | "built-in" };
 
@@ -27,7 +33,7 @@ const builtIn = (): Published => ({ snapshot: sourceSnapshot(), publicationId: n
 async function fetchPublished(): Promise<Published> {
   const cfg = publicReadConfig();
   if (!cfg) return builtIn();
-  const headers: Record<string, string> = { apikey: cfg.publishableKey, Accept: "application/json" };
+  const headers: Record<string, string> = { apikey: cfg.publishableKey, Accept: "application/json", "X-Cms-Process": PROCESS_STAMP };
   // legacy anon keys are JWTs and also go in Authorization; the new publishable keys only in apikey
   if (cfg.publishableKey.startsWith("eyJ")) headers.Authorization = `Bearer ${cfg.publishableKey}`;
   const res = await fetch(`${cfg.url}/rest/v1/rpc/cms_get_published`, {
