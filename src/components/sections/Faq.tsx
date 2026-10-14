@@ -10,6 +10,8 @@ const copy = {
     askLabel: "Не знайшли відповідь? Поставити питання",
     ask: ["Не знайшли", "відповідь?"],
     askText: "Напишіть нам у Telegram — відповімо протягом 15 хвилин у робочий час.",
+    /** Explicit line break on phones; tablet and desktop wrap askText naturally */
+    askTextMobile: ["Напишіть нам у Telegram — відповімо", "протягом 15 хвилин у робочий час."] as [string, string] | null,
     askButton: "Поставити питання",
     title: ["Питання", "та відповіді"],
   },
@@ -17,6 +19,7 @@ const copy = {
     askLabel: "Didn’t find your answer? Ask a question",
     ask: ["Didn’t find", "your answer?"],
     askText: "Message us on Telegram and we’ll reply within 15 minutes during business hours.",
+    askTextMobile: null as [string, string] | null,
     askButton: "Ask a question",
     title: ["Questions", "& answers"],
   },
@@ -140,7 +143,14 @@ function AskCard({ locale }: { locale: Locale }) {
           {t.ask[1]}
         </p>
         <p className="text-[14px] leading-[1.5] text-white/80 md:max-w-[319px] md:text-[15px]">
-          {t.askText}
+          {t.askTextMobile ? (
+            <>
+              {t.askTextMobile[0]}
+              <br className="md:hidden" /> {t.askTextMobile[1]}
+            </>
+          ) : (
+            t.askText
+          )}
         </p>
       </div>
       <PillButton as="span" circleSize={44} gap={10} className="relative h-[60px] w-[273px] pr-2 pl-[27px]">

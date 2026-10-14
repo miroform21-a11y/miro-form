@@ -26,7 +26,7 @@ export const plans: Plan[] = [
     title: ["Landing Page"],
     description:
       "Односторінковий сайт для продукту, послуги чи рекламної кампанії. До 10 продуманих блоків, індивідуальний дизайн. Запуск — від 7 днів.",
-    price: "$390",
+    price: "390$",
     lead: { direction: "web", option: "Лендінг пейдж", title: "Landing Page" },
   },
   {
@@ -40,7 +40,7 @@ export const plans: Plan[] = [
       "Багатосторінковий сайт або інтернет-магазин для компанії чи бренду. Адмінпанель, анімації та CRM.",
       "Термін — від 3 тижнів.",
     ],
-    price: "$1 290",
+    price: "1 290$",
     lead: { direction: "web", option: "Багатосторінковий сайт", title: "Багатосторінковий сайт" },
   },
 ];
@@ -83,7 +83,7 @@ const plansEn: Plan[] = [
     ],
     title: ["Landing Page"],
     description: "A one-page site for a product, service or ad campaign. Up to 10 well-crafted sections and a custom design. Launch in as little as 7 days.",
-    price: "$990",
+    price: "990$",
     lead: { direction: "web", option: "Landing page", title: "Landing Page" },
   },
   {
@@ -93,7 +93,7 @@ const plansEn: Plan[] = [
     title: ["Multi-page", " website"],
     description: "A multi-page website or online store for a company or brand. Admin panel, animations and CRM. Timeline: from 3 weeks.",
     mobileDescription: ["A multi-page website or online store for a company or brand. Admin panel, animations and CRM.", "Timeline: from 3 weeks."],
-    price: "$3,990",
+    price: "3,990$",
     lead: { direction: "web", option: "Multi-page website", title: "Multi-page website" },
   },
 ];
