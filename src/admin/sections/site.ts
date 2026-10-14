@@ -616,7 +616,7 @@ export const siteSections: SectionDef[] = [
         label: "Разделы",
         min: 1,
         max: 30,
-        itemTitle: (x, i) => `${i + 1}. ${firstLine((x as { title: string }).title, "Раздел")}`,
+        itemTitle: (x, i) => firstLine((x as { title: string }).title, `Раздел ${i + 1}`),
         make: () => ({ title: "", body: [""] }),
         fields: [t("title", "Заголовок раздела"), { kind: "strings", path: "body", label: "Абзацы", min: 1, max: 20, rows: 3, itemLabel: "абзац" }],
       },

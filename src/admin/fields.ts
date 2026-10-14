@@ -209,5 +209,5 @@ export const ID: Pattern = { re: /^[a-z0-9-]+$/, message: "только лати
 
 export const firstLine = (s: unknown, fallback: string) => {
   const t = typeof s === "string" ? s.trim() : "";
-  return t ? (t.length > 48 ? t.slice(0, 46) + "…" : t) : fallback;
+  return t ? (t.length > 90 ? t.slice(0, 88) + "…" : t) : fallback;
 };

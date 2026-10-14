@@ -74,7 +74,7 @@ export function SectionEditor({ locale, section }: { locale: Locale; section: Se
             type="button"
             aria-pressed={!!options.question === q}
             onClick={() => setOptions({ question: q as boolean })}
-            className={`rounded-md border border-white/10 px-2.5 py-1 ${!!options.question === q ? "bg-white/15 text-white" : "text-white/55"}`}
+            className={`rounded-md border border-white/10 px-2.5 py-1 pointer-coarse:min-h-11 ${!!options.question === q ? "bg-white/15 text-white" : "text-white/55"}`}
           >
             {label as string}
           </button>
@@ -85,7 +85,7 @@ export function SectionEditor({ locale, section }: { locale: Locale; section: Se
   return (
     <div className="flex min-h-full flex-col xl:h-full xl:flex-row">
       <div className="flex min-w-0 flex-col xl:w-[min(560px,46%)] xl:shrink-0 xl:overflow-y-auto xl:border-r xl:border-white/10">
-        <div className="sticky top-0 z-20 border-b border-white/10 bg-[#0b0b0b]/95 px-5 pt-4 pb-3 backdrop-blur">
+        <div className="sticky top-14 z-20 border-b border-white/10 lg:top-0 bg-[#0b0b0b]/95 px-5 pt-4 pb-3 backdrop-blur">
           <p className="text-[12px] text-white/40">{`${localeName[locale]} · ${section.group}`}</p>
           <h1 className="mt-0.5 font-display text-[20px] font-semibold">{section.title}</h1>
           <p className="mt-1 text-[12.5px]" aria-live="polite">
@@ -97,7 +97,7 @@ export function SectionEditor({ locale, section }: { locale: Locale; section: Se
               onClick={save}
               disabled={!canSave}
               title={errors.length ? "Сначала исправьте ошибки" : !dirty ? "Нет изменений" : "Ctrl+S"}
-              className="rounded-lg bg-lime px-4 py-1.5 text-[13.5px] font-semibold text-ink transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-35"
+              className="rounded-lg bg-lime px-4 py-1.5 text-[13.5px] font-semibold text-ink pointer-coarse:min-h-11 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-35"
             >
               {saving ? "Сохраняем…" : "Сохранить в браузере"}
             </button>

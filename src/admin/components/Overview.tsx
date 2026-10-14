@@ -116,7 +116,7 @@ export function Overview() {
                 {s.title}
               </span>
               {(["uk", "en"] as const).map((l) => (
-                <Link key={l} href={sectionHref(l, s)} className="rounded-md border border-white/12 px-2 py-1 text-[12px] text-white/70 hover:border-lime hover:text-lime">
+                <Link key={l} href={sectionHref(l, s)} className="inline-flex items-center justify-center rounded-md border border-white/12 px-2 py-1 text-[12px] text-white/70 hover:border-lime hover:text-lime pointer-coarse:min-h-11 pointer-coarse:min-w-11">
                   {l === "uk" ? "UA" : "EN"}
                   {admin.isDirty(s.area, l, s.key) ? " •" : ""}
                 </Link>

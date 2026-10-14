@@ -64,7 +64,7 @@ function Sidebar({ onNavigate }: { onNavigate: () => void }) {
               href={href}
               onClick={onNavigate}
               aria-current={active ? "true" : undefined}
-              className={`rounded-lg px-2 py-1.5 text-center text-[13px] font-medium transition-colors ${active ? "bg-lime text-ink" : "text-white/70 hover:bg-white/10"}`}
+              className={`rounded-lg px-2 py-1.5 text-center text-[13px] font-medium transition-colors pointer-coarse:py-3 ${active ? "bg-lime text-ink" : "text-white/70 hover:bg-white/10"}`}
             >
               {localeShort[l]}
               {(isDirty("site", l) || isDirty("brief", l)) && <span className={active ? "text-ink" : "text-lime"}> •</span>}
@@ -76,7 +76,7 @@ function Sidebar({ onNavigate }: { onNavigate: () => void }) {
       <Link
         href="/admin"
         onClick={onNavigate}
-        className={`rounded-lg px-3 py-2 text-[13.5px] transition-colors ${!locale ? "bg-white/10 text-white" : "text-white/70 hover:bg-white/5 hover:text-white"}`}
+        className={`rounded-lg px-3 py-2 text-[13.5px] transition-colors pointer-coarse:py-3 ${!locale ? "bg-white/10 text-white" : "text-white/70 hover:bg-white/5 hover:text-white"}`}
       >
         Обзор и данные
       </Link>
@@ -93,7 +93,7 @@ function Sidebar({ onNavigate }: { onNavigate: () => void }) {
                 href={sectionHref(loc, s)}
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
-                className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-[13.5px] transition-colors ${active ? "bg-white/10 text-white" : "text-white/70 hover:bg-white/5 hover:text-white"}`}
+                className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-[13.5px] transition-colors pointer-coarse:min-h-11 ${active ? "bg-white/10 text-white" : "text-white/70 hover:bg-white/5 hover:text-white"}`}
               >
                 <span className="flex-1">{s.title}</span>
                 {dirty && (
@@ -114,35 +114,44 @@ function Sidebar({ onNavigate }: { onNavigate: () => void }) {
 export function AdminShell({ children }: { children: ReactNode }) {
   const [menu, setMenu] = useState(false);
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-[#0b0b0b] text-white">
-      <header className="z-40 shrink-0 border-b border-white/10 bg-[#0b0b0b]">
+    <div className="flex min-h-dvh flex-col bg-[#0b0b0b] text-white lg:h-dvh lg:overflow-hidden">
+      <header className="sticky top-0 z-40 shrink-0 border-b border-white/10 bg-[#0b0b0b] lg:static">
         <div className="flex h-14 items-center gap-3 px-4 md:px-6">
           <button
             type="button"
-            className="grid size-9 place-items-center rounded-lg border border-white/12 lg:hidden"
+            className="grid size-9 shrink-0 place-items-center rounded-lg border border-white/12 pointer-coarse:size-11 lg:hidden"
             aria-label={menu ? "Закрыть меню разделов" : "Открыть меню разделов"}
             aria-expanded={menu}
             onClick={() => setMenu((m) => !m)}
           >
             {menu ? "✕" : "☰"}
           </button>
-          <Link href="/admin" className="font-display text-[15px] font-semibold tracking-wide">
+          <Link href="/admin" className="font-display text-[15px] font-semibold tracking-wide whitespace-nowrap pointer-coarse:py-3">
             MIROFORM <span className="hidden text-white/45 sm:inline">· Админ-панель</span>
           </Link>
-          <span className="rounded-md border border-amber-300/40 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-amber-200 uppercase">демо</span>
+          <span className="shrink-0 rounded-md border border-amber-300/40 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-amber-200 uppercase">демо</span>
           <div className="ml-auto flex items-center gap-2">
-            <a href="/" target="_blank" rel="noreferrer" className="rounded-lg px-3 py-1.5 text-[13px] text-white/65 hover:bg-white/5 hover:text-white">
-              Открыть сайт ↗
+            <a
+              href="/"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center rounded-lg px-3 py-1.5 text-[13px] whitespace-nowrap text-white/65 hover:bg-white/5 hover:text-white pointer-coarse:min-h-11"
+            >
+              <span className="max-[380px]:hidden">Открыть&nbsp;</span>сайт ↗
             </a>
           </div>
         </div>
-        <DemoBanner />
       </header>
-      <div className="relative flex min-h-0 flex-1">
-        <aside className={`${menu ? "absolute inset-0 z-30 block bg-[#0b0b0b]" : "hidden"} w-full shrink-0 overflow-y-auto border-r border-white/10 lg:static lg:block lg:w-[264px]`}>
+      <div className="shrink-0">
+        <DemoBanner />
+      </div>
+      <div className="relative flex flex-1 lg:min-h-0">
+        <aside
+          className={`${menu ? "fixed inset-x-0 top-14 bottom-0 z-30 block overscroll-contain bg-[#0b0b0b]" : "hidden"} w-full shrink-0 overflow-y-auto border-r border-white/10 lg:static lg:block lg:w-[264px]`}
+        >
           <Sidebar onNavigate={() => setMenu(false)} />
         </aside>
-        <main id="admin-main" className="min-w-0 flex-1 overflow-y-auto">
+        <main id="admin-main" className="min-w-0 flex-1 lg:overflow-y-auto">
           {children}
         </main>
       </div>

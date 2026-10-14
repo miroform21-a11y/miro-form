@@ -30,6 +30,8 @@ export function PreviewFrame({
   options: PreviewOptions;
 }) {
   const [width, setWidth] = useState<number>(1440);
+  /** On a phone the preview starts with the phone layout (the desktop one would be scaled to ~25%) */
+  const pickedWidth = useRef(false);
   const boxRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLIFrameElement>(null);
   const [box, setBox] = useState({ w: 0, h: 0 });
@@ -42,6 +44,7 @@ export function PreviewFrame({
     const ro = new ResizeObserver(() => setBox({ w: el.clientWidth, h: el.clientHeight }));
     ro.observe(el);
     setBox({ w: el.clientWidth, h: el.clientHeight });
+    if (!pickedWidth.current && window.innerWidth < 768) setWidth(390);
     return () => ro.disconnect();
   }, []);
 
@@ -80,8 +83,11 @@ export function PreviewFrame({
               key={x.w}
               type="button"
               aria-pressed={width === x.w}
-              onClick={() => setWidth(x.w)}
-              className={`rounded-md px-2.5 py-1 text-[12px] transition-colors ${width === x.w ? "bg-white/15 text-white" : "text-white/55 hover:text-white"}`}
+              onClick={() => {
+                pickedWidth.current = true;
+                setWidth(x.w);
+              }}
+              className={`rounded-md px-2.5 py-1 text-[12px] transition-colors pointer-coarse:min-h-11 ${width === x.w ? "bg-white/15 text-white" : "text-white/55 hover:text-white"}`}
             >
               {x.label}
             </button>
@@ -93,13 +99,13 @@ export function PreviewFrame({
             setReady(false);
             setReloadKey((k) => k + 1);
           }}
-          className="rounded-md px-2 py-1 text-[12px] text-white/55 hover:text-white"
+          className="rounded-md px-2 py-1 text-[12px] text-white/55 hover:text-white pointer-coarse:min-h-11"
         >
           ↻ Перезапустить
         </button>
         <span className="ml-auto text-[11.5px] text-white/35">{`масштаб ${Math.round(scale * 100)}%`}</span>
       </div>
-      <div ref={boxRef} className="relative min-h-0 flex-1 overflow-hidden rounded-xl border border-white/10 bg-ink">
+      <div ref={boxRef} className="relative h-[78svh] min-h-[420px] overflow-hidden rounded-xl border border-white/10 bg-ink xl:h-auto xl:min-h-0 xl:flex-1">
         {box.w > 0 && (
           <iframe
             key={reloadKey}

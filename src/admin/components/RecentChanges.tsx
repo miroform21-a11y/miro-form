@@ -43,7 +43,7 @@ export function RecentChanges() {
                   </Link>
                   {` · ${e.field}`}
                 </p>
-                <p className="mt-0.5 truncate text-[12px] text-white/35">{`${preview(e.before)} → ${preview(e.after)} · ${time(e.at)}`}</p>
+                <p className="mt-0.5 text-[12px] break-words text-white/35">{`${preview(e.before)} → ${preview(e.after)} · ${time(e.at)}`}</p>
               </div>
               <button
                 type="button"

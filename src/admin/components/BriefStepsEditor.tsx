@@ -201,7 +201,7 @@ function OptionsEditor({ schema, field, path, onChange, issues }: { schema: Sche
         {multi ? (
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             {options.map((o) => (
-              <label key={o.id} className="flex items-center gap-1.5 text-[13px] text-white/75">
+              <label key={o.id} className="flex items-center gap-1.5 text-[13px] text-white/75 pointer-coarse:min-h-11">
                 <input
                   type="checkbox"
                   className="accent-lime"
@@ -248,7 +248,7 @@ function OptionsEditor({ schema, field, path, onChange, issues }: { schema: Sche
               {options
                 .filter((o) => o.id !== field.exclusive)
                 .map((o) => (
-                  <label key={o.id} className="flex items-center gap-1.5 text-[13px] text-white/75">
+                  <label key={o.id} className="flex items-center gap-1.5 text-[13px] text-white/75 pointer-coarse:min-h-11">
                     <input
                       type="checkbox"
                       className="accent-lime"
@@ -293,7 +293,7 @@ function ShowIfEditor({ schema, field, path, onChange, issues }: { schema: Schem
       {cur && trigger && (
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           {trigger.options.map((o) => (
-            <label key={o.id} className="flex items-center gap-1.5 text-[13px] text-white/75">
+            <label key={o.id} className="flex items-center gap-1.5 text-[13px] text-white/75 pointer-coarse:min-h-11">
               <input
                 type="checkbox"
                 className="accent-lime"
@@ -368,7 +368,7 @@ export function BriefStepsEditor({
               onStep(i);
               setOpen(null);
             }}
-            className={`rounded-lg border px-3 py-1.5 text-[13px] ${i === step ? "border-lime bg-lime text-ink" : errorsIn(`steps.${i}`) ? "border-orange/60 text-orange" : "border-white/12 text-white/70 hover:bg-white/5"}`}
+            className={`rounded-lg border px-3 py-1.5 text-[13px] pointer-coarse:min-h-11 pointer-coarse:min-w-11 ${i === step ? "border-lime bg-lime text-ink" : errorsIn(`steps.${i}`) ? "border-orange/60 text-orange" : "border-white/12 text-white/70 hover:bg-white/5"}`}
           >
             {x.number}
           </button>
@@ -405,9 +405,14 @@ export function BriefStepsEditor({
           return (
             <div key={f.key} className={`rounded-xl border ${errorsIn(fp) ? "border-orange/50" : "border-white/10"} bg-white/[0.02]`}>
               <div className="flex items-center gap-2 px-3 py-2">
-                <button type="button" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? null : f.key)} className="flex min-w-0 flex-1 items-center gap-2 text-left text-[13.5px]">
+                <button
+                  type="button"
+                  aria-expanded={isOpen}
+                  onClick={() => setOpen(isOpen ? null : f.key)}
+                  className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 py-1 text-left text-[13.5px] pointer-coarse:min-h-11"
+                >
                   <span className={`text-white/40 transition-transform ${isOpen ? "rotate-90" : ""}`}>▸</span>
-                  <span className="truncate text-white/90">{f.label || f.key}</span>
+                  <span className="min-w-0 break-words text-white/90">{f.label || f.key}</span>
                   {f.required && <span className="text-lime">*</span>}
                   {f.showIf && <span className="shrink-0 rounded bg-white/10 px-1.5 text-[11px] text-white/55">условный</span>}
                   <span className="ml-auto shrink-0 text-[11px] text-white/35">{typeName[f.type]}</span>

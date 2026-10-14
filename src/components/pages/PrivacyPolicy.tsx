@@ -14,7 +14,8 @@ export function PrivacyPolicy({ locale = "uk", content = siteContent[locale].pri
         >
           {back}
         </a>
-        <h1 className="mt-10 font-display text-[34px] leading-[1.05] font-bold tracking-[-0.03em] text-white md:text-[52px]">{title}</h1>
+        {/* below 430px the 34px size would push the long Ukrainian word past the screen edge */}
+        <h1 className="mt-10 font-display text-[34px] leading-[1.05] font-bold tracking-[-0.03em] break-words text-white max-[429px]:text-[28px] md:text-[52px]">{title}</h1>
         <div className="mt-10 flex flex-col gap-9">
           {sections.map((s) => (
             <section key={s.title}>

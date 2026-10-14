@@ -17,11 +17,11 @@ type Props = {
 };
 
 export const inputCls =
-  "w-full rounded-lg border border-white/12 bg-white/[0.04] px-3 py-2 text-[14px] leading-snug text-white outline-none transition-colors placeholder:text-white/30 hover:border-white/25 focus:border-lime/70 focus:bg-white/[0.06] aria-[invalid=true]:border-orange/80";
+  "w-full rounded-lg border border-white/12 bg-white/[0.04] px-3 py-2 text-[14px] leading-snug text-white outline-none transition-colors placeholder:text-white/30 hover:border-white/25 focus:border-lime/70 focus:bg-white/[0.06] aria-[invalid=true]:border-orange/80 pointer-coarse:min-h-11";
 export const btnCls =
-  "inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/12 bg-white/[0.04] px-3 py-1.5 text-[13px] text-white/85 transition-colors hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40";
+  "inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/12 bg-white/[0.04] px-3 py-1.5 text-[13px] text-white/85 transition-colors hover:border-white/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 pointer-coarse:min-h-11 pointer-coarse:min-w-11";
 const iconBtn =
-  "grid size-8 shrink-0 place-items-center rounded-md border border-white/10 text-[13px] text-white/70 transition-colors hover:border-white/30 hover:text-white disabled:cursor-not-allowed disabled:opacity-30";
+  "grid size-8 shrink-0 place-items-center rounded-md pointer-coarse:size-11 border border-white/10 text-[13px] text-white/70 transition-colors hover:border-white/30 hover:text-white disabled:cursor-not-allowed disabled:opacity-30";
 
 function IssueList({ issues }: { issues: Issue[] }) {
   if (!issues.length) return null;
@@ -367,7 +367,7 @@ function FieldView({ f, value, onChange, base, issues, ctx }: { f: Field } & Omi
       return <MediaField f={f} value={v} onChange={set} issues={issues} path={path} />;
     case "toggle":
       return (
-        <label className="flex cursor-pointer items-start gap-2.5 text-[13px] text-white/80">
+        <label className="flex cursor-pointer items-start gap-2.5 text-[13px] text-white/80 pointer-coarse:min-h-11 pointer-coarse:items-center">
           <input type="checkbox" checked={!!v} onChange={(e) => set(e.target.checked || undefined)} className="mt-0.5 size-4 shrink-0 accent-lime" />
           <span>
             {f.label}
@@ -406,7 +406,7 @@ function FieldView({ f, value, onChange, base, issues, ctx }: { f: Field } & Omi
       const on = v !== undefined;
       return (
         <div className="flex min-w-0 flex-col gap-3 rounded-xl border border-dashed border-white/12 p-3">
-          <label className="flex cursor-pointer items-center gap-2.5 text-[13px] text-white/80">
+          <label className="flex cursor-pointer items-center gap-2.5 text-[13px] text-white/80 pointer-coarse:min-h-11">
             <input type="checkbox" checked={on} onChange={(e) => set(e.target.checked ? f.make(value) : undefined)} className="size-4 accent-lime" />
             {f.label}
           </label>
@@ -485,10 +485,10 @@ function FieldView({ f, value, onChange, base, issues, ctx }: { f: Field } & Omi
                     type="button"
                     aria-expanded={isOpen}
                     onClick={() => setOpenItem(isOpen ? null : i)}
-                    className="flex min-w-0 flex-1 items-center gap-2 text-left text-[13.5px] text-white/90"
+                    className="flex min-w-0 flex-1 items-center gap-2 py-1 text-left text-[13.5px] text-white/90 pointer-coarse:min-h-11"
                   >
-                    <span className={`inline-block text-white/40 transition-transform ${isOpen ? "rotate-90" : ""}`}>▸</span>
-                    <span className="truncate">{f.itemTitle(item, i)}</span>
+                    <span className={`inline-block shrink-0 text-white/40 transition-transform ${isOpen ? "rotate-90" : ""}`}>▸</span>
+                    <span className="min-w-0 break-words">{f.itemTitle(item, i)}</span>
                     {errs.some((e) => e.level === "error") && <span className="shrink-0 rounded bg-orange/20 px-1.5 text-[11px] text-orange">ошибки</span>}
                   </button>
                   <ListControls
