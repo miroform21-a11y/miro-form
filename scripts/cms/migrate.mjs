@@ -12,6 +12,11 @@ const files = fs.readdirSync(dir).filter((f) => f.endsWith(".sql")).sort();
 
 const db = await connect();
 try {
+  const exists = (await db.query(`select to_regclass('public.cms_migrations') as t`)).rows[0].t !== null;
+  if (dry && !exists) {
+    for (const f of files) console.log(`would apply  ${f}`);
+    process.exit(0);
+  }
   await db.query(`create table if not exists public.cms_migrations (name text primary key, applied_at timestamptz not null default now())`);
   await db.query(`alter table public.cms_migrations enable row level security`);
   await db.query(`revoke all on public.cms_migrations from public, anon, authenticated`);
