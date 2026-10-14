@@ -7,6 +7,8 @@ export type Step = {
   description: string;
   /** Optional explicit line break inside the description (Figma step 04) */
   descriptionLines?: [string, string];
+  /** Optional explicit line break on wide phones only (430px+, below the tablet layout); narrower phones wrap naturally */
+  wideMobileLines?: [string, string];
   duration: string;
 };
 
@@ -15,18 +17,21 @@ export const steps: Step[] = [
     number: "01",
     title: ["Бриф", "і аналітика"],
     description: "Обговорюємо задачі, аналізуємо нішу, конкурентів і цільову аудиторію Вашого проекту.",
+    wideMobileLines: ["Обговорюємо задачі, аналізуємо нішу,", "конкурентів і цільову аудиторію Вашого проекту."],
     duration: "1–2 дні",
   },
   {
     number: "02",
     title: ["Прототип", " та дизайн"],
     description: "Будуємо структуру сторінок і створюємо унікальний візуал з адаптивами та анімаціями.",
+    wideMobileLines: ["Будуємо структуру сторінок і створюємо", "унікальний візуал з адаптивами та анімаціями."],
     duration: "3–7 днів",
   },
   {
     number: "03",
     title: ["Розробка", " та інтеграції"],
     description: "Верстаємо, підключаємо форми, аналітику, CRM та AI-інтеграції.",
+    wideMobileLines: ["Верстаємо, підключаємо форми,", "аналітику, CRM та AI-інтеграції."],
     duration: "2–5 днів",
   },
   {

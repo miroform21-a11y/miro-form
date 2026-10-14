@@ -10,6 +10,7 @@ import { Reveal } from "@/components/ui/Reveal";
 import { PillButton } from "@/components/ui/PillButton";
 import { LeadCard } from "@/components/ui/LeadCard";
 import { CountUp } from "@/components/ui/CountUp";
+import { formatPrice, priceAffixes, priceAmount } from "@/lib/price";
 
 /* ---------------------------------------------------------------- */
 /* Shared pieces                                                     */
@@ -25,13 +26,14 @@ function PlanPill({ children, className = "" }: { children: string; className?: 
   );
 }
 
-/** "$1 490" / "$1,490" → counter from 0 (used on the mobile / tablet cards) */
+/** "1 490$" / "3,990$" → counter from 0 (used on the mobile / tablet cards); symbol order from lib/price */
 function PriceCounter({ value }: { value: string }) {
-  const n = Number(value.replace(/[^\d]/g, ""));
-  return <CountUp to={n} prefix="$" group={value.includes(",") ? "," : value.includes(" ")} reserve duration={1400} />;
+  const amount = priceAmount(value);
+  const n = Number(amount.replace(/[^\d]/g, ""));
+  return <CountUp to={n} {...priceAffixes()} group={amount.includes(",") ? "," : amount.includes(" ")} reserve duration={1400} />;
 }
 
-/** "Від $390"; a plan without a price (US prices not set yet) shows "Custom quote" in the same slot */
+/** "Від 390$"; a plan without a price (US prices not set yet) shows "Custom quote" in the same slot */
 function Price({ value, size, animate = false, locale, t }: { value: string; size: "sm" | "lg"; animate?: boolean; locale: Locale; t: PricingContent }) {
   return (
     <p className={`flex items-end whitespace-nowrap ${size === "lg" ? "gap-2.5" : "gap-2"}`}>
@@ -39,7 +41,7 @@ function Price({ value, size, animate = false, locale, t }: { value: string; siz
       <span
         className={`font-display leading-none font-normal tracking-[-0.04em] text-ink-2 ${size === "lg" ? (locale === "en" ? "text-[42px] max-[1439px]:text-[38px]" : "text-[42px]") : "text-[36px]"}`}
       >
-        {!value ? t.quote[1] : animate ? <PriceCounter value={value} /> : value}
+        {!value ? t.quote[1] : animate ? <PriceCounter value={value} /> : formatPrice(value)}
       </span>
     </p>
   );
@@ -133,6 +135,17 @@ function DiscountsTitle({ className, title }: { className: string; title: Pricin
 /* Mobile & tablet (< 1280px): cards from the 390px Figma frame      */
 /* ---------------------------------------------------------------- */
 
+/** On phones the short last sentence ("Адмінпанель, анімації та CRM.") moves to a new line whole instead of leaving one word behind */
+function KeepLastSentence({ text }: { text: string }) {
+  const cut = text.lastIndexOf(". ");
+  if (cut < 0) return text;
+  return (
+    <>
+      {text.slice(0, cut + 1)} <span className="max-md:whitespace-nowrap">{text.slice(cut + 2)}</span>
+    </>
+  );
+}
+
 function CompactPlanCard({ plan, locale, t }: { plan: Plan; locale: Locale; t: PricingContent }) {
   const isMulti = plan.id === "multi";
   return (
@@ -187,7 +200,7 @@ function CompactPlanCard({ plan, locale, t }: { plan: Plan; locale: Locale; t: P
           <p className="text-[14px] leading-[1.5] text-ink-2/65">
             {plan.mobileDescription ? (
               <>
-                {plan.mobileDescription[0]}
+                <KeepLastSentence text={plan.mobileDescription[0]} />
                 <br />
                 {plan.mobileDescription[1]}
               </>

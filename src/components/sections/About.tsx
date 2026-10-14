@@ -36,7 +36,7 @@ function FounderCard({ founder }: { founder: AboutContent["founder"] }) {
       rel="noopener noreferrer"
       aria-label={founder.ariaLabel}
       draggable={false}
-      className="pop-trigger no-native-image relative flex flex-col gap-[34px] overflow-hidden rounded-[28px] border border-white/8 bg-[#111] transition-[translate,border-color,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 active:-translate-y-1 hover:border-white/16 hover:shadow-[0_24px_60px_-30px_rgba(174,238,5,0.3)] active:border-white/16 p-2.5 max-md:h-[496px] md:gap-[30px] md:rounded-[32px] md:p-5 lg:h-full">
+      className="pop-trigger no-native-image relative flex flex-col gap-[34px] overflow-hidden rounded-[28px] border border-white/8 bg-[#111] transition-[translate,border-color,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 active:-translate-y-1 hover:border-white/16 hover:shadow-[0_24px_60px_-30px_rgba(174,238,5,0.3)] active:border-white/16 p-2.5 [--photo-h:calc((100vw-62px)*372/340)] max-md:h-[496px] min-[403px]:max-md:h-[calc(124px+var(--photo-h))] md:gap-[30px] md:rounded-[32px] md:p-5 lg:h-full">
       <Image
         src="/images/about/orange-glow.png"
         alt=""
@@ -47,7 +47,9 @@ function FounderCard({ founder }: { founder: AboutContent["founder"] }) {
         className="no-native-image absolute top-[199px] left-[-96px] h-[460px] w-[540px] max-w-none object-contain md:top-auto md:bottom-[-193px] md:left-[-104px] md:h-[560px] md:w-[641px]"
       />
 
-      <div className="relative h-[372px] w-full shrink-0 overflow-hidden rounded-[20px] md:h-auto md:min-h-[320px] md:flex-1 md:rounded-[22px] lg:h-[432px] lg:flex-none">
+      {/* Phones wider than iPhone 16 Pro (402px): the frame keeps its 340×372 proportions there and grows in height,
+          so the stretched-to-fit mobile photo scales evenly instead of widening (--photo-h: frame width × 372/340) */}
+      <div className="relative h-[372px] w-full shrink-0 overflow-hidden rounded-[20px] min-[403px]:max-md:h-(--photo-h) md:h-auto md:min-h-[320px] md:flex-1 md:rounded-[22px] lg:h-[432px] lg:flex-none">
         {/* Mobile photo */}
         <Image
           src={mobile}

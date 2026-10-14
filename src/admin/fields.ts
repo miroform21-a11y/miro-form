@@ -1,5 +1,6 @@
 import type { Locale } from "@/i18n/locale";
 import { getAt, join } from "./path";
+import { formatPrice } from "@/lib/price";
 
 /**
  * Declarative description of an editor form. Paths are relative to the value being edited
@@ -197,7 +198,11 @@ export function validate(fields: Field[], value: unknown, base = "", ctx: Omit<F
 
 /* ---------------- common patterns ---------------- */
 
-export const PRICE: Pattern = { re: /^\$[\d\s,]*\d$/, message: "цена в формате «$390» или «$3,990»." };
+/** An amount with the $ on either side ("390$" or "$390"); the site shows it in the order set in lib/price.ts */
+export const PRICE: Pattern = {
+  re: /^(\$\s?[\d\s,]*\d|\d[\d\s,]*\s?\$)$/,
+  message: `цена в формате «${formatPrice("390")}» или «${formatPrice("3,990")}».`,
+};
 export const DISCOUNT: Pattern = { re: /^-?\d{1,2}%$/, message: "скидка в формате «-10%»." };
 export const EMAIL: Pattern = { re: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "адрес почты в формате name@domain.com." };
 export const PHONE_HREF: Pattern = { re: /^tel:\+?\d{7,15}$/, message: "ссылка для звонка в формате «tel:+380730217721» (без пробелов)." };

@@ -127,7 +127,7 @@ type PricingData = (typeof pricingByLocale)["uk"];
 export type PricingContent = {
   tag: string;
   title: string;
-  /** Small label before a price ("Від $390") */
+  /** Small label before a price ("Від 390$") */
   from: string;
   /** Shown in the price slot when a plan has no price: small label + big word */
   quote: [string, string];
@@ -141,7 +141,7 @@ export type PricingContent = {
   /** Screen-reader labels: "<plan title> — <label>" */
   chooseLabel: string;
   discussLabel: string;
-  /** The two priced packages (prices as shown, e.g. "$390"; their popup preset is checked by /api/lead) */
+  /** The two priced packages (e.g. "390$" — the symbol is placed by lib/price.ts; their popup preset is checked by /api/lead) */
   plans: Plan[];
   customPlan: PricingData["customPlan"];
   /** "AI & Custom" text on phones/tablets: three lines with non-breaking parts (Figma) */
@@ -176,7 +176,8 @@ export type FaqContent = {
   title: [string, string];
   /** Also rendered as FAQPage structured data on the home page */
   items: FaqItem[];
-  askCard: { label: string; title: [string, string]; text: string; button: string };
+  /** `mobileTextLines`: optional explicit line break of the text on phones (tablet and desktop wrap `text` naturally) */
+  askCard: { label: string; title: [string, string]; text: string; mobileTextLines?: [string, string]; button: string };
 };
 
 export type ContactContent = {

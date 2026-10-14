@@ -1,6 +1,7 @@
 import type { SiteContent } from "@/content/types";
 import { DISCOUNT, EMAIL, PHONE_HREF, PRICE, firstLine, type Field, type FieldContext, type SelectOption } from "../fields";
 import type { SectionDef } from "./types";
+import { formatPrice } from "@/lib/price";
 
 /** Editors of the site sections (area "site"). Layout-only values (crops, gaps, pill widths, themes) stay in code. */
 
@@ -296,6 +297,7 @@ export const siteSections: SectionDef[] = [
           opt("title.1", "Название — строка 2"),
           area("description", "Описание", 3, { softMax: 120 }),
           twoLines("descriptionLines", "Описание с явным переносом строки (десктоп)", "description"),
+          twoLines("wideMobileLines", "Описание с переносом на широких телефонах (от 430px)", "description", "На более узких телефонах текст переносится сам."),
           t("duration", "Срок", { softMax: 14 }),
         ],
       },
@@ -323,7 +325,7 @@ export const siteSections: SectionDef[] = [
         fields: [
           t("title.0", "Название — строка 1"),
           opt("title.1", "Название — строка 2"),
-          opt("price", "Цена", { pattern: PRICE, hint: "Например «$390». Пусто — показывается «Ціна за запитом»." }),
+          opt("price", "Цена", { pattern: PRICE, hint: `Например «${formatPrice("390")}». Пусто — показывается «Ціна за запитом».` }),
           area("description", "Описание", 3, { softMax: 120 }),
           twoLines("mobileDescription", "Описание на телефоне с переносом перед последним предложением", "description"),
           { kind: "strings", path: "tags", label: "Что входит в пакет — теги (десктоп)", min: 1, max: 6, softMax: 18, itemLabel: "тег" },
@@ -448,7 +450,18 @@ export const siteSections: SectionDef[] = [
           twoLines("answerLines", "Ответ с явным переносом (десктоп)", "answer"),
         ],
       },
-      group("Карточка «Остались вопросы»", [t("askCard.label", "Метка"), t("askCard.title.0", "Заголовок — строка 1"), t("askCard.title.1", "Заголовок — строка 2"), area("askCard.text", "Текст", 2), t("askCard.button", "Кнопка")]),
+      group(
+        "Карточка «Остались вопросы»",
+        [
+          t("label", "Метка"),
+          t("title.0", "Заголовок — строка 1"),
+          t("title.1", "Заголовок — строка 2"),
+          area("text", "Текст", 2),
+          twoLines("mobileTextLines", "Текст на телефоне с явным переносом", "text"),
+          t("button", "Кнопка"),
+        ],
+        "askCard",
+      ),
       note("На опубликованном сайте вопросы также выводятся в структурированных данных (FAQPage) для поисковиков."),
     ],
   },

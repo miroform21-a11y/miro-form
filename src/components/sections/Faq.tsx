@@ -124,7 +124,15 @@ function AskCard({ card }: { card: FaqContent["askCard"] }) {
           {card.title[1]}
         </p>
         <p className="text-[14px] leading-[1.5] text-white/80 md:max-w-[319px] md:text-[15px]">
-          {card.text}
+          {card.mobileTextLines ? (
+            <>
+              {/* the break is for phones; from the tablet layout up the space keeps the text flowing */}
+              {card.mobileTextLines[0]}
+              <br className="md:hidden" /> {card.mobileTextLines[1]}
+            </>
+          ) : (
+            card.text
+          )}
         </p>
       </div>
       <PillButton as="span" circleSize={44} gap={10} className="relative h-[60px] w-[273px] pr-2 pl-[27px]">

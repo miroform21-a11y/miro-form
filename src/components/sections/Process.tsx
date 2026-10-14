@@ -16,7 +16,7 @@ function DurationTag({ children }: { children: string }) {
   );
 }
 
-function StepText({ step }: { step: Step }) {
+function StepText({ step, mobile = false }: { step: Step; mobile?: boolean }) {
   return (
     <div className="flex w-full flex-col gap-2.5 md:gap-3.5">
       <h3 className="font-display text-[19px] leading-[24px] font-semibold whitespace-pre-wrap md:leading-[1.25] tracking-[-0.01em] text-white md:w-[280px] md:max-w-full md:text-[20px]">
@@ -30,6 +30,12 @@ function StepText({ step }: { step: Step }) {
             {step.descriptionLines[0]}
             <br />
             {step.descriptionLines[1]}
+          </>
+        ) : mobile && step.wideMobileLines ? (
+          <>
+            {/* the break shows on wide phones only; on narrower ones the space keeps the text flowing as before */}
+            {step.wideMobileLines[0]}
+            <br className="hidden min-[430px]:inline" /> {step.wideMobileLines[1]}
           </>
         ) : (
           step.description
@@ -101,7 +107,7 @@ export function Process({ locale = "uk", content = siteContent[locale].process }
               <img src={i === 0 ? "/images/process/m-dot-active.svg" : "/images/process/m-dot.svg"} alt="" className="h-[26px] w-3.5 shrink-0" />
               <div className="flex min-w-0 flex-1 flex-col items-start gap-4">
                 <p className={`font-pixel text-[34px] leading-pixel ${i === 0 ? "text-lime" : "text-white/18"}`}>{step.number}</p>
-                <StepText step={step} />
+                <StepText step={step} mobile />
                 <DurationTag>{step.duration}</DurationTag>
               </div>
             </Reveal>
