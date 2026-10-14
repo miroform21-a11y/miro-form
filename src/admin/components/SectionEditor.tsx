@@ -39,7 +39,7 @@ export function SectionEditor({ locale, section }: { locale: Locale; section: Se
   const save = async () => {
     if (!canSave) return;
     setSaving(true);
-    await admin.saveSection(area, locale, key);
+    await admin.saveSection(area, locale, key, section.id);
     setSaving(false);
   };
 

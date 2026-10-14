@@ -20,8 +20,8 @@ export function useRoute() {
 export function DemoBanner() {
   return (
     <div role="note" className="border-b border-amber-300/25 bg-amber-300/[0.08] px-4 py-2 text-[12.5px] leading-snug text-amber-100/90 md:px-6">
-      <b className="font-semibold text-amber-200">Демо-режим.</b> Изменения сохраняются только в этом браузере (localStorage) и <b className="font-semibold">не публикуются</b> на сайте. Загрузка изображений и видео не
-      сохраняется. Очистка данных браузера удалит сохранённое.
+      <b className="font-semibold text-amber-200">Демо-режим.</b> Изменения сохраняются только в этом браузере (localStorage) и <b className="font-semibold">не публикуются</b> на сайте. Загруженные файлы на сайт не
+      попадают: фото Founder хранится только в этом браузере, остальные изображения и видео видны лишь в предпросмотре. Очистка данных браузера удалит сохранённое.
     </div>
   );
 }

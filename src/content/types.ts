@@ -85,7 +85,15 @@ export type AboutContent = {
   /** The grey phrase around the inline photo: "<readBefore> [photo] <readAfter>" */
   readBefore: string;
   readAfter: string;
-  founder: { name: string; role: string; alt: string; href: string; ariaLabel: string };
+  founder: {
+    name: string;
+    role: string;
+    alt: string;
+    href: string;
+    ariaLabel: string;
+    /** Card photo: desktop / tablet crop and the phone version */
+    photo: { desktop: string; mobile: string };
+  };
   /** Two counters: projects / years */
   stats: [AboutStat, AboutStat];
   fullCycle: { value: number; suffix: string; text: string; tagline: [string, string] };

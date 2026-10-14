@@ -2,6 +2,9 @@ import { socialLinks } from "@/data/navigation";
 import type { Locale } from "@/i18n/locale";
 import type { AboutContent } from "../types";
 
+/** The Figma photos of the founder card (other files are fitted into the same frame with object-cover) */
+export const founderPhoto: AboutContent["founder"]["photo"] = { desktop: "/images/about/founder.png", mobile: "/images/about/m-founder.png" };
+
 export const aboutContent: Record<Locale, AboutContent> = {
   uk: {
     tag: "Про нас",
@@ -16,6 +19,7 @@ export const aboutContent: Record<Locale, AboutContent> = {
       // for now the card leads to the company Instagram (@miro.form); founderInstagram (@gukgerman) is kept in navigation.ts
       href: socialLinks.instagram,
       ariaLabel: "German Guk, Founder & CEO — Instagram MIROFORM @miro.form",
+      photo: { ...founderPhoto },
     },
     stats: [
       { label: "Реалізованих проєктів", value: 400, suffix: "+" },
@@ -39,6 +43,7 @@ export const aboutContent: Record<Locale, AboutContent> = {
       alt: "German Guk — founder of MIROFORM",
       href: socialLinks.instagram,
       ariaLabel: "German Guk, Founder & CEO — Instagram MIROFORM @miro.form",
+      photo: { ...founderPhoto },
     },
     stats: [
       { label: "Projects delivered", value: 400, suffix: "+" },

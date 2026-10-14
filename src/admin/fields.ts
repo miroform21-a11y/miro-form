@@ -32,9 +32,13 @@ export type Field =
   /** { label, href } */
   | (Common & { kind: "link"; softMax?: number })
   /** A bare URL / anchor */
-  | (Common & { kind: "href" })
-  /** Path of a file on the site; picking a file only previews it */
-  | (Common & { kind: "media"; media: "image" | "video"; optional?: boolean })
+  /** A bare URL / anchor; `external` = a full https:// address of another site */
+  | (Common & { kind: "href"; external?: boolean })
+  /**
+   * Path of a file on the site. Picking a file only previews it, unless `store: "browser"`: then a reduced copy of
+   * the image is kept with the demo data in this browser (still not uploaded or published).
+   */
+  | (Common & { kind: "media"; media: "image" | "video"; optional?: boolean; store?: "browser" })
   | (Common & { kind: "strings"; min?: number; max?: number; fixed?: boolean; softMax?: number; rows?: number; itemLabel?: string })
   | (Common & {
       kind: "list";
@@ -67,6 +71,24 @@ export type Issue = { path: string; level: "error" | "warning"; message: string 
 const HREF = /^(#[\w-]*|\/[^\s]*|https?:\/\/[^\s]+|mailto:[^\s]+|tel:\+?[\d\s()-]+)$/;
 /** Local files only: next/image has no remote hosts configured */
 const MEDIA = /^\/[^\s]+$/;
+
+/** A picked photo kept in the browser demo store (reduced copy as a data URL) */
+export const BROWSER_IMAGE = /^data:image\/(webp|jpeg|png);base64,[A-Za-z0-9+/=]+$/;
+/** ~1.4 MB of base64: the browser store holds about 5 MB for everything */
+export const MAX_BROWSER_IMAGE = 1_400_000;
+
+export const externalUrlError = (v: string) => {
+  const s = v.trim();
+  if (/\s/.test(s)) return "адрес не должен содержать пробелов.";
+  if (!/^https?:\/\//i.test(s)) return "укажите полный адрес сайта, начиная с https:// (например https://example.com).";
+  try {
+    const u = new URL(s);
+    if (!u.hostname.includes(".") || u.hostname.startsWith(".") || u.hostname.endsWith(".")) return "в адресе нет корректного домена (например example.com).";
+  } catch {
+    return "адрес записан некорректно — проверьте его (например https://example.com).";
+  }
+  return undefined;
+};
 
 export const hrefError = (v: string) =>
   HREF.test(v.trim()) ? undefined : "Ссылка должна начинаться с «#», «/», «https://», «mailto:» или «tel:» и не содержать пробелов.";
@@ -123,7 +145,7 @@ export function validate(fields: Field[], value: unknown, base = "", ctx: Omit<F
       case "href": {
         if (blank(v)) out.push({ path, level: "error", message: `«${f.label}»: укажите ссылку.` });
         else {
-          const e = hrefError(v as string);
+          const e = f.external ? externalUrlError(v as string) : hrefError(v as string);
           if (e) out.push({ path, level: "error", message: `«${f.label}»: ${e}` });
         }
         break;
@@ -131,6 +153,11 @@ export function validate(fields: Field[], value: unknown, base = "", ctx: Omit<F
       case "media": {
         if (v === undefined && f.optional) break;
         const s = typeof v === "string" ? v : "";
+        if (f.store === "browser" && BROWSER_IMAGE.test(s)) {
+          if (s.length > MAX_BROWSER_IMAGE)
+            out.push({ path, level: "error", message: `«${f.label}»: изображение слишком большое для демо-хранилища браузера — выберите файл поменьше.` });
+          break;
+        }
         if (s.startsWith("blob:"))
           out.push({
             path,

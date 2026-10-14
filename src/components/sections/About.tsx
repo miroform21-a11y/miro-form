@@ -7,6 +7,7 @@ import { ReadWords, ScrollRead } from "@/components/ui/ScrollRead";
 import type { Locale } from "@/i18n/locale";
 import { siteContent } from "@/content";
 import type { AboutContent } from "@/content/types";
+import { founderPhoto } from "@/content/site/about";
 
 function InlinePhoto({ className }: { className: string }) {
   return (
@@ -24,6 +25,9 @@ function InlinePhoto({ className }: { className: string }) {
 }
 
 function FounderCard({ founder }: { founder: AboutContent["founder"] }) {
+  const { desktop, mobile } = founder.photo;
+  // a replacement photo keeps its proportions inside the same frame and crop box (the Figma files are pre-cut to fit)
+  const cover = (src: string, own: string) => (src === own ? undefined : { objectFit: "cover" as const });
   return (
     <a
       // for now the card leads to the company Instagram (@miro.form); founderInstagram (@gukgerman) is kept in navigation.ts
@@ -46,21 +50,23 @@ function FounderCard({ founder }: { founder: AboutContent["founder"] }) {
       <div className="relative h-[372px] w-full shrink-0 overflow-hidden rounded-[20px] md:h-auto md:min-h-[320px] md:flex-1 md:rounded-[22px] lg:h-[432px] lg:flex-none">
         {/* Mobile photo */}
         <Image
-          src="/images/about/m-founder.png"
+          src={mobile}
           alt={founder.alt}
           fill
           sizes="350px"
           draggable={false}
+          style={cover(mobile, founderPhoto.mobile)}
           className="no-native-image object-fill md:hidden"
         />
         {/* Desktop photo (crop from Figma) */}
         <Image
-          src="/images/about/founder.png"
+          src={desktop}
           alt={founder.alt}
           width={839}
           height={1119}
           sizes="420px"
           draggable={false}
+          style={cover(desktop, founderPhoto.desktop)}
           className="no-native-image absolute top-[-7.41%] left-[-1.17%] h-[119.61%] w-[101.96%] max-w-none max-md:hidden"
         />
       </div>

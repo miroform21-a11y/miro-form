@@ -6,6 +6,7 @@ import { describeProblem, useAdmin } from "../store";
 import { allSections, areaTitle, sectionHref } from "../sections";
 import { btnCls } from "./FieldEditor";
 import { localeName } from "./AdminShell";
+import { RecentChanges } from "./RecentChanges";
 
 const time = (iso?: string) => (iso ? new Date(iso).toLocaleString("ru-RU") : "");
 
@@ -34,6 +35,8 @@ export function Overview() {
           видеть результат в предпросмотре. Сохранение работает только в этом браузере — на сайт изменения не попадают.
         </p>
       </div>
+
+      <RecentChanges />
 
       <section aria-labelledby="storage" className="flex flex-col gap-3">
         <h2 id="storage" className="text-[15px] font-semibold text-white/85">
@@ -130,7 +133,8 @@ export function Overview() {
         <ul className="list-disc pl-5">
           <li>Нет входа по паролю: панель открывается только при локальном запуске и не выкладывается на рабочий домен.</li>
           <li>Сохранение — в localStorage этого браузера; другой браузер, устройство или очистка данных их не увидят.</li>
-          <li>Файлы изображений и видео не загружаются: выбранный файл виден только в предпросмотре текущей вкладки.</li>
+          <li>Файлы на сервер не загружаются: фото Founder сохраняется уменьшенной копией только в этом браузере, остальные изображения и видео видны лишь в предпросмотре текущей вкладки.</li>
+          <li>История изменений и отмена работают только в этом браузере и только пока сохранены его демо-данные.</li>
           <li>Сайт, проверка заявок на сервере и сообщения в Telegram по-прежнему используют данные из кода.</li>
         </ul>
       </section>

@@ -36,6 +36,19 @@ function hasShapeOf(data: unknown, defaults: object): data is Record<string, unk
   return Object.entries(defaults).every(([k, v]) => k in d && typeof d[k] === typeof v && Array.isArray(d[k]) === Array.isArray(v));
 }
 
+const isPlain = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
+
+/**
+ * Adds fields that were introduced in code after the draft was saved (e.g. a new photo setting), taking them from
+ * the defaults; values that exist in the draft are never touched. Lists are kept as they are.
+ */
+export function fillMissing(data: unknown, defaults: unknown): unknown {
+  if (!isPlain(data) || !isPlain(defaults)) return data;
+  const out: Record<string, unknown> = { ...data };
+  for (const [k, v] of Object.entries(defaults)) out[k] = k in data ? fillMissing(data[k], v) : v;
+  return out;
+}
+
 /** Older drafts written by a previous schema version, so the UI can mention them. */
 function hasOutdatedEntry(area: ContentArea, locale: Locale, s: Storage) {
   for (let i = 0; i < s.length; i++) {
@@ -62,7 +75,7 @@ export class LocalStorageContentRepository implements ContentRepository {
       const env = JSON.parse(raw) as Envelope;
       if (!env || typeof env !== "object" || env.schema !== CONTENT_SCHEMA_VERSION) return { data: defaults, source: "defaults", problem: "outdated" };
       if (!hasShapeOf(env.data, defaults)) return { data: defaults, source: "defaults", problem: "corrupted" };
-      return { data: env.data as T, source: "stored", savedAt: env.savedAt };
+      return { data: fillMissing(env.data, defaults) as T, source: "stored", savedAt: env.savedAt };
     } catch {
       return { data: defaults, source: "defaults", problem: "corrupted" };
     }
