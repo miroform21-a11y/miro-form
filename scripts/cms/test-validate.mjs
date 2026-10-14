@@ -1,0 +1,62 @@
+// Unit checks of the CMS content validation (no database). usage: node scripts/cms/test-validate.mjs
+import { createRequire } from "node:module";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const { createJiti } = createRequire(path.join(root, "package.json"))("jiti");
+const jiti = createJiti(import.meta.url, { alias: { "@": path.join(root, "src") } });
+const { sourceSnapshot, SECTIONS, LOCALES, AREAS, clone } = await jiti.import(path.join(root, "src/cms/model.ts"));
+const { sectionErrors, snapshotErrors, mediaRefs } = await jiti.import(path.join(root, "src/cms/validate.ts"));
+
+const results = [];
+const check = (name, ok, extra = "") => results.push(`${ok ? "PASS" : "FAIL"}  ${name}${extra ? " — " + extra : ""}`);
+const snap = sourceSnapshot();
+const host = "abcdefghijklmnop.supabase.co";
+
+const all = snapshotErrors({ site: snap.site, brief: snap.brief }, host);
+check("source content passes validation (all sections, UA+EN)", all.length === 0, all.slice(0, 3).map((e) => `${e.where}: ${e.issue.message}`).join(" | "));
+
+const err = (area, l, s, data) => sectionErrors(area, l, s, data, snap[area][l], host);
+const hero = clone(snap.site.uk.hero);
+hero.unknownField = "x";
+check("unknown key refused", err("site", "uk", "hero", hero).some((i) => i.message.includes("неизвестное поле")));
+const hero2 = clone(snap.site.uk.hero);
+hero2.title = "not an array";
+check("wrong type refused", err("site", "uk", "hero", hero2).length > 0);
+const hero3 = clone(snap.site.uk.hero);
+hero3.eyebrow = "";
+check("empty required text refused", err("site", "uk", "hero", hero3).some((i) => i.message.includes("не может быть пустым")));
+const works = clone(snap.site.uk.works);
+works.projects[0].href = "javascript:alert(1)";
+check("bad project URL refused", err("site", "uk", "works", works).length > 0);
+const works2 = clone(snap.site.uk.works);
+works2.projects[0].image.src = "data:image/png;base64,AAAA";
+check("data: image refused", err("site", "uk", "works", works2).length > 0);
+const works3 = clone(snap.site.uk.works);
+works3.projects[0].image.src = "media:123e4567-e89b-42d3-a456-426614174000";
+check("uploaded file reference accepted", err("site", "uk", "works", works3).length === 0 && mediaRefs(works3).size === 1);
+const works4 = clone(snap.site.uk.works);
+works4.projects[0].image.src = `https://zzzzzzzzzzzzzzzz.supabase.co/storage/v1/object/public/cms-public/media/${"a".repeat(64)}.png`;
+check("file from another Supabase project refused", err("site", "uk", "works", works4).length > 0);
+works4.projects[0].image.src = `https://${host}/storage/v1/object/public/cms-public/media/${"a".repeat(64)}.png`;
+check("published file of this project accepted", err("site", "uk", "works", works4).length === 0);
+const pricing = clone(snap.site.uk.pricing);
+pricing.plans[0].price = "390 грн";
+check("bad price refused", err("site", "uk", "pricing", pricing).length > 0);
+const reviews = clone(snap.site.uk.reviews);
+reviews.items.push({ id: "review-9", text: "Ок", name: "Тест", company: "Co", initials: "T" });
+check("new review with optional fields accepted", err("site", "uk", "reviews", reviews).length === 0);
+const stack = clone(snap.site.uk.hero);
+delete stack.stack[0].w;
+check("optional key removed (pill width) accepted", err("site", "uk", "hero", stack).length === 0);
+const brief = clone(snap.brief.uk.schema);
+brief.steps[1].fields[0].options[3].label = "Щось інше";
+check("brief option renamed accepted", err("brief", "uk", "schema", brief).length === 0);
+const brief2 = clone(snap.brief.uk.schema);
+brief2.steps[1].fields[1].showIf.values = ["o99"];
+check("brief condition to a missing option refused", err("brief", "uk", "schema", brief2).length > 0);
+check("unknown section refused", sectionErrors("site", "uk", "nope", {}, snap.site.uk, host).length > 0);
+check("section count", AREAS.every((a) => SECTIONS[a].length > 0) && SECTIONS.site.length === 16 && SECTIONS.brief.length === 3);
+
+console.log(results.join("\n"));
+process.exit(results.some((r) => r.startsWith("FAIL")) ? 1 : 0);

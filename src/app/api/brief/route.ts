@@ -1,5 +1,5 @@
 import { BRIEF_LIMITS, MAX_LINKS, MAX_SOCIALS, isShown, optionId, sendErrors, skipKey, type BriefAnswers, type BriefField, type BriefSchema, type BriefValue } from "@/data/brief";
-import { briefSchemas } from "@/data/briefEn";
+import { getPublishedOrBuiltIn } from "@/server/cms/published";
 import { claimOnce, releaseClaim, withinRateLimit } from "@/lib/server/limits";
 import { sendTelegramHtml, telegramConfigured } from "@/lib/server/telegram";
 import { buildBriefMessages } from "@/lib/server/briefMessage";
@@ -101,7 +101,8 @@ export async function POST(request: Request) {
     if (looksAutomated(body)) return reply(200); // silently dropped
 
     // the English form says so; anything else is the Ukrainian brief, exactly as before
-    const schema = briefSchemas[body.lang === "en" ? "en" : "uk"];
+    // the questionnaire of the published content (the same the wizard rendered)
+    const schema = (await getPublishedOrBuiltIn()).snapshot.brief[body.lang === "en" ? "en" : "uk"].schema;
     const answers = parse(body, schema);
     if (!answers) {
       console.warn("[brief] refused: answers did not pass validation");

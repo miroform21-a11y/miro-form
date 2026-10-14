@@ -35,10 +35,10 @@ export type Field =
   /** A bare URL / anchor; `external` = a full https:// address of another site */
   | (Common & { kind: "href"; external?: boolean })
   /**
-   * Path of a file on the site. Picking a file only previews it, unless `store: "browser"`: then a reduced copy of
-   * the image is kept with the demo data in this browser (still not uploaded or published).
+   * A file of the site: a built-in path ("/images/…"), an uploaded file ("media:<id>", private until published)
+   * or a published file in Storage (public URL)
    */
-  | (Common & { kind: "media"; media: "image" | "video"; optional?: boolean; store?: "browser" })
+  | (Common & { kind: "media"; media: "image" | "video"; optional?: boolean })
   | (Common & { kind: "strings"; min?: number; max?: number; fixed?: boolean; softMax?: number; rows?: number; itemLabel?: string })
   | (Common & {
       kind: "list";
@@ -72,10 +72,13 @@ const HREF = /^(#[\w-]*|\/[^\s]*|https?:\/\/[^\s]+|mailto:[^\s]+|tel:\+?[\d\s()-
 /** Local files only: next/image has no remote hosts configured */
 const MEDIA = /^\/[^\s]+$/;
 
-/** A picked photo kept in the browser demo store (reduced copy as a data URL) */
-export const BROWSER_IMAGE = /^data:image\/(webp|jpeg|png);base64,[A-Za-z0-9+/=]+$/;
-/** ~1.4 MB of base64: the browser store holds about 5 MB for everything */
-export const MAX_BROWSER_IMAGE = 1_400_000;
+/** An uploaded file that is not published yet (private bucket, shown in the admin through signed URLs) */
+export const MEDIA_REF = /^media:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+/** A published file in Supabase Storage (the server also checks that it belongs to this project) */
+export const PUBLISHED_MEDIA = /^https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\/cms-public\/media\/[0-9a-f]{64}\.(jpg|png|webp|avif|mp4)$/;
+/** Upload limits (the buckets enforce the same) */
+export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+export const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 
 export const externalUrlError = (v: string) => {
   const s = v.trim();
@@ -153,18 +156,11 @@ export function validate(fields: Field[], value: unknown, base = "", ctx: Omit<F
       case "media": {
         if (v === undefined && f.optional) break;
         const s = typeof v === "string" ? v : "";
-        if (f.store === "browser" && BROWSER_IMAGE.test(s)) {
-          if (s.length > MAX_BROWSER_IMAGE)
-            out.push({ path, level: "error", message: `«${f.label}»: изображение слишком большое для демо-хранилища браузера — выберите файл поменьше.` });
-          break;
-        }
-        if (s.startsWith("blob:"))
-          out.push({
-            path,
-            level: "error",
-            message: `«${f.label}»: выбранный файл показан только в предпросмотре. В демо-режиме файлы не сохраняются и не публикуются — укажите путь к файлу, который уже есть на сайте, или нажмите «Вернуть путь».`,
-          });
-        else if (!MEDIA.test(s)) out.push({ path, level: "error", message: `«${f.label}»: укажите путь к файлу на сайте, начиная с «/» (например /images/works/project.png). Внешние адреса не поддерживаются.` });
+        if (MEDIA_REF.test(s) || PUBLISHED_MEDIA.test(s)) break;
+        if (s.startsWith("blob:") || s.startsWith("data:"))
+          out.push({ path, level: "error", message: `«${f.label}»: файл ещё не загружен — дождитесь окончания загрузки или выберите его снова.` });
+        else if (!MEDIA.test(s))
+          out.push({ path, level: "error", message: `«${f.label}»: загрузите файл или укажите путь к файлу на сайте, начиная с «/» (например /images/works/project.png).` });
         break;
       }
       case "strings": {

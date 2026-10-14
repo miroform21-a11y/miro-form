@@ -3,64 +3,104 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { briefContent, siteContent } from "@/content";
 import type { BriefContent, SiteContent } from "@/content/types";
-import type { ContentArea, ContentRepository, LoadProblem } from "@/content/repository";
-import { SaveError } from "@/content/repository";
-import { LocalStorageContentRepository, fillMissing } from "@/content/local-storage-repository";
 import type { Locale } from "@/i18n/locale";
-import { clone, getAt, join, same, setAt } from "./path";
-import { describe, diff, imageAvailable, isImageValue, loadHistory, saveHistory, type HistoryEntry } from "./history";
-import { allSections, findSection } from "./sections";
+import type { AdminState, ChangeRow, MediaInfo, PublicationMeta } from "@/server/cms/admin-ops";
+import {
+  cmsCreateUpload,
+  cmsExport,
+  cmsFinishUpload,
+  cmsImport,
+  cmsLoad,
+  cmsLoadPublication,
+  cmsPublish,
+  cmsResetToBuiltIn,
+  cmsRestore,
+  cmsSaveSection,
+  cmsSignMedia,
+  cmsUndo,
+} from "@/app/admin/cms-actions";
+import { clone, same } from "./path";
+import type { HistoryEntry } from "./history";
 
 /**
- * Admin state: for every area (site / brief) and language a saved copy and an editable draft.
- * The two languages are separate objects — editing one never touches the other.
- * Saved copies live in the browser demo store only (see LocalStorageContentRepository).
+ * Admin state backed by the CMS in Supabase (through the Server Actions in app/admin/cms-actions.ts).
+ * Per area, language and section: the saved draft (server), the local edits and the server version used for
+ * conflict detection. Published content changes only on "Опубликовать".
  */
 
+type ContentArea = "site" | "brief";
 type AreaData = { site: SiteContent; brief: BriefContent };
-type Slot<T> = { saved: T; draft: T; loaded: boolean; problem?: LoadProblem; savedAt?: string; source?: "stored" | "defaults" };
-type State = { [A in ContentArea]: Record<Locale, Slot<AreaData[A]>> };
+type SectionState = { saved: unknown; draft: unknown; version: number };
+type Sections = Record<ContentArea, Record<Locale, Record<string, SectionState>>>;
 
 export type Toast = { id: number; kind: "success" | "error" | "info"; text: string };
+type Result = { ok: boolean; message: string };
 
-const defaultsOf = <A extends ContentArea>(area: A, locale: Locale): AreaData[A] =>
-  clone((area === "site" ? siteContent[locale] : briefContent[locale]) as AreaData[A]);
+/** Slot info used by the editor status lines */
+type Slot = { loaded: true; savedAt?: string; source: "stored" | "defaults"; problem?: undefined };
 
-const initialSlot = <A extends ContentArea>(area: A, locale: Locale): Slot<AreaData[A]> => {
-  const d = defaultsOf(area, locale);
-  return { saved: d, draft: clone(d), loaded: false };
-};
+const builtIn = (area: ContentArea, locale: Locale) => (area === "site" ? siteContent[locale] : briefContent[locale]) as Record<string, unknown>;
 
-const initialState = (): State => ({
-  site: { uk: initialSlot("site", "uk"), en: initialSlot("site", "en") },
-  brief: { uk: initialSlot("brief", "uk"), en: initialSlot("brief", "en") },
+function toSections(drafts: AdminState["drafts"]): Sections {
+  const out = {} as Sections;
+  for (const a of ["site", "brief"] as const) {
+    out[a] = {} as Record<Locale, Record<string, SectionState>>;
+    for (const l of ["uk", "en"] as const) {
+      out[a][l] = {};
+      for (const [k, d] of Object.entries(drafts[a][l])) out[a][l][k] = { saved: d.data, draft: clone(d.data), version: d.version };
+    }
+  }
+  return out;
+}
+
+const toHistory = (c: ChangeRow): HistoryEntry => ({
+  id: c.id,
+  area: c.area,
+  locale: c.locale,
+  key: c.section,
+  sectionId: c.sectionId,
+  sectionTitle: c.sectionTitle,
+  path: c.path,
+  field: c.field,
+  description: c.description,
+  before: c.beforePresent ? c.before : undefined,
+  after: c.afterPresent ? c.after : undefined,
+  at: c.at,
 });
 
 type Ctx = {
-  repo: ContentRepository;
-  state: State;
+  state: Sections;
   draft: <A extends ContentArea>(area: A, locale: Locale) => AreaData[A];
   saved: <A extends ContentArea>(area: A, locale: Locale) => AreaData[A];
-  slot: (area: ContentArea, locale: Locale) => Slot<unknown>;
-  /** Replace one top-level section of the draft */
+  slot: (area: ContentArea, locale: Locale) => Slot;
   setSection: (area: ContentArea, locale: Locale, key: string, value: unknown) => void;
   isDirty: (area: ContentArea, locale: Locale, key?: string) => boolean;
-  /** true when the section differs from the current site content */
+  /** The saved draft differs from what the site shows */
+  isUnpublished: (area: ContentArea, locale: Locale, key?: string) => boolean;
+  /** The section (draft) differs from the published version */
   differsFromSite: (area: ContentArea, locale: Locale, key: string) => boolean;
-  /** `sectionId` names the admin section in the history (two sections can share one key) */
   saveSection: (area: ContentArea, locale: Locale, key: string, sectionId?: string) => Promise<boolean>;
-  /** Saved changes, newest first (this browser only) */
-  history: HistoryEntry[];
-  historyProblem?: "corrupted" | "unavailable";
-  /** Puts one saved change back; later changes of other fields stay */
-  undo: (id: string) => Promise<{ ok: boolean; message: string }>;
   cancelSection: (area: ContentArea, locale: Locale, key: string) => void;
-  /** Put the site content of this section back into the draft (still needs saving) */
+  /** Puts the published version of the section into the form (still needs saving) */
   restoreSection: (area: ContentArea, locale: Locale, key: string) => void;
-  /** Remove the stored draft of an area + language entirely */
+  /** Replaces the drafts of an area + language with the built-in content (saved, with history) */
   resetArea: (area: ContentArea, locale: Locale) => Promise<void>;
-  exportJson: () => string;
-  importJson: (json: string) => Promise<{ ok: boolean; message: string }>;
+  exportJson: () => Promise<string | null>;
+  importJson: (json: string) => Promise<Result>;
+  history: HistoryEntry[];
+  undo: (id: string) => Promise<Result>;
+  publish: (note: string) => Promise<Result>;
+  restorePublication: (id: number) => Promise<Result>;
+  loadPublication: (id: number) => Promise<Result>;
+  publications: PublicationMeta[];
+  currentPublicationId: number | null;
+  unpublished: string[];
+  uploadMedia: (file: Blob, meta: { name: string; width?: number; height?: number }) => Promise<{ ok: true; ref: string } | { ok: false; error: string }>;
+  /** A displayable URL for a media value ("media:<id>" → signed URL) */
+  mediaUrl: (value: string) => string | null;
+  /** Content with uploaded-file references replaced by displayable URLs (for the preview) */
+  resolveMedia: <T>(content: T) => T;
+  reload: () => Promise<void>;
   toasts: Toast[];
   toast: (kind: Toast["kind"], text: string) => void;
   dismiss: (id: number) => void;
@@ -74,29 +114,23 @@ export function useAdmin() {
   return c;
 }
 
-const problemText: Record<LoadProblem, string> = {
-  corrupted: "Сохранённые демо-данные повреждены и не загружены — показаны текущие данные сайта.",
-  outdated: "Сохранённые демо-данные устарели (изменилась структура контента) и не загружены — показаны текущие данные сайта.",
-  unavailable: "Хранилище браузера недоступно (приватный режим или запрет данных сайтов). Изменения нельзя будет сохранить.",
-};
-export const describeProblem = (p: LoadProblem) => problemText[p];
+type Failure = { ok: false; error: string; conflict?: boolean; unauthorized?: boolean };
+const isFailure = <T extends { ok: boolean }>(r: T): r is Extract<T, { ok: false }> => r.ok === false;
 
-export function AdminProvider({ children }: { children: ReactNode }) {
-  const repo = useMemo<ContentRepository>(() => new LocalStorageContentRepository(), []);
-  const [state, setState] = useState<State>(initialState);
+export function AdminProvider({ initial, children }: { initial: AdminState; children: ReactNode }) {
+  const [state, setState] = useState<Sections>(() => toSections(initial.drafts));
+  const [published, setPublished] = useState(initial.published);
+  const [publications, setPublications] = useState(initial.publications);
+  const [currentPublicationId, setCurrentPublicationId] = useState(initial.currentPublicationId);
+  const [changes, setChanges] = useState(initial.changes);
+  const [media, setMedia] = useState<Record<string, MediaInfo>>(initial.media);
+  const [unpublished, setUnpublished] = useState(initial.unpublished);
+  const [savedAt, setSavedAt] = useState<string | undefined>();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const nextToast = useRef(1);
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [historyProblem, setHistoryProblem] = useState<"corrupted" | "unavailable">();
-  /** The latest saved data, for async actions that run after several state updates */
-  const stateRef = useRef<State | null>(null);
-  const historyRef = useRef<HistoryEntry[]>([]);
-
-  const persistHistory = useCallback((next: HistoryEntry[]) => {
-    const { kept } = saveHistory(next);
-    historyRef.current = kept;
-    setHistory(kept);
-  }, []);
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  const pendingSign = useRef(new Set<string>());
 
   const toast = useCallback((kind: Toast["kind"], text: string) => {
     const id = nextToast.current++;
@@ -105,140 +139,102 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   }, []);
   const dismiss = useCallback((id: number) => setToasts((t) => t.filter((x) => x.id !== id)), []);
 
-  // load stored drafts once, on the client (localStorage does not exist on the server)
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const next = initialState();
-      for (const area of ["site", "brief"] as const)
-        for (const locale of ["uk", "en"] as const) {
-          const res = await repo.load(area, locale, defaultsOf(area, locale));
-          (next[area] as Record<Locale, Slot<unknown>>)[locale] = {
-            saved: res.data,
-            draft: clone(res.data),
-            loaded: true,
-            problem: res.problem,
-            savedAt: res.savedAt,
-            source: res.source,
-          };
-        }
-      if (!cancelled) {
-        setState(next);
-        const h = loadHistory();
-        historyRef.current = h.entries;
-        setHistory(h.entries);
-        setHistoryProblem(h.problem);
+  /** Common handling of a failed action; returns its message */
+  const handleFailure = useCallback(
+    (r: { error: string; unauthorized?: boolean }) => {
+      if (r.unauthorized) {
+        window.location.assign("/admin/login");
       }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [repo]);
+      toast("error", r.error);
+      return r.error;
+    },
+    [toast],
+  );
 
-  const slot = useCallback((area: ContentArea, locale: Locale) => state[area][locale] as Slot<unknown>, [state]);
-
-  const update = useCallback((area: ContentArea, locale: Locale, fn: (s: Slot<unknown>) => Slot<unknown>) => {
-    setState((st) => ({ ...st, [area]: { ...st[area], [locale]: fn(st[area][locale] as Slot<unknown>) } }));
+  const applyState = useCallback((s: AdminState) => {
+    setState(toSections(s.drafts));
+    setPublished(s.published);
+    setPublications(s.publications);
+    setCurrentPublicationId(s.currentPublicationId);
+    setChanges(s.changes);
+    setMedia(s.media);
+    setUnpublished(s.unpublished);
   }, []);
 
-  const setSection = useCallback(
-    (area: ContentArea, locale: Locale, key: string, value: unknown) =>
-      update(area, locale, (s) => ({ ...s, draft: { ...(s.draft as object), [key]: value } })),
-    [update],
-  );
+  const reload = useCallback(async () => {
+    const r = await cmsLoad();
+    if (isFailure(r)) return void handleFailure(r);
+    applyState(r.state);
+  }, [applyState, handleFailure]);
+
+  const update = useCallback((area: ContentArea, locale: Locale, key: string, fn: (s: SectionState) => SectionState) => {
+    setState((st) => ({ ...st, [area]: { ...st[area], [locale]: { ...st[area][locale], [key]: fn(st[area][locale][key]) } } }));
+  }, []);
+
+  const areaObject = useCallback((area: ContentArea, locale: Locale, which: "draft" | "saved") => {
+    const sections = state[area][locale];
+    return Object.fromEntries(Object.entries(sections).map(([k, s]) => [k, s[which]]));
+  }, [state]);
+
+  const draftMemo = useMemo(() => {
+    const out: Record<string, unknown> = {};
+    for (const a of ["site", "brief"] as const) for (const l of ["uk", "en"] as const) out[`${a}/${l}`] = areaObject(a, l, "draft");
+    return out;
+  }, [areaObject]);
+  const savedMemo = useMemo(() => {
+    const out: Record<string, unknown> = {};
+    for (const a of ["site", "brief"] as const) for (const l of ["uk", "en"] as const) out[`${a}/${l}`] = areaObject(a, l, "saved");
+    return out;
+  }, [areaObject]);
 
   const isDirty = useCallback(
     (area: ContentArea, locale: Locale, key?: string) => {
-      const s = state[area][locale] as Slot<Record<string, unknown>>;
-      return key ? !same(s.draft[key], s.saved[key]) : !same(s.draft, s.saved);
+      const secs = state[area][locale];
+      return key ? !same(secs[key].draft, secs[key].saved) : Object.values(secs).some((s) => !same(s.draft, s.saved));
     },
     [state],
   );
 
-  const differsFromSite = useCallback(
-    (area: ContentArea, locale: Locale, key: string) => {
-      const s = state[area][locale] as Slot<Record<string, unknown>>;
-      return !same(s.draft[key], (defaultsOf(area, locale) as Record<string, unknown>)[key]);
-    },
-    [state],
+  const isUnpublished = useCallback(
+    (area: ContentArea, locale: Locale, key?: string) => (key ? unpublished.includes(`${area}/${locale}/${key}`) : unpublished.some((u) => u.startsWith(`${area}/${locale}/`))),
+    [unpublished],
   );
+
+  const publishedSection = useCallback(
+    (area: ContentArea, locale: Locale, key: string) => {
+      const p = published?.[area]?.[locale] as Record<string, unknown> | undefined;
+      return clone(p?.[key] ?? builtIn(area, locale)[key]);
+    },
+    [published],
+  );
+
+  const differsFromSite = useCallback((area: ContentArea, locale: Locale, key: string) => !same(state[area][locale][key].draft, publishedSection(area, locale, key)), [state, publishedSection]);
+
+  const setSection = useCallback((area: ContentArea, locale: Locale, key: string, value: unknown) => update(area, locale, key, (s) => ({ ...s, draft: value })), [update]);
 
   const saveSection = useCallback(
     async (area: ContentArea, locale: Locale, key: string, sectionId?: string) => {
-      const s = state[area][locale] as Slot<Record<string, unknown>>;
-      const nextSaved = { ...s.saved, [key]: clone(s.draft[key]) };
-      try {
-        const { savedAt } = await repo.save(area, locale, nextSaved);
-        update(area, locale, (cur) => ({ ...cur, saved: nextSaved, savedAt, source: "stored", problem: undefined }));
-        // one history entry per changed field; a save that changes very many fields at once is one entry
-        const section = (sectionId && findSection(area, sectionId)) || allSections.find((x) => x.area === area && x.key === key);
-        if (section) {
-          let changes = diff(s.saved[key], nextSaved[key]);
-          if (changes.length > 12) changes = [{ path: "", before: s.saved[key], after: nextSaved[key] }];
-          const entries: HistoryEntry[] = changes.map((c, i) => ({
-            id: `${Date.now().toString(36)}-${i}-${Math.random().toString(36).slice(2, 7)}`,
-            area,
-            locale,
-            key,
-            sectionId: section.id,
-            sectionTitle: section.title,
-            path: c.path,
-            ...describe(section, c.path, c.before, c.after, nextSaved[key]),
-            before: clone(c.before),
-            after: clone(c.after),
-            at: savedAt,
-          }));
-          if (entries.length) persistHistory([...entries.reverse(), ...historyRef.current]);
-        }
-        toast("success", "Сохранено в этом браузере. На сайте ничего не изменилось — это демо-режим.");
-        return true;
-      } catch (e) {
-        toast("error", e instanceof SaveError ? e.message : "Не удалось сохранить данные в браузере.");
+      const s = stateRef.current[area][locale][key];
+      const sent = clone(s.draft);
+      const r = await cmsSaveSection({ area, locale, section: key, sectionId: sectionId ?? key, data: sent, expectedVersion: s.version });
+      if (isFailure(r)) {
+        handleFailure(r);
         return false;
       }
+      // keep edits made while the request was running
+      update(area, locale, key, (cur) => ({ saved: sent, draft: same(cur.draft, sent) ? sent : cur.draft, version: r.version }));
+      setChanges((c) => [...r.changes, ...c].slice(0, 50));
+      setUnpublished(r.unpublished);
+      setSavedAt(new Date().toISOString());
+      toast("success", r.changes.length ? "Черновик сохранён. На сайте изменения появятся после «Опубликовать»." : "Изменений нет — сохранять нечего.");
+      return true;
     },
-    [repo, state, toast, update, persistHistory],
-  );
-
-  stateRef.current = state;
-
-  const undo = useCallback(
-    async (id: string): Promise<{ ok: boolean; message: string }> => {
-      const fail = (message: string) => {
-        toast("error", message);
-        return { ok: false, message };
-      };
-      const e = historyRef.current.find((x) => x.id === id);
-      const st = stateRef.current;
-      if (!e || !st) return fail("Это изменение уже отменено или удалено из истории.");
-      const s = st[e.area][e.locale] as Slot<Record<string, unknown>>;
-      if (!s.loaded) return fail("Данные ещё загружаются — попробуйте через секунду.");
-      if (e.payloadDropped) return fail("Это изменение нельзя отменить: прежнее изображение не поместилось в хранилище браузера и не сохранилось.");
-      const full = join(e.key, e.path);
-      if (!same(getAt(s.saved, full), e.after))
-        return fail(`Нельзя отменить «${e.description}»: это поле позже изменили ещё раз. Сначала отмените более позднее изменение этого поля.`);
-      if (!same(s.draft[e.key], s.saved[e.key]))
-        return fail(`В разделе «${e.sectionTitle}» (${e.locale === "uk" ? "UA" : "EN"}) есть несохранённые правки. Сохраните или отмените их, затем повторите отмену.`);
-      if (isImageValue(e.before) && !(await imageAvailable(e.before)))
-        return fail("Нельзя отменить: прежнее изображение больше недоступно. Данные не изменены.");
-      const nextSaved = setAt(s.saved, full, clone(e.before));
-      try {
-        const { savedAt } = await repo.save(e.area, e.locale, nextSaved);
-        update(e.area, e.locale, (cur) => ({ ...cur, saved: nextSaved, draft: setAt(cur.draft, full, clone(e.before)), savedAt, source: "stored", problem: undefined }));
-      } catch (err) {
-        return fail(err instanceof SaveError ? err.message : "Не удалось сохранить отмену в браузере. Данные не изменены.");
-      }
-      persistHistory(historyRef.current.filter((x) => x.id !== id));
-      const message = `Отменено: ${e.description}. Сохранено в этом браузере.`;
-      toast("success", message);
-      return { ok: true, message };
-    },
-    [repo, toast, update, persistHistory],
+    [handleFailure, toast, update],
   );
 
   const cancelSection = useCallback(
     (area: ContentArea, locale: Locale, key: string) => {
-      update(area, locale, (s) => ({ ...s, draft: { ...(s.draft as object), [key]: clone((s.saved as Record<string, unknown>)[key]) } }));
+      update(area, locale, key, (s) => ({ ...s, draft: clone(s.saved) }));
       toast("info", "Несохранённые изменения раздела отменены.");
     },
     [toast, update],
@@ -246,107 +242,198 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   const restoreSection = useCallback(
     (area: ContentArea, locale: Locale, key: string) => {
-      update(area, locale, (s) => ({ ...s, draft: { ...(s.draft as object), [key]: (defaultsOf(area, locale) as Record<string, unknown>)[key] } }));
-      toast("info", "В форму подставлены текущие данные сайта. Нажмите «Сохранить», чтобы заменить ими демо-данные.");
+      update(area, locale, key, (s) => ({ ...s, draft: publishedSection(area, locale, key) }));
+      toast("info", "В форму подставлена опубликованная версия раздела. Нажмите «Сохранить», чтобы она стала черновиком.");
     },
-    [toast, update],
+    [publishedSection, toast, update],
   );
 
   const resetArea = useCallback(
     async (area: ContentArea, locale: Locale) => {
-      await repo.clear(area, locale);
-      const d = defaultsOf(area, locale);
-      update(area, locale, () => ({ saved: d, draft: clone(d), loaded: true, source: "defaults" }));
-      // the changes of this area and language no longer apply to the data
-      persistHistory(historyRef.current.filter((x) => !(x.area === area && x.locale === locale)));
-      toast("success", "Демо-данные удалены из браузера — показаны текущие данные сайта. Их история изменений очищена.");
+      const r = await cmsResetToBuiltIn(area, locale);
+      if (isFailure(r)) return void handleFailure(r);
+      await reload();
+      toast("success", "В черновики загружен исходный контент. На сайте ничего не изменится до публикации.");
     },
-    [repo, toast, update, persistHistory],
+    [handleFailure, reload, toast],
   );
 
-  const exportJson = useCallback(() => {
-    const out = {
-      format: "miroform-admin-demo",
-      exportedAt: new Date().toISOString(),
-      site: { uk: state.site.uk.saved, en: state.site.en.saved },
-      brief: { uk: state.brief.uk.saved, en: state.brief.en.saved },
-    };
-    return JSON.stringify(out, null, 2);
-  }, [state]);
+  const exportJson = useCallback(async () => {
+    const r = await cmsExport();
+    if (isFailure(r)) {
+      handleFailure(r);
+      return null;
+    }
+    return r.json;
+  }, [handleFailure]);
 
   const importJson = useCallback(
     async (json: string) => {
-      let parsed: { format?: string; site?: Record<string, unknown>; brief?: Record<string, unknown> };
-      try {
-        parsed = JSON.parse(json);
-      } catch {
-        return { ok: false, message: "Файл не является корректным JSON." };
-      }
-      if (parsed?.format !== "miroform-admin-demo") return { ok: false, message: "Это не файл экспорта демо-админки MIROFORM." };
-      let count = 0;
-      for (const area of ["site", "brief"] as const)
-        for (const locale of ["uk", "en"] as const) {
-          const data = parsed[area]?.[locale];
-          if (!data) continue;
-          const defaults = defaultsOf(area, locale) as Record<string, unknown>;
-          const ok =
-            typeof data === "object" &&
-            Object.entries(defaults).every(([k, v]) => k in (data as object) && typeof (data as Record<string, unknown>)[k] === typeof v);
-          if (!ok) return { ok: false, message: `Раздел «${area}/${locale}» в файле имеет неверную структуру. Ничего не импортировано.` };
-        }
-      try {
-        for (const area of ["site", "brief"] as const)
-          for (const locale of ["uk", "en"] as const) {
-            const raw = parsed[area]?.[locale] as object | undefined;
-            if (!raw) continue;
-            // fields added to the site after the export was made come from the current defaults
-            const data = fillMissing(raw, defaultsOf(area, locale)) as object;
-            const { savedAt } = await repo.save(area, locale, data);
-            update(area, locale, () => ({ saved: data, draft: clone(data), loaded: true, savedAt, source: "stored" }));
-            count++;
-          }
-      } catch (e) {
-        return { ok: false, message: e instanceof SaveError ? e.message : "Не удалось записать импортированные данные." };
-      }
-      persistHistory([]);
-      return { ok: true, message: `Импортировано наборов данных: ${count}. Они сохранены только в этом браузере. История изменений очищена.` };
+      const r = await cmsImport(json);
+      if (isFailure(r)) return { ok: false, message: handleFailure(r) };
+      await reload();
+      return { ok: true, message: "Файл загружен в черновики. Проверьте разделы и опубликуйте, когда будете готовы." };
     },
-    [repo, update, persistHistory],
+    [handleFailure, reload],
   );
 
+  const undo = useCallback(
+    async (id: string) => {
+      const r = await cmsUndo(id);
+      if (isFailure(r)) return { ok: false, message: handleFailure(r) };
+      const c = changes.find((x) => x.id === id);
+      update(r.area, r.locale, r.section, (s) => ({ saved: r.data, draft: same(s.draft, s.saved) ? clone(r.data) : s.draft, version: r.version }));
+      setChanges((list) => list.filter((x) => x.id !== id));
+      setUnpublished(r.unpublished);
+      const message = `Отменено: ${c?.description ?? "изменение"}. Черновик сохранён.`;
+      toast("success", message);
+      return { ok: true, message };
+    },
+    [changes, handleFailure, toast, update],
+  );
+
+  const publish = useCallback(
+    async (note: string) => {
+      if (isDirty("site", "uk") || isDirty("site", "en") || isDirty("brief", "uk") || isDirty("brief", "en")) {
+        const message = "Есть несохранённые правки. Сохраните или отмените их перед публикацией.";
+        toast("error", message);
+        return { ok: false, message };
+      }
+      const r = await cmsPublish(note);
+      if (isFailure(r)) return { ok: false, message: handleFailure(r) };
+      await reload();
+      const message = `Опубликовано (версия №${r.publicationId}). Сайт обновится при следующем открытии страницы.`;
+      toast("success", message);
+      return { ok: true, message };
+    },
+    [handleFailure, isDirty, reload, toast],
+  );
+
+  const restorePublication = useCallback(
+    async (id: number) => {
+      const r = await cmsRestore(id);
+      if (isFailure(r)) return { ok: false, message: handleFailure(r) };
+      await reload();
+      const message = `Сайт возвращён к версии №${id} (новая запись №${r.publicationId}).`;
+      toast("success", message);
+      return { ok: true, message };
+    },
+    [handleFailure, reload, toast],
+  );
+
+  const loadPublication = useCallback(
+    async (id: number) => {
+      const r = await cmsLoadPublication(id);
+      if (isFailure(r)) return { ok: false, message: handleFailure(r) };
+      await reload();
+      const message = `Версия №${id} загружена в черновики. Сайт не изменён.`;
+      toast("success", message);
+      return { ok: true, message };
+    },
+    [handleFailure, reload, toast],
+  );
+
+  const uploadMedia = useCallback(
+    async (file: Blob, meta: { name: string; width?: number; height?: number }) => {
+      const created = await cmsCreateUpload({ mime: file.type, bytes: file.size, name: meta.name });
+      if (isFailure(created)) return { ok: false as const, error: handleFailure(created) };
+      // the file goes straight to the private bucket with a one-time upload URL (no secret in the browser)
+      const body = new FormData();
+      body.append("cacheControl", "3600");
+      body.append("", file);
+      let put: Response;
+      try {
+        put = await fetch(created.uploadUrl, { method: "PUT", body, headers: { "x-upsert": "false" } });
+      } catch {
+        return { ok: false as const, error: "Нет связи с хранилищем. Проверьте интернет и попробуйте снова." };
+      }
+      if (!put.ok) return { ok: false as const, error: "Хранилище не приняло файл. Попробуйте ещё раз." };
+      const done = await cmsFinishUpload({ mediaId: created.mediaId, width: meta.width, height: meta.height });
+      if (isFailure(done)) return { ok: false as const, error: handleFailure(done) };
+      setMedia((m) => ({ ...m, [done.media.id]: done.media }));
+      return { ok: true as const, ref: `media:${done.media.id}` };
+    },
+    [handleFailure],
+  );
+
+  // sign URLs for references we have not seen yet (e.g. restored by undo)
+  const requestSign = useCallback((id: string) => {
+    if (pendingSign.current.has(id)) return;
+    pendingSign.current.add(id);
+    queueMicrotask(async () => {
+      const ids = [...pendingSign.current];
+      pendingSign.current.clear();
+      const r = await cmsSignMedia(ids);
+      if (!isFailure(r)) setMedia((m) => ({ ...m, ...r.media }));
+    });
+  }, []);
+
+  const mediaUrl = useCallback(
+    (value: string) => {
+      if (!value.startsWith("media:")) return value;
+      const id = value.slice(6);
+      const m = media[id];
+      if (!m) requestSign(id);
+      return m?.url ?? null;
+    },
+    [media, requestSign],
+  );
+
+  const resolveMedia = useCallback(
+    <T,>(content: T): T => {
+      const walk = (v: unknown): unknown => {
+        if (typeof v === "string") return v.startsWith("media:") ? (mediaUrl(v) ?? "") : v;
+        if (Array.isArray(v)) return v.map(walk);
+        if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x)]));
+        return v;
+      };
+      return walk(content) as T;
+    },
+    [mediaUrl],
+  );
+
+  const history = useMemo(() => changes.map(toHistory), [changes]);
+
+  // leaving the page with unsaved changes
+  const anyDirty = isDirty("site", "uk") || isDirty("site", "en") || isDirty("brief", "uk") || isDirty("brief", "en");
+  useEffect(() => {
+    if (!anyDirty) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [anyDirty]);
+
   const value: Ctx = {
-    repo,
     state,
-    draft: (area, locale) => state[area][locale].draft as never,
-    saved: (area, locale) => state[area][locale].saved as never,
-    slot,
+    draft: (area, locale) => draftMemo[`${area}/${locale}`] as never,
+    saved: (area, locale) => savedMemo[`${area}/${locale}`] as never,
+    slot: () => ({ loaded: true, savedAt, source: "stored" }),
     setSection,
     isDirty,
+    isUnpublished,
     differsFromSite,
     saveSection,
-    history,
-    historyProblem,
-    undo,
     cancelSection,
     restoreSection,
     resetArea,
     exportJson,
     importJson,
+    history,
+    undo,
+    publish,
+    restorePublication,
+    loadPublication,
+    publications,
+    currentPublicationId,
+    unpublished,
+    uploadMedia,
+    mediaUrl,
+    resolveMedia,
+    reload,
     toasts,
     toast,
     dismiss,
   };
-
-  // leaving the page with unsaved changes
-  const anyDirty = (["site", "brief"] as const).some((a) => (["uk", "en"] as const).some((l) => !same(state[a][l].draft, state[a][l].saved)));
-  useEffect(() => {
-    if (!anyDirty) return;
-    const warn = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-    };
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [anyDirty]);
 
   return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;
 }

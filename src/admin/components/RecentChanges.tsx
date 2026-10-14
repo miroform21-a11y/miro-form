@@ -12,7 +12,7 @@ const time = (iso: string) => new Date(iso).toLocaleString("ru-RU", { day: "2-di
 
 /** The last saved changes with an undo button each (overview page) */
 export function RecentChanges() {
-  const { history, historyProblem, undo } = useAdmin();
+  const { history, undo } = useAdmin();
   const [busy, setBusy] = useState<string | null>(null);
   const [result, setResult] = useState<{ id: string; ok: boolean; message: string } | null>(null);
   const shown = history.slice(0, SHOWN);
@@ -22,8 +22,6 @@ export function RecentChanges() {
       <h2 id="recent" className="text-[15px] font-semibold text-white/85">
         Последние изменения
       </h2>
-      {historyProblem === "corrupted" && <p className="text-[12.5px] text-orange">Часть сохранённой истории была повреждена и не загружена.</p>}
-      {historyProblem === "unavailable" && <p className="text-[12.5px] text-orange">Хранилище браузера недоступно — история изменений не ведётся.</p>}
       {result && (
         <p role={result.ok ? "status" : "alert"} className={`rounded-lg border px-3 py-2 text-[12.5px] ${result.ok ? "border-lime/30 text-lime" : "border-orange/40 bg-orange/10 text-orange"}`}>
           {result.message}
@@ -64,7 +62,7 @@ export function RecentChanges() {
         </ol>
       )}
       <p className="text-[12px] leading-snug text-white/40">
-        Сюда попадают только сохранённые изменения данных (не посещения разделов). История хранится в этом браузере вместе с демо-данными: последние 50 изменений, показаны 5. Отмена возвращает
+        Сюда попадают только сохранённые изменения данных (не посещения разделов). История хранится в базе данных и одинакова на всех ваших устройствах: показаны 5 последних. Отмена возвращает в черновик
         прежнее значение одного поля и не трогает более поздние изменения других полей.
       </p>
     </section>

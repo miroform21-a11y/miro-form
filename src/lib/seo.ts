@@ -132,12 +132,13 @@ const catalogName: Record<Locale, string> = {
  * The published packages (data/pricing.ts — the same data as the visible price cards) as an OfferCatalog of the
  * Organization: "from" prices → PriceSpecification.minPrice in USD. Plans without a price are left out.
  */
-export function offerCatalogJsonLd(locale: Locale) {
-  const offers = pricingByLocale[locale].plans
+/** `plans`: the published packages (defaults to the built-in ones) */
+export function offerCatalogJsonLd(locale: Locale, plans: { title: (string | undefined)[]; description: string; price: string }[] = pricingByLocale[locale].plans) {
+  const offers = plans
     .filter((p) => p.price)
     .map((p) => ({
       "@type": "Offer",
-      itemOffered: { "@type": "Service", name: p.title.join("").replace(/\s+/g, " ").trim(), description: p.description, provider: { "@id": orgId } },
+      itemOffered: { "@type": "Service", name: p.title.filter(Boolean).join("").replace(/\s+/g, " ").trim(), description: p.description, provider: { "@id": orgId } },
       priceSpecification: { "@type": "PriceSpecification", minPrice: Number(p.price.replace(/[^\d]/g, "")), priceCurrency: "USD" },
     }));
   return { "@type": "Organization", "@id": orgId, hasOfferCatalog: { "@type": "OfferCatalog", name: catalogName[locale], itemListElement: offers } };

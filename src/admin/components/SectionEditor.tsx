@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { BriefContent, SiteContent } from "@/content/types";
 import type { Locale } from "@/i18n/locale";
-import { describeProblem, useAdmin } from "../store";
+import { useAdmin } from "../store";
 import { validate } from "../fields";
 import type { SectionDef } from "../sections/types";
 import type { PreviewOptions } from "../preview-protocol";
@@ -11,7 +11,8 @@ import { Fields, btnCls } from "./FieldEditor";
 import { PreviewFrame } from "./PreviewFrame";
 import { SeoPreview } from "./SeoPreview";
 import { localeName } from "./AdminShell";
-import { BriefStepsEditor, briefStepsIssues } from "./BriefStepsEditor";
+import { BriefStepsEditor } from "./BriefStepsEditor";
+import { briefStepsIssues } from "../brief-rules";
 
 const time = (iso?: string) => (iso ? new Date(iso).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "");
 
@@ -25,6 +26,11 @@ export function SectionEditor({ locale, section }: { locale: Locale; section: Se
   const brief = admin.draft("brief", locale) as BriefContent;
   const dirty = admin.isDirty(area, locale, key);
   const differs = admin.differsFromSite(area, locale, key);
+  const unpublished = admin.isUnpublished(area, locale, key);
+  // the preview shows uploaded (not yet public) files through short-lived signed URLs
+  const resolveMedia = admin.resolveMedia;
+  const previewSite = useMemo(() => resolveMedia(site), [resolveMedia, site]);
+  const previewBrief = useMemo(() => resolveMedia(brief), [resolveMedia, brief]);
   const [options, setOptions] = useState<PreviewOptions>({});
   const [saving, setSaving] = useState(false);
 
@@ -34,7 +40,7 @@ export function SectionEditor({ locale, section }: { locale: Locale; section: Se
   );
   const errors = issues.filter((i) => i.level === "error");
   const warnings = issues.filter((i) => i.level === "warning");
-  const canSave = dirty && !errors.length && !saving && slot.problem !== "unavailable";
+  const canSave = dirty && !errors.length && !saving;
 
   const save = async () => {
     if (!canSave) return;
@@ -57,10 +63,9 @@ export function SectionEditor({ locale, section }: { locale: Locale; section: Se
   });
 
   let status: ReactNode;
-  if (!slot.loaded) status = <span className="text-white/40">Загрузка сохранённых данных…</span>;
-  else if (dirty) status = <span className="text-lime">● Есть несохранённые изменения</span>;
-  else if (differs) status = <span className="text-white/60">{`Сохранено в этом браузере${slot.savedAt ? ` · ${time(slot.savedAt)}` : ""} · отличается от сайта`}</span>;
-  else status = <span className="text-white/45">Совпадает с текущими данными сайта</span>;
+  if (dirty) status = <span className="text-lime">● Есть несохранённые изменения</span>;
+  else if (unpublished) status = <span className="text-amber-200/90">{`Черновик сохранён${slot.savedAt ? ` · ${time(slot.savedAt)}` : ""} · ещё не опубликован`}</span>;
+  else status = <span className="text-white/45">Совпадает с опубликованной версией сайта</span>;
 
   const previewOptions =
     section.preview === "thank-you" ? (
@@ -99,7 +104,7 @@ export function SectionEditor({ locale, section }: { locale: Locale; section: Se
               title={errors.length ? "Сначала исправьте ошибки" : !dirty ? "Нет изменений" : "Ctrl+S"}
               className="rounded-lg bg-lime px-4 py-1.5 text-[13.5px] font-semibold text-ink pointer-coarse:min-h-11 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-35"
             >
-              {saving ? "Сохраняем…" : "Сохранить в браузере"}
+              {saving ? "Сохраняем…" : "Сохранить черновик"}
             </button>
             <button type="button" className={btnCls} disabled={!dirty} onClick={() => admin.cancelSection(area, locale, key)}>
               Отменить изменения
@@ -109,11 +114,11 @@ export function SectionEditor({ locale, section }: { locale: Locale; section: Se
               className={btnCls}
               disabled={!differs}
               onClick={() => {
-                if (window.confirm("Подставить в форму текущие данные сайта для этого раздела? Ваши правки раздела будут заменены (сохранённое в браузере изменится только после «Сохранить»)."))
+                if (window.confirm("Подставить в форму опубликованную версию этого раздела? Ваши правки раздела будут заменены (черновик изменится только после «Сохранить»)."))
                   admin.restoreSection(area, locale, key);
               }}
             >
-              Вернуть данные сайта
+              Вернуть опубликованное
             </button>
           </div>
           {(errors.length > 0 || warnings.length > 0) && (
@@ -122,7 +127,6 @@ export function SectionEditor({ locale, section }: { locale: Locale; section: Se
               {warnings.length > 0 && <span className="text-amber-300/90">{`Предупреждений: ${warnings.length}.`}</span>}
             </p>
           )}
-          {slot.problem && <p className="mt-2 rounded-lg border border-orange/40 bg-orange/10 px-3 py-2 text-[12.5px] text-orange">{describeProblem(slot.problem)}</p>}
         </div>
         <div className="px-5 py-5">
           {section.custom === "brief-steps" ? (
@@ -145,7 +149,7 @@ export function SectionEditor({ locale, section }: { locale: Locale; section: Se
         ) : (
           <>
             {previewOptions}
-            <PreviewFrame locale={locale} view={section.preview} site={site} brief={brief} options={options} />
+            <PreviewFrame locale={locale} view={section.preview} site={previewSite} brief={previewBrief} options={options} />
           </>
         )}
       </div>

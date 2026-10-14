@@ -1,7 +1,8 @@
 "use client";
 
 import { useId, useRef, useState, type ReactNode } from "react";
-import { MAX_BROWSER_IMAGE, type Field, type FieldContext, type Issue, type SelectOption } from "../fields";
+import { MAX_IMAGE_BYTES, MAX_VIDEO_BYTES, type Field, type FieldContext, type Issue, type SelectOption } from "../fields";
+import { useAdmin } from "../store";
 import { getAt, join, setAt } from "../path";
 
 /** Renders a list of field descriptions (fields.ts) for `value` and reports every edit as a new value. */
@@ -82,58 +83,67 @@ function TextInput({
   );
 }
 
-/** A reduced copy of a picked image as a data URL (WebP, longest side ≤ 1400px) for the browser demo store */
-async function reduceImage(file: File): Promise<string> {
+/** Reduces a picked photo before upload: longest side ≤ 2000px, WebP (JPEG where Safari cannot encode WebP) */
+async function reduceImage(file: File): Promise<{ blob: Blob; width: number; height: number }> {
   if (!file.type.startsWith("image/")) throw new Error("not-image");
   const bitmap = await createImageBitmap(file).catch(() => {
     throw new Error("decode");
   });
-  const k = Math.min(1, 1400 / Math.max(bitmap.width, bitmap.height));
+  const k = Math.min(1, 2000 / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(bitmap.width * k);
   canvas.height = Math.round(bitmap.height * k);
   canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
   bitmap.close();
-  for (const q of [0.86, 0.72, 0.6]) {
-    const url = canvas.toDataURL("image/webp", q);
-    if (url.startsWith("data:image/webp") && url.length <= MAX_BROWSER_IMAGE) return url;
-    if (!url.startsWith("data:image/webp")) break; // no WebP encoder → JPEG below
+  const toBlob = (type: string, q: number) => new Promise<Blob | null>((r) => canvas.toBlob(r, type, q));
+  for (const q of [0.88, 0.75, 0.62]) {
+    const b = await toBlob("image/webp", q);
+    if (b && b.type === "image/webp" && b.size <= MAX_IMAGE_BYTES) return { blob: b, width: canvas.width, height: canvas.height };
+    if (b && b.type !== "image/webp") break; // no WebP encoder (Safari) → JPEG
   }
-  const jpeg = canvas.toDataURL("image/jpeg", 0.8);
-  if (jpeg.length > MAX_BROWSER_IMAGE) throw new Error("too-big");
-  return jpeg;
+  const jpeg = await toBlob("image/jpeg", 0.82);
+  if (!jpeg || jpeg.size > MAX_IMAGE_BYTES) throw new Error("too-big");
+  return { blob: jpeg, width: canvas.width, height: canvas.height };
 }
 
 const pickError: Record<string, string> = {
-  "not-image": "Это не изображение — выберите файл PNG, JPG или WebP.",
+  "not-image": "Это не изображение — выберите файл PNG, JPG, WebP или фото с телефона.",
   decode: "Не удалось прочитать изображение. Попробуйте другой файл.",
   "too-big": "Изображение слишком большое даже после уменьшения — выберите файл поменьше.",
+  "not-video": "Нужно видео в формате MP4.",
+  "video-big": "Видео должно быть не больше 50 МБ.",
 };
 
 function MediaField({ f, value, onChange, issues, path }: { f: Extract<Field, { kind: "media" }>; value: unknown; onChange: (v: unknown) => void; issues: Issue[]; path: string }) {
   const id = useId();
+  const { uploadMedia, mediaUrl } = useAdmin();
   const s = typeof value === "string" ? value : "";
-  const inBrowser = f.store === "browser";
-  /** The value that a picked file replaced (to put it back) */
+  /** The value that an uploaded file replaced (to put it back) */
   const [original, setOriginal] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [pickMsg, setPickMsg] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const isFile = s.startsWith("blob:") || s.startsWith("data:");
-  const preview = s && (/^\/[^\s]+$/.test(s) || isFile);
+  const uploaded = s.startsWith("media:");
+  const published = /^https:\/\//.test(s);
+  const display = s ? mediaUrl(s) : null;
+  const preview = display && (/^\/[^\s]+$/.test(s) || uploaded || published);
   const pick = async (file: File | undefined) => {
     if (!file) return;
     setPickMsg(null);
-    if (!inBrowser) {
-      if (original === null) setOriginal(s);
-      onChange(URL.createObjectURL(file));
-      return;
-    }
     setBusy(true);
     try {
-      const url = await reduceImage(file);
+      let blob: Blob;
+      let width: number | undefined;
+      let height: number | undefined;
+      if (f.media === "video") {
+        if (file.type !== "video/mp4") throw new Error("not-video");
+        if (file.size > MAX_VIDEO_BYTES) throw new Error("video-big");
+        blob = file;
+      } else ({ blob, width, height } = await reduceImage(file));
+      const r = await uploadMedia(blob, { name: file.name, width, height });
+      if (!r.ok) return setPickMsg(r.error);
       if (original === null) setOriginal(s);
-      onChange(url);
+      onChange(r.ref);
     } catch (e) {
       setPickMsg(pickError[(e as Error).message] ?? pickError.decode);
     } finally {
@@ -146,23 +156,21 @@ function MediaField({ f, value, onChange, issues, path }: { f: Extract<Field, { 
         <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-lg border border-white/10 bg-black/40">
           {preview ? (
             f.media === "video" ? (
-              <video src={s} muted playsInline className="size-full object-cover" />
+              <video src={display!} muted playsInline className="size-full object-cover" />
             ) : (
-              // eslint-disable-next-line @next/next/no-img-element -- admin thumbnail of an arbitrary path / picked file
-              <img src={s} alt={`${f.label}: текущее изображение`} className="size-full object-cover" />
+              // eslint-disable-next-line @next/next/no-img-element -- admin thumbnail of an arbitrary path / uploaded file
+              <img src={display!} alt={`${f.label}: текущее изображение`} className="size-full object-cover" />
             )
           ) : (
-            <span className="text-[11px] text-white/30">нет</span>
+            <span className="text-[11px] text-white/30">{busy ? "…" : "нет"}</span>
           )}
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <input
             id={id}
             type="text"
-            value={isFile ? "" : s}
-            placeholder={
-              s.startsWith("data:") ? "Выбранный файл (хранится только в этом браузере)" : s.startsWith("blob:") ? "Выбран локальный файл (только предпросмотр)" : f.media === "video" ? "/videos/…" : "/images/…"
-            }
+            value={uploaded ? "" : s}
+            placeholder={uploaded ? "Загруженный файл (появится на сайте после публикации)" : f.media === "video" ? "/videos/…" : "/images/…"}
             aria-invalid={own(issues, path).some((i) => i.level === "error")}
             onChange={(e) => {
               setOriginal(null);
@@ -172,7 +180,7 @@ function MediaField({ f, value, onChange, issues, path }: { f: Extract<Field, { 
           />
           <div className="flex flex-wrap items-center gap-2">
             <button type="button" className={btnCls} disabled={busy} onClick={() => fileRef.current?.click()}>
-              {busy ? "Обработка…" : inBrowser ? (isFile ? "Заменить фото" : "Загрузить новое фото") : "Выбрать файл для предпросмотра"}
+              {busy ? "Загрузка…" : f.media === "video" ? (s ? "Заменить видео" : "Загрузить видео") : s ? "Заменить фото" : "Загрузить фото"}
             </button>
             {original !== null && (
               <button
@@ -183,7 +191,7 @@ function MediaField({ f, value, onChange, issues, path }: { f: Extract<Field, { 
                   setOriginal(null);
                 }}
               >
-                {inBrowser ? "Отменить выбор и вернуть исходное" : "Вернуть путь"}
+                Отменить выбор и вернуть исходное
               </button>
             )}
             {f.optional && value !== undefined && (
@@ -195,7 +203,7 @@ function MediaField({ f, value, onChange, issues, path }: { f: Extract<Field, { 
               ref={fileRef}
               type="file"
               hidden
-              accept={f.media === "video" ? "video/mp4,video/webm" : inBrowser ? "image/png,image/jpeg,image/webp" : "image/png,image/jpeg,image/webp,image/avif,image/svg+xml"}
+              accept={f.media === "video" ? "video/mp4" : "image/png,image/jpeg,image/webp,image/avif,image/heic,image/heif"}
               onChange={(e) => {
                 void pick(e.target.files?.[0]);
                 e.target.value = "";
@@ -207,10 +215,10 @@ function MediaField({ f, value, onChange, issues, path }: { f: Extract<Field, { 
               {pickMsg}
             </p>
           )}
-          <p className="text-[11.5px] leading-snug text-amber-200/80">
-            {inBrowser
-              ? "Демо-режим: выбранное фото уменьшается и после «Сохранить» хранится только в этом браузере вместе с остальными демо-данными. На сервер и на сайт оно не загружается."
-              : "Загрузка файлов в демо-версии не работает: выбранный файл виден только в предпросмотре этой вкладки, никуда не отправляется и не сохраняется."}
+          <p className="text-[11.5px] leading-snug text-white/40">
+            {f.media === "video"
+              ? "MP4 до 50 МБ. Файл хранится в закрытом хранилище и станет публичным только после «Опубликовать»."
+              : "Фото уменьшается до 2000 px и хранится в закрытом хранилище; публичным оно станет только после «Опубликовать»."}
           </p>
         </div>
       </div>

@@ -218,7 +218,6 @@ export const siteSections: SectionDef[] = [
         {
           kind: "media",
           media: "image",
-          store: "browser",
           path: "founder.photo.desktop",
           label: "Фото Founder — десктоп и планшет",
           hint: "Показывается в той же рамке и с тем же кадрированием, что и сейчас; фото другого формата заполняет рамку без искажений. Лучше вертикальное, примерно 3:4.",
@@ -226,7 +225,6 @@ export const siteSections: SectionDef[] = [
         {
           kind: "media",
           media: "image",
-          store: "browser",
           path: "founder.photo.mobile",
           label: "Фото Founder — телефон",
           hint: "Отдельный вариант для экранов до 768 px, рамка примерно 3:4.",

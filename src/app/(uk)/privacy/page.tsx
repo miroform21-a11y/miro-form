@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
-import { siteContent } from "@/content";
 import { PrivacyPolicy } from "@/components/pages/PrivacyPolicy";
+import { getSiteContent } from "@/server/cms/published";
 
-export const metadata: Metadata = pageMetadata({
-  ...siteContent.uk.seo.privacy,
-  path: "/privacy",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata({ ...(await getSiteContent("uk")).seo.privacy, path: "/privacy" });
+}
 
-export default function PrivacyPage() {
-  return <PrivacyPolicy />;
+export default async function PrivacyPage() {
+  return <PrivacyPolicy content={(await getSiteContent("uk")).privacy} />;
 }

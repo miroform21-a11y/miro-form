@@ -2,19 +2,19 @@ import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import "../globals.css";
 import { fontVariables } from "../fonts";
-import { adminEnabled } from "@/admin/env";
+import { adminSecrets } from "@/server/cms/env";
 
-/** Root layout of the demo admin panel (/admin), see admin/env.ts for when it is served. */
+/** Root layout of the admin (/admin). Without ADMIN_PASSWORD and ADMIN_SESSION_SECRET on the server it is not served at all. */
 export function generateMetadata(): Metadata {
   const robots = { index: false, follow: false, nocache: true };
   // when it is not served, nothing on the 404 hints at an admin panel
-  return adminEnabled() ? { title: "Админ-панель (демо) — MIROFORM", robots } : { title: "Сторінку не знайдено — MIROFORM", robots };
+  return adminSecrets() ? { title: "Админ-панель — MIROFORM", robots } : { title: "Сторінку не знайдено — MIROFORM", robots };
 }
 
 export const viewport: Viewport = { themeColor: "#050505" };
 
 export default function AdminRootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  if (!adminEnabled()) notFound();
+  if (!adminSecrets()) notFound();
   return (
     <html lang="ru" className={fontVariables}>
       <body>{children}</body>

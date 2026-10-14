@@ -6,6 +6,7 @@ import { useState, type ReactNode } from "react";
 import type { Locale } from "@/i18n/locale";
 import { useAdmin } from "../store";
 import { groupedSections, sectionHref } from "../sections";
+import { logout } from "@/app/admin/login/actions";
 
 export const localeName: Record<Locale, string> = { uk: "Украинская версия", en: "Английская версия" };
 export const localeShort: Record<Locale, string> = { uk: "UA", en: "EN" };
@@ -17,11 +18,22 @@ export function useRoute() {
   return { locale, area: parts[2] ?? null, section: parts[3] ?? null };
 }
 
-export function DemoBanner() {
+/** What visitors see vs the drafts, always visible under the header */
+export function StatusBar() {
+  const { unpublished, currentPublicationId } = useAdmin();
+  const n = unpublished.length;
   return (
-    <div role="note" className="border-b border-amber-300/25 bg-amber-300/[0.08] px-4 py-2 text-[12.5px] leading-snug text-amber-100/90 md:px-6">
-      <b className="font-semibold text-amber-200">Демо-режим.</b> Изменения сохраняются только в этом браузере (localStorage) и <b className="font-semibold">не публикуются</b> на сайте. Загруженные файлы на сайт не
-      попадают: фото Founder хранится только в этом браузере, остальные изображения и видео видны лишь в предпросмотре. Очистка данных браузера удалит сохранённое.
+    <div role="status" className={`flex flex-wrap items-center gap-x-3 gap-y-1 border-b px-4 py-2 text-[12.5px] leading-snug md:px-6 ${n ? "border-amber-300/25 bg-amber-300/[0.08] text-amber-100/90" : "border-white/10 bg-white/[0.02] text-white/55"}`}>
+      <span>
+        {n
+          ? `Черновики сохранены, но ещё не на сайте: разделов с изменениями — ${n}. Посетители видят ${currentPublicationId ? `версию №${currentPublicationId}` : "исходный контент"}.`
+          : `Сайт показывает ${currentPublicationId ? `версию №${currentPublicationId}` : "исходный контент"}; неопубликованных изменений нет.`}
+      </span>
+      {n > 0 && (
+        <Link href="/admin" className="font-semibold text-lime underline-offset-2 hover:underline pointer-coarse:py-2">
+          Перейти к публикации
+        </Link>
+      )}
     </div>
   );
 }
@@ -50,7 +62,7 @@ function Toasts() {
 
 function Sidebar({ onNavigate }: { onNavigate: () => void }) {
   const { locale, area, section } = useRoute();
-  const { isDirty, slot } = useAdmin();
+  const { isDirty, isUnpublished } = useAdmin();
   const loc = locale ?? "uk";
   return (
     <nav aria-label="Разделы админ-панели" className="flex flex-col gap-5 px-3 py-4">
@@ -86,7 +98,7 @@ function Sidebar({ onNavigate }: { onNavigate: () => void }) {
           {g.sections.map((s) => {
             const active = locale && area === s.area && section === s.id;
             const dirty = isDirty(s.area, loc, s.key);
-            const stored = slot(s.area, loc).source === "stored";
+            const unpublishedHere = isUnpublished(s.area, loc, s.key);
             return (
               <Link
                 key={s.area + s.id}
@@ -101,7 +113,11 @@ function Sidebar({ onNavigate }: { onNavigate: () => void }) {
                     •
                   </span>
                 )}
-                {!dirty && stored && <span className="sr-only">есть сохранённые демо-данные</span>}
+                {!dirty && unpublishedHere && (
+                  <span className="text-amber-200/80" title="Черновик ещё не опубликован" aria-label="черновик не опубликован">
+                    ◦
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -129,7 +145,6 @@ export function AdminShell({ children }: { children: ReactNode }) {
           <Link href="/admin" className="font-display text-[15px] font-semibold tracking-wide whitespace-nowrap pointer-coarse:py-3">
             MIROFORM <span className="hidden text-white/45 sm:inline">· Админ-панель</span>
           </Link>
-          <span className="shrink-0 rounded-md border border-amber-300/40 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-amber-200 uppercase">демо</span>
           <div className="ml-auto flex items-center gap-2">
             <a
               href="/"
@@ -139,11 +154,16 @@ export function AdminShell({ children }: { children: ReactNode }) {
             >
               <span className="max-[380px]:hidden">Открыть&nbsp;</span>сайт ↗
             </a>
+            <form action={logout}>
+              <button type="submit" className="inline-flex items-center rounded-lg border border-white/12 px-3 py-1.5 text-[13px] whitespace-nowrap text-white/70 hover:bg-white/5 hover:text-white pointer-coarse:min-h-11">
+                Выйти
+              </button>
+            </form>
           </div>
         </div>
       </header>
       <div className="shrink-0">
-        <DemoBanner />
+        <StatusBar />
       </div>
       <div className="relative flex flex-1 lg:min-h-0">
         <aside

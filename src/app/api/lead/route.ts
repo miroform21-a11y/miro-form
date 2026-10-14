@@ -1,6 +1,6 @@
-import { leadOptions } from "@/data/leads";
-import { pricingByLocale } from "@/data/pricing";
 import type { Locale } from "@/i18n/locale";
+import type { SiteContent } from "@/content/types";
+import { getPublishedOrBuiltIn } from "@/server/cms/published";
 import { claimOnce, releaseClaim, withinRateLimit } from "@/lib/server/limits";
 import { sendToTelegram, telegramConfigured } from "@/lib/server/telegram";
 import { HttpError, assertSameOrigin, clientKey, isContact, isRecord, kyivTime, looksAutomated, readJson, reply, sha256, text } from "@/lib/server/http";
@@ -9,14 +9,17 @@ import { HttpError, assertSameOrigin, clientKey, isContact, isRecord, kyivTime, 
  * Leads from the main page forms (Contacts section, service/pricing popups, FAQ question popup)
  * → validated here → Telegram. Nothing is stored except short-lived hashed rate-limit/duplicate keys.
  * The English site (/en) sends lang "en": its own option values are accepted and the message gets an "EN" mark.
+ * The allowed choices are those of the published content (the forms render the same), see server/cms/published.
  */
 
 const MAX_BODY = 8 * 1024;
 
-// The only values the forms of each language can send — anything else is rejected
-function allowedFor(locale: Locale) {
-  const { directions, projectTypes, budgets } = leadOptions[locale];
-  const { plans, customPlan } = pricingByLocale[locale];
+type Allowed = { options: Set<string>; directions: Set<string>; budgets: Set<string> };
+
+// The only values the forms of the published site can send — anything else is rejected
+function allowedFor(site: SiteContent): Allowed {
+  const { directions, projectTypes, budgets } = site.forms.options;
+  const { plans, customPlan } = site.pricing;
   return {
     options: new Set<string>([...projectTypes, ...directions.flatMap((d) => d.options)]),
     directions: new Set<string>([
@@ -27,7 +30,6 @@ function allowedFor(locale: Locale) {
     budgets: new Set<string>(budgets),
   };
 }
-const allowed = { uk: allowedFor("uk"), en: allowedFor("en") };
 
 /** Shown under the title of a lead that came from the English site */
 const EN_MARK = "🇬🇧 EN-версія сайту";
@@ -42,15 +44,15 @@ type Lead = {
   message: string;
 };
 
-function parse(body: Record<string, unknown>, locale: Locale): Lead | null {
+function parse(body: Record<string, unknown>, allowed: Allowed): Lead | null {
   const kind = body.kind;
   if (kind !== "lead" && kind !== "question") return null;
 
   const name = text(body.name, 80);
   const contact = text(body.contact, 40);
-  const direction = text(body.direction, 60);
-  const option = text(body.option, 60);
-  const budget = text(body.budget, 40);
+  const direction = text(body.direction, 200);
+  const option = text(body.option, 200);
+  const budget = text(body.budget, 200);
   const message = text(body.message, 3000);
   if ([name, contact, direction, option, budget, message].some((v) => v === null)) return null;
 
@@ -58,9 +60,9 @@ function parse(body: Record<string, unknown>, locale: Locale): Lead | null {
   if (!isContact(lead.contact)) return null;
   if (kind === "lead" && lead.name.length < 2) return null;
   if (kind === "question" && lead.message.length < 3) return null;
-  if (lead.option && !allowed[locale].options.has(lead.option)) return null;
-  if (lead.direction && !allowed[locale].directions.has(lead.direction)) return null;
-  if (lead.budget && !allowed[locale].budgets.has(lead.budget)) return null;
+  if (lead.option && !allowed.options.has(lead.option)) return null;
+  if (lead.direction && !allowed.directions.has(lead.direction)) return null;
+  if (lead.budget && !allowed.budgets.has(lead.budget)) return null;
   return lead;
 }
 
@@ -95,7 +97,8 @@ export async function POST(request: Request) {
 
     // the English forms say so; anything else is the Ukrainian site, exactly as before
     const locale: Locale = body.lang === "en" ? "en" : "uk";
-    const lead = parse(body, locale);
+    const site = (await getPublishedOrBuiltIn()).snapshot.site[locale];
+    const lead = parse(body, allowedFor(site));
     if (!lead) return reply(400);
     if (!telegramConfigured()) {
       console.error("[lead] Telegram is not configured — lead not delivered");

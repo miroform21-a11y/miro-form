@@ -1,13 +1,12 @@
 import type { ContentArea } from "@/content/repository";
 import type { Locale } from "@/i18n/locale";
-import { CONTENT_SCHEMA_VERSION } from "@/content/local-storage-repository";
 import type { Field } from "./fields";
 import { getAt, same } from "./path";
 import type { SectionDef } from "./sections/types";
 
 /**
- * History of saved content changes (one entry per changed field) and what is needed to undo each of them.
- * Kept in this browser's localStorage next to the demo data, so it survives a reload.
+ * History of saved content changes (one entry per changed field): diffing and human-readable descriptions.
+ * The entries live in the database (cms_changes); the server computes them on every save.
  */
 
 export type HistoryEntry = {
@@ -26,8 +25,6 @@ export type HistoryEntry = {
   before: unknown;
   after: unknown;
   at: string;
-  /** The image of `before` did not fit into the browser store: this change can no longer be undone */
-  payloadDropped?: boolean;
 };
 
 export type Change = { path: string; before: unknown; after: unknown };
@@ -130,81 +127,8 @@ export function describe(section: SectionDef, path: string, before: unknown, aft
 /** Short readable form of a value for the overview */
 export function preview(v: unknown): string {
   if (v === undefined || v === null || v === "") return "—";
-  if (typeof v === "string") return v.startsWith("data:image") ? "загруженное фото" : v.length > 60 ? v.slice(0, 58) + "…" : v;
+  if (typeof v === "string") return v.startsWith("media:") ? "загруженный файл" : v.includes("/storage/v1/object/public/") ? "опубликованный файл" : v.length > 60 ? v.slice(0, 58) + "…" : v;
   if (typeof v === "number" || typeof v === "boolean") return String(v);
   if (Array.isArray(v)) return `список (${v.length})`;
   return "набор полей";
 }
-
-/* ---------------- storage ---------------- */
-
-export const HISTORY_KEY = `miroform-admin-demo:v${CONTENT_SCHEMA_VERSION}:history`;
-export const HISTORY_LIMIT = 50;
-
-export type HistoryLoad = { entries: HistoryEntry[]; problem?: "corrupted" | "unavailable" };
-
-export function loadHistory(): HistoryLoad {
-  let raw: string | null;
-  try {
-    raw = window.localStorage.getItem(HISTORY_KEY);
-  } catch {
-    return { entries: [], problem: "unavailable" };
-  }
-  if (raw === null) return { entries: [] };
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) throw new Error("shape");
-    const entries = parsed.filter(
-      (e): e is HistoryEntry =>
-        isPlain(e) && typeof e.id === "string" && (e.area === "site" || e.area === "brief") && (e.locale === "uk" || e.locale === "en") && typeof e.key === "string" && typeof e.path === "string" && typeof e.at === "string",
-    );
-    return { entries, problem: entries.length === parsed.length ? undefined : "corrupted" };
-  } catch {
-    return { entries: [], problem: "corrupted" };
-  }
-}
-
-const hasImage = (v: unknown) => typeof v === "string" && v.startsWith("data:image");
-
-/**
- * Writes the history; when the browser store is full, first drops the stored images of old values (those changes
- * become impossible to undo, and say so), then the oldest entries. Returns what was actually kept.
- */
-export function saveHistory(entries: HistoryEntry[]): { kept: HistoryEntry[]; ok: boolean } {
-  let list = entries.slice(0, HISTORY_LIMIT);
-  const write = (l: HistoryEntry[]) => {
-    try {
-      window.localStorage.setItem(HISTORY_KEY, JSON.stringify(l));
-      return true;
-    } catch {
-      return false;
-    }
-  };
-  if (write(list)) return { kept: list, ok: true };
-  list = list.map((e) => (hasImage(e.before) || hasImage(e.after) ? { ...e, before: hasImage(e.before) ? null : e.before, after: hasImage(e.after) ? null : e.after, payloadDropped: true } : e));
-  while (list.length) {
-    if (write(list)) return { kept: list, ok: true };
-    list = list.slice(0, -1);
-  }
-  return { kept: [], ok: write([]) };
-}
-
-/** Whether an image path / data URL can still be loaded (an old picked file may be gone) */
-export function imageAvailable(src: string): Promise<boolean> {
-  if (src.startsWith("blob:")) return Promise.resolve(false);
-  return new Promise((resolve) => {
-    const img = new Image();
-    const timer = setTimeout(() => resolve(false), 8000);
-    img.onload = () => {
-      clearTimeout(timer);
-      resolve(true);
-    };
-    img.onerror = () => {
-      clearTimeout(timer);
-      resolve(false);
-    };
-    img.src = src;
-  });
-}
-
-export const isImageValue = (v: unknown): v is string => typeof v === "string" && (v.startsWith("data:image") || v.startsWith("blob:") || /^\/images\//.test(v));

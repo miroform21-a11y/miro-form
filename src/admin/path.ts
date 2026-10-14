@@ -32,7 +32,19 @@ export function setAt<T>(obj: T, path: Path, value: unknown): T {
 
 export const join = (...p: (string | number)[]) => p.filter((x) => x !== "").join(".");
 
-/** Deep equality for plain JSON-like data */
-export const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+/** JSON with object keys sorted (Postgres jsonb does not keep key order) */
+const canonical = (v: unknown): string =>
+  Array.isArray(v)
+    ? `[${v.map((x) => (x === undefined ? "null" : canonical(x))).join(",")}]`
+    : v && typeof v === "object"
+      ? `{${Object.keys(v)
+          .filter((k) => (v as Record<string, unknown>)[k] !== undefined)
+          .sort()
+          .map((k) => `${JSON.stringify(k)}:${canonical((v as Record<string, unknown>)[k])}`)
+          .join(",")}}`
+      : (JSON.stringify(v) ?? "undefined");
+
+/** Deep equality for plain JSON-like data (key order does not matter) */
+export const same = (a: unknown, b: unknown) => canonical(a) === canonical(b);
 
 export const clone = <T,>(v: T): T => (v === undefined ? v : (JSON.parse(JSON.stringify(v)) as T));
