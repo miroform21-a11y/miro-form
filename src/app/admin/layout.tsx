@@ -11,6 +11,9 @@ export function generateMetadata(): Metadata {
   return adminSecrets() ? { title: "Админ-панель — MIROFORM", robots } : { title: "Сторінку не знайдено — MIROFORM", robots };
 }
 
+/** Never prerendered: whether the admin exists depends on the server secrets of the running deployment */
+export const dynamic = "force-dynamic";
+
 export const viewport: Viewport = { themeColor: "#050505" };
 
 export default function AdminRootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

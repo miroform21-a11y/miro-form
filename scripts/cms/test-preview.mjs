@@ -38,7 +38,7 @@ const statuses = await Promise.all(pages.map(async (p) => [p, (await get(p)).sta
 check("Preview reachable with the bypass header; 8 public pages answer 200", statuses.every(([, s]) => s === 200), statuses.filter(([, s]) => s !== 200).map(([p, s]) => `${p}:${s}`).join(" "));
 const home = await html("/");
 const homeEn = await html("/en");
-check("UA home renders published content + SEO (title, canonical, hreflang, JSON-LD)", /<title>Створення сайтів/.test(home) && home.includes('rel="canonical"') && home.includes('hreflang="en"') && home.includes("application/ld+json") && home.includes("FAQPage"));
+check("UA home renders published content + SEO (title, canonical, hreflang, JSON-LD)", /<title>Створення сайтів/.test(home) && home.includes('rel="canonical"') && /hreflang="en"/i.test(home) && home.includes("application/ld+json") && home.includes("FAQPage"));
 check("EN home renders (title, lang)", /<title>Turnkey Website/.test(homeEn) && /<html lang="en"/.test(homeEn));
 check("robots.txt and sitemap.xml", (await get("/robots.txt")).status === 200 && (await get("/sitemap.xml")).status === 200);
 const secretNames = ["ADMIN_PASSWORD", "ADMIN_SESSION_SECRET", "SUPABASE_SECRET_KEY", "SUPABASE_PUBLISHABLE_KEY", "SUPABASE_DB_URL", "VERCEL_AUTOMATION_BYPASS_SECRET"];

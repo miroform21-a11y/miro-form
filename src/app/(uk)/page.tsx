@@ -15,6 +15,9 @@ import { JsonLd } from "@/components/ui/JsonLd";
 import { faqJsonLd, offerCatalogJsonLd, pageMetadata } from "@/lib/seo";
 import { getSiteContent } from "@/server/cms/published";
 
+/** Regenerated in the background at most every 10 minutes (publishing refreshes it at once) — also when the build ran without the database */
+export const revalidate = 600;
+
 export async function generateMetadata(): Promise<Metadata> {
   const c = await getSiteContent("uk");
   return pageMetadata({ ...c.seo.home, path: "/" });
