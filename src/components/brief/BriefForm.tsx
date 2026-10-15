@@ -6,6 +6,8 @@ import { FormSubmitError } from "@/lib/submitLead";
 import { socialLinks } from "@/data/navigation";
 import { briefSchemas } from "@/data/briefEn";
 import { routes, type Locale } from "@/i18n/locale";
+import { briefContent } from "@/content";
+import type { BriefUiContent } from "@/content/types";
 import { ArrowShot } from "@/components/ui/ArrowShot";
 import { PillButton } from "@/components/ui/PillButton";
 import { Honeypot, readHoneypot } from "@/components/ui/Honeypot";
@@ -34,96 +36,11 @@ import {
 /** field key → message */
 type Errors = Record<string, string>;
 
-const copy = {
-  uk: {
-    fillTime: ["Орієнтовний час заповнення —", "10–15 хвилин"],
-    required: " (обов’язкове поле)",
-    several: "можна кілька",
-    link: "посилання",
-    comment: "коментар",
-    removeLink: "Прибрати посилання",
-    addLink: "+ Додати посилання",
-    phone: "Телефон",
-    // an example of the format (our own number) — only a placeholder, never sent as an answer
-    phonePlaceholder: "+38 073 021 77 21",
-    socials: "Соціальні мережі",
-    socialNetwork: "Соціальна мережа",
-    change: "Змінити",
-    remove: "Прибрати",
-    socialName: "назва",
-    socialNamePlaceholder: "Назва соціальної мережі",
-    profileLink: "посилання на профіль",
-    profilePlaceholder: "Посилання на профіль",
-    addSocial: "+ Додати соціальну мережу",
-    openTelegram: "Відкрити Telegram MIROFORM у новій вкладці",
-    progress: "Прогрес заповнення брифу",
-    step: ["Крок", "із"],
-    sentTitle: "Бриф отримано",
-    sentText: "Дякуємо! Ми уважно вивчимо відповіді та зв’яжемося з вами найближчим часом.",
-    backToSite: "Повернутися на сайт",
-    networkError: "мережа",
-    form: "Бриф",
-    lastNote: "Перед відправленням можна повернутися до будь-якого кроку. Натискаючи кнопку, ви погоджуєтесь з",
-    privacy: "політикою конфіденційності",
-    back: "Назад",
-    next: "Далі",
-    sending: "Надсилаємо…",
-    send: "Надіслати бриф",
-    limited: "Забагато спроб за короткий час. Ваші відповіді збережені — спробуйте ще раз за кілька хвилин або",
-    failed: "Не вдалося надіслати бриф. Ваші відповіді збережені — спробуйте ще раз або",
-    writeTelegram: "напишіть нам у Telegram",
-    code: "код",
-    steps: "Кроки брифу",
-    done: "пройдено",
-    requiredNote: ["Поля із зірочкою", "обов’язкові. Інші запитання можна пропускати, якщо поки немає відповіді."],
-  },
-  en: {
-    fillTime: ["Estimated time to complete —", "10–15 minutes"],
-    required: " (required field)",
-    several: "select all that apply",
-    link: "link",
-    comment: "comment",
-    removeLink: "Remove link",
-    addLink: "+ Add link",
-    phone: "Phone",
-    phonePlaceholder: "+38 073 021 77 21",
-    socials: "Social media",
-    socialNetwork: "Social network",
-    change: "Change",
-    remove: "Remove",
-    socialName: "name",
-    socialNamePlaceholder: "Social network name",
-    profileLink: "profile link",
-    profilePlaceholder: "Profile link",
-    addSocial: "+ Add social network",
-    openTelegram: "Open MIROFORM on Telegram in a new tab",
-    progress: "Brief progress",
-    step: ["Step", "of"],
-    sentTitle: "Brief received",
-    sentText: "Thank you! We’ll review your answers carefully and get back to you shortly.",
-    backToSite: "Back to the site",
-    networkError: "network",
-    form: "Brief",
-    lastNote: "You can go back to any step before sending. By clicking the button, you agree to our",
-    privacy: "privacy policy",
-    back: "Back",
-    next: "Next",
-    sending: "Sending…",
-    send: "Send brief",
-    limited: "Too many attempts in a short time. Your answers are saved — try again in a few minutes or",
-    failed: "Couldn’t send the brief. Your answers are saved — try again or",
-    writeTelegram: "message us on Telegram",
-    code: "code",
-    steps: "Brief steps",
-    done: "completed",
-    requiredNote: ["Fields marked with", "are required. Feel free to skip other questions if you don’t have an answer yet."],
-  },
-} satisfies Record<Locale, unknown>;
 
-type BriefCopy = (typeof copy)["uk"];
+type BriefCopy = BriefUiContent;
 
 /** The language of the wizard: its texts and its schema (steps, social networks) */
-const BriefLocale = createContext<{ locale: Locale; t: BriefCopy; schema: BriefSchema }>({ locale: "uk", t: copy.uk, schema: briefSchemaUk });
+const BriefLocale = createContext<{ locale: Locale; t: BriefCopy; schema: BriefSchema }>({ locale: "uk", t: briefContent.uk.ui, schema: briefSchemaUk });
 const useBriefLocale = () => useContext(BriefLocale);
 
 /** "10–15 хвилин" never breaks inside the range */
@@ -236,9 +153,9 @@ function Chips({
       <Label field={field} id={id} extra={multi ? t.several : undefined} />
       <Hint text={field.hint} />
       <div className="flex flex-wrap gap-2">
-        {field.options.map((v) => (
-          <Chip key={v} on={isOn(v)} multi={multi} onClick={() => toggle(v)}>
-            {v}
+        {field.options.map((o) => (
+          <Chip key={o.id} on={isOn(o.id)} multi={multi} onClick={() => toggle(o.id)}>
+            {o.label}
           </Chip>
         ))}
       </div>
@@ -631,24 +548,35 @@ const ClockIcon = () => (
 /* Wizard                                                              */
 /* ------------------------------------------------------------------ */
 
-export function BriefForm({ locale = "uk" }: { locale?: Locale }) {
-  const schema = briefSchemas[locale];
-  const t = copy[locale];
+export function BriefForm({
+  locale = "uk",
+  content = briefContent[locale].ui,
+  schema = briefSchemas[locale],
+  initialStep = 0,
+}: {
+  locale?: Locale;
+  content?: BriefUiContent;
+  /** The questionnaire (defaults to the published one of the language) */
+  schema?: BriefSchema;
+  /** Step opened first (the admin preview shows the step being edited) */
+  initialStep?: number;
+}) {
+  const t = content;
   return (
     <BriefLocale.Provider value={{ locale, t, schema }}>
-      <Wizard />
+      <Wizard initialStep={initialStep} />
     </BriefLocale.Provider>
   );
 }
 
-function Wizard() {
+function Wizard({ initialStep }: { initialStep: number }) {
   const { locale, t, schema } = useBriefLocale();
   const briefSteps = schema.steps;
   const LAST = briefSteps.length - 1;
   const [answers, setAnswers] = useState<BriefAnswers>(() => defaultAnswers(briefSteps));
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(initialStep);
   /** Furthest step opened so far — the steps before it are marked as passed in the side list */
-  const [furthest, setFurthest] = useState(0);
+  const [furthest, setFurthest] = useState(initialStep);
   const [errors, setErrors] = useState<Errors>({});
   const [status, setStatus] = useState<"idle" | "sending" | "error" | "limited" | "sent">("idle");
   const [errorCode, setErrorCode] = useState("");

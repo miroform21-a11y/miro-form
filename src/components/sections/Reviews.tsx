@@ -2,24 +2,21 @@
 
 import Image from "next/image";
 import { useRef, useState } from "react";
-import { reviewsByLocale, type Review } from "@/data/reviews";
+import type { Review } from "@/data/reviews";
 import type { Locale } from "@/i18n/locale";
-
-const copy = {
-  uk: { prev: "Попередні відгуки", next: "Наступні відгуки", tag: "Відгуки", title: "Що кажуть клієнти", carousel: "Відгуки клієнтів" },
-  en: { prev: "Previous reviews", next: "Next reviews", tag: "Reviews", title: "What clients say", carousel: "Client reviews" },
-} satisfies Record<Locale, Record<string, string>>;
+import { siteContent } from "@/content";
+import type { ReviewsContent } from "@/content/types";
 import { SectionTag } from "@/components/ui/SectionTag";
 import { Reveal } from "@/components/ui/Reveal";
 import { RatingCard, ReviewCard } from "./ReviewCards";
 
-function NavButtons({ onPrev, onNext, className = "", locale }: { onPrev: () => void; onNext: () => void; className?: string; locale: Locale }) {
+function NavButtons({ onPrev, onNext, className = "", t }: { onPrev: () => void; onNext: () => void; className?: string; t: ReviewsContent }) {
   return (
     <div className={`flex gap-3 ${className}`}>
       <button
         type="button"
         onClick={onPrev}
-        aria-label={copy[locale].prev}
+        aria-label={t.prev}
         className="grid h-16 w-[62px] place-items-center rounded-full border border-white/20 bg-white/4 transition-[background-color,translate] duration-300 hover:-translate-x-0.5 hover:bg-white/10"
       >
         <img src="/images/reviews/chev-left.svg" alt="" className="h-[12.8px] w-[7.2px]" />
@@ -27,7 +24,7 @@ function NavButtons({ onPrev, onNext, className = "", locale }: { onPrev: () => 
       <button
         type="button"
         onClick={onNext}
-        aria-label={copy[locale].next}
+        aria-label={t.next}
         className="grid h-16 w-[62px] place-items-center rounded-full bg-lime transition-[translate,box-shadow] duration-300 hover:translate-x-0.5 hover:shadow-[0_10px_30px_-10px_rgba(174,238,5,0.6)]"
       >
         <img src="/images/reviews/chev-right.svg" alt="" className="h-[12.8px] w-[7.2px]" />
@@ -60,9 +57,9 @@ function Pages({ pages, active, render }: { pages: Review[][]; active: number; r
   );
 }
 
-export function Reviews({ locale = "uk" }: { locale?: Locale }) {
-  const t = copy[locale];
-  const reviews = reviewsByLocale[locale];
+export function Reviews({ locale = "uk", content = siteContent[locale].reviews }: { locale?: Locale; content?: ReviewsContent }) {
+  const t = content;
+  const reviews = t.items;
   const pages4 = chunk(reviews, 4);
   const pages2 = chunk(reviews, 2);
   const [page4, setPage4] = useState(0);
@@ -105,14 +102,14 @@ export function Reviews({ locale = "uk" }: { locale?: Locale }) {
               {t.title}
             </h2>
           </div>
-          <NavButtons locale={locale} className="hidden xl:flex" onPrev={() => cycle(setPage4, pages4.length, -1)} onNext={() => cycle(setPage4, pages4.length, 1)} />
-          <NavButtons locale={locale} className="hidden md:flex xl:hidden" onPrev={() => cycle(setPage2, pages2.length, -1)} onNext={() => cycle(setPage2, pages2.length, 1)} />
+          <NavButtons t={t} className="hidden xl:flex" onPrev={() => cycle(setPage4, pages4.length, -1)} onNext={() => cycle(setPage4, pages4.length, 1)} />
+          <NavButtons t={t} className="hidden md:flex xl:hidden" onPrev={() => cycle(setPage2, pages2.length, -1)} onNext={() => cycle(setPage2, pages2.length, 1)} />
         </Reveal>
 
         {/* Tablet & desktop */}
         <div className="mt-[69px] hidden gap-[19px] md:flex">
           <Reveal className="w-[clamp(340px,36vw,407px)] shrink-0">
-            <RatingCard locale={locale} />
+            <RatingCard data={t.ratingCard} starsLabel={t.starsLabel} />
           </Reveal>
           <Reveal delay={100} className="min-w-0 flex-1">
             {/* ≥1280: 2×2 */}
@@ -123,7 +120,7 @@ export function Reviews({ locale = "uk" }: { locale?: Locale }) {
                 render={(page) => (
                   <div className="grid grid-cols-2 gap-x-[19px] gap-y-5">
                     {page.map((r) => (
-                      <ReviewCard key={r.id} review={r} variant="desktop" locale={locale} />
+                      <ReviewCard key={r.id} review={r} variant="desktop" starsLabel={t.starsLabel} />
                     ))}
                   </div>
                 )}
@@ -137,7 +134,7 @@ export function Reviews({ locale = "uk" }: { locale?: Locale }) {
                 render={(page) => (
                   <div className="flex flex-col gap-5">
                     {page.map((r) => (
-                      <ReviewCard key={r.id} review={r} variant="desktop" locale={locale} />
+                      <ReviewCard key={r.id} review={r} variant="desktop" starsLabel={t.starsLabel} />
                     ))}
                   </div>
                 )}
@@ -149,7 +146,7 @@ export function Reviews({ locale = "uk" }: { locale?: Locale }) {
         {/* Mobile */}
         <div className="md:hidden">
           <Reveal className="mt-8 px-5">
-            <RatingCard locale={locale} />
+            <RatingCard data={t.ratingCard} starsLabel={t.starsLabel} />
           </Reveal>
           <div
             ref={trackRef}
@@ -161,7 +158,7 @@ export function Reviews({ locale = "uk" }: { locale?: Locale }) {
           >
             {reviews.map((r) => (
               <div key={r.id} className="w-[300px] max-w-[calc(100vw-60px)] shrink-0 snap-start">
-                <ReviewCard review={r} variant="mobile" locale={locale} />
+                <ReviewCard review={r} variant="mobile" starsLabel={t.starsLabel} />
               </div>
             ))}
           </div>
@@ -169,7 +166,7 @@ export function Reviews({ locale = "uk" }: { locale?: Locale }) {
             <p className="font-pixel text-[12px] leading-pixel text-white/50" aria-live="polite">
               {String(slide + 1).padStart(2, "0")} / {String(reviews.length).padStart(2, "0")}
             </p>
-            <NavButtons locale={locale} onPrev={() => scrollToSlide(slide - 1)} onNext={() => scrollToSlide(slide + 1)} />
+            <NavButtons t={t} onPrev={() => scrollToSlide(slide - 1)} onNext={() => scrollToSlide(slide + 1)} />
           </div>
         </div>
       </div>

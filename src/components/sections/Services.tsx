@@ -1,7 +1,9 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { servicesByLocale, type Service } from "@/data/services";
+import type { Service } from "@/data/services";
 import type { Locale } from "@/i18n/locale";
+import { siteContent } from "@/content";
+import type { ServicesContent } from "@/content/types";
 import { SectionTag } from "@/components/ui/SectionTag";
 import { Reveal } from "@/components/ui/Reveal";
 import { ArrowShot } from "@/components/ui/ArrowShot";
@@ -35,26 +37,6 @@ const theme = {
     arrow: { bg: "bg-ink-2", color: "#AEEE05" },
   },
 } as const;
-
-const copy = {
-  uk: {
-    tag: "Послуги",
-    // decor cursor labels (fixed label widths from Figma)
-    cursorSite: "Сайт",
-    cursorDesign: "Дизайн",
-    keyLetter: "М",
-    lead: "залишити заявку",
-    quote: "Незалежно від типу проєкту, ми вкладаємо максимум умінь і досвіду, щоб отримати результат, яким не соромно хвалитися.",
-  },
-  en: {
-    tag: "Services",
-    cursorSite: "Site",
-    cursorDesign: "Design",
-    keyLetter: "M",
-    lead: "request a quote",
-    quote: "Whatever the project, we put all our skill and experience into it to deliver a result worth showing off.",
-  },
-} satisfies Record<Locale, Record<string, string>>;
 
 /* ---------------------------------------------------------------- */
 /* Shared decor pieces                                               */
@@ -123,8 +105,7 @@ function Liquid({ mobile = false }: { mobile?: boolean }) {
 /* expressed relative to x = 700 and anchored to the card's right.   */
 /* ---------------------------------------------------------------- */
 
-function DesktopDecor({ id, locale }: { id: Service["id"]; locale: Locale }) {
-  const t = copy[locale];
+function DesktopDecor({ id, t }: { id: Service["id"]; t: ServicesContent }) {
   const layer = "pointer-events-none absolute top-0 right-0 hidden h-[360px] w-[560px] origin-top-right md:block md:max-lg:scale-[0.5] lg:max-xl:scale-[0.78] xl:max-[1439px]:scale-[0.88]";
 
   if (id === "web")
@@ -171,8 +152,7 @@ function DesktopDecor({ id, locale }: { id: Service["id"]; locale: Locale }) {
 /* Mobile decor: coordinates from the 352px-wide Figma cards         */
 /* ---------------------------------------------------------------- */
 
-function MobileDecor({ id, locale }: { id: Service["id"]; locale: Locale }) {
-  const t = copy[locale];
+function MobileDecor({ id, t }: { id: Service["id"]; t: ServicesContent }) {
   const layer = "pointer-events-none absolute inset-0 md:hidden";
 
   if (id === "web")
@@ -238,7 +218,7 @@ const mobileArrowPos: Record<Service["id"], string> = {
   ai: "max-md:bottom-[15px] max-md:right-[23.72px]",
 };
 
-function ServiceCard({ service, locale }: { service: Service; locale: Locale }) {
+function ServiceCard({ service, locale, copy }: { service: Service; locale: Locale; copy: ServicesContent }) {
   const t = theme[service.theme];
   const isAi = service.id === "ai";
 
@@ -246,8 +226,8 @@ function ServiceCard({ service, locale }: { service: Service; locale: Locale }) 
     <article
       className={`group/card pop-trigger relative w-full cursor-pointer overflow-hidden rounded-[28px] px-6 pt-6 transition-[translate,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 hover:shadow-[0_24px_60px_-30px_rgba(174,238,5,0.35)] active:-translate-y-1 active:shadow-[0_24px_60px_-30px_rgba(174,238,5,0.35)] md:h-[360px] md:rounded-[36px] md:px-8 md:pt-11 lg:px-[47px] ${t.card} ${mobileHeights[service.id]}`}
     >
-      <MobileDecor id={service.id} locale={locale} />
-      <DesktopDecor id={service.id} locale={locale} />
+      <MobileDecor id={service.id} t={copy} />
+      <DesktopDecor id={service.id} t={copy} />
 
       <div className="relative flex flex-col">
         <ul className="flex flex-wrap items-center gap-x-[7px] gap-y-2 max-md:min-h-8">
@@ -315,7 +295,7 @@ function ServiceCard({ service, locale }: { service: Service; locale: Locale }) 
       >
         <ArrowShot color={t.arrow.color} size={20} />
       </span>
-      <LeadOverlayButton preset={{ direction: service.id }} label={`${service.title} — ${copy[locale].lead}`} />
+      <LeadOverlayButton preset={{ direction: service.id }} label={`${service.title} — ${copy.leadLabel}`} />
     </article>
   );
 }
@@ -335,48 +315,31 @@ function LogosPill({ className = "" }: { className?: string }) {
 }
 
 /** The section heading with Figma's line breaks and the logos pill in the middle (per language). */
-function Heading({ locale }: { locale: Locale }) {
-  if (locale === "en")
-    return (
-      <>
-        {/* English lines run longer: keep the same 19px gap to the screen edge as on the left */}
-        <span className="block max-w-[calc(100vw-38px)] md:hidden">
-          <ReadWords text="We take on projects" /> <span className="font-semibold text-white">we can be proud of</span>
-          <ReadWords text=" and see them through to results" />
-        </span>
-        <span className="max-md:hidden">
-          <ReadWords text="We take on projects" /> <span className="font-semibold text-white">that</span>
-          <br />
-          <span className="font-semibold text-white">we’re</span>
-          <LogosPill className="mx-[0.45em] -translate-y-[0.06em]" />
-          <span className="font-semibold text-white">proud of</span>,
-          <br />
-          <ReadWords text="and see them through to results" />
-        </span>
-      </>
-    );
+function Heading({ locale, heading }: { locale: Locale; heading: ServicesContent["heading"] }) {
+  const { mobile, desktop } = heading;
   return (
     <>
-      <span className="md:hidden">
-        <ReadWords text="Беремося за проєкти," /> <span className="font-semibold text-white">якими зможемо пишатися</span>
-        <ReadWords text=", та доводимо їх до результату" />
+      {/* English lines run longer: keep the same 19px gap to the screen edge as on the left */}
+      <span className={locale === "en" ? "block max-w-[calc(100vw-38px)] md:hidden" : "md:hidden"}>
+        <ReadWords text={mobile.before} /> <span className="font-semibold text-white">{mobile.bold}</span>
+        <ReadWords text={mobile.after} />
       </span>
       <span className="max-md:hidden">
-        <ReadWords text={"Беремося  за проєкти,"} /> <span className="font-semibold text-white">якими</span>
+        <ReadWords text={desktop.line1} /> <span className="font-semibold text-white">{desktop.line1Bold}</span>
         <br />
-        <span className="font-semibold text-white">зможемо</span>
+        <span className="font-semibold text-white">{desktop.line2BoldBeforeLogos}</span>
         <LogosPill className="mx-[0.45em] -translate-y-[0.06em]" />
-        <span className="font-semibold text-white">пишатися</span>,
+        <span className="font-semibold text-white">{desktop.line2BoldAfterLogos}</span>,
         <br />
-        <ReadWords text="та доводимо їх до результату" />
+        <ReadWords text={desktop.line3} />
       </span>
     </>
   );
 }
 
-export function Services({ locale = "uk" }: { locale?: Locale }) {
-  const t = copy[locale];
-  const services = servicesByLocale[locale];
+export function Services({ locale = "uk", content = siteContent[locale].services }: { locale?: Locale; content?: ServicesContent }) {
+  const t = content;
+  const services = t.cards;
   return (
     <section id="services" className="relative overflow-hidden bg-ink pt-10 pb-[111px] md:pt-6 md:pb-[140px]">
       {/* Faint blue glow (desktop: left, mobile: top right) */}
@@ -403,7 +366,7 @@ export function Services({ locale = "uk" }: { locale?: Locale }) {
               from={0.45}
               className="mt-5 w-[min(370px,calc(100vw-20px))] font-display text-[26px] leading-[31px] font-normal md:leading-[1.18] tracking-[-0.03em] text-white/45 md:mt-7 md:w-auto md:text-[36px] lg:text-[40px] xl:text-[min(44px,3.05vw)]"
             >
-              <Heading locale={locale} />
+              <Heading locale={locale} heading={t.heading} />
             </ScrollRead>
             <LogosPill className="mt-[18px] md:hidden" />
           </Reveal>
@@ -422,7 +385,7 @@ export function Services({ locale = "uk" }: { locale?: Locale }) {
         <div className="mt-8 flex flex-col gap-5 md:mt-20">
           {services.map((service, i) => (
             <Reveal key={service.id} delay={i * 60}>
-              <ServiceCard service={service} locale={locale} />
+              <ServiceCard service={service} locale={locale} copy={t} />
             </Reveal>
           ))}
         </div>

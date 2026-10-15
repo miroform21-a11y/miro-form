@@ -70,7 +70,7 @@ export const discounts: { value: string; title: string; lines: [string, string];
 /* ---------------- English version ---------------- */
 
 /**
- * US prices, set separately from the Ukrainian ones ("From $990").
+ * US prices, set separately from the Ukrainian ones ("From 990$"; symbol order: lib/price.ts).
  * An empty `price` would show "Custom quote" in the price slot instead.
  */
 const plansEn: Plan[] = [

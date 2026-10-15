@@ -7,7 +7,7 @@ export type Step = {
   description: string;
   /** Optional explicit line break inside the description (Figma step 04) */
   descriptionLines?: [string, string];
-  /** Optional explicit line break on wide phones only (430px+, mobile timeline); narrower phones wrap naturally */
+  /** Optional explicit line break on wide phones only (430px+, below the tablet layout); narrower phones wrap naturally */
   wideMobileLines?: [string, string];
   duration: string;
 };

@@ -1,47 +1,16 @@
 import Image from "next/image";
-import { pricingByLocale, type Plan } from "@/data/pricing";
+import type { Plan } from "@/data/pricing";
 import type { Locale } from "@/i18n/locale";
+import { siteContent } from "@/content";
+import type { PricingContent } from "@/content/types";
 
-type Discount = (typeof pricingByLocale)["uk"]["discounts"][number];
+type Discount = PricingContent["discounts"][number];
 import { SectionTag } from "@/components/ui/SectionTag";
 import { Reveal } from "@/components/ui/Reveal";
 import { PillButton } from "@/components/ui/PillButton";
 import { LeadCard } from "@/components/ui/LeadCard";
 import { CountUp } from "@/components/ui/CountUp";
 import { formatPrice, priceAffixes, priceAmount } from "@/lib/price";
-
-const copy = {
-  uk: {
-    tag: "Тарифи",
-    title: "Пакети та вартість",
-    from: "Від",
-    // only used when a price is not set (the Ukrainian plans always have one)
-    quote: ["Ціна", "за запитом"],
-    paymentTitle: "Гнучка оплата частинами",
-    paymentNote: "До 12 місяців — деталі на консультації",
-    discounts: ["Умови", "знижки"],
-    hit: "Хіт продажів",
-    choose: "Обрати пакет",
-    discuss: "Обговорити",
-    chooseLabel: "обрати пакет",
-    discussLabel: "обговорити",
-  },
-  en: {
-    tag: "Pricing",
-    title: "Packages & pricing",
-    from: "From",
-    // shown while the US price of a plan is not set (see data/pricing.ts)
-    quote: ["Custom", "quote"],
-    paymentTitle: "Flexible installment plans",
-    paymentNote: "Up to 12 months — details on a call",
-    discounts: ["Discount", "terms"],
-    hit: "Best seller",
-    choose: "Choose package",
-    discuss: "Let’s talk",
-    chooseLabel: "choose package",
-    discussLabel: "let’s talk",
-  },
-} satisfies Record<Locale, unknown>;
 
 /* ---------------------------------------------------------------- */
 /* Shared pieces                                                     */
@@ -65,8 +34,7 @@ function PriceCounter({ value }: { value: string }) {
 }
 
 /** "Від 390$"; a plan without a price (US prices not set yet) shows "Custom quote" in the same slot */
-function Price({ value, size, animate = false, locale }: { value: string; size: "sm" | "lg"; animate?: boolean; locale: Locale }) {
-  const t = copy[locale];
+function Price({ value, size, animate = false, locale, t }: { value: string; size: "sm" | "lg"; animate?: boolean; locale: Locale; t: PricingContent }) {
   return (
     <p className={`flex items-end whitespace-nowrap ${size === "lg" ? "gap-2.5" : "gap-2"}`}>
       <span className="text-[14px] leading-body text-ink-2/60">{value ? t.from : t.quote[0]}</span>
@@ -79,16 +47,15 @@ function Price({ value, size, animate = false, locale }: { value: string; size: 
   );
 }
 
-function PaymentNote({ locale }: { locale: Locale }) {
-  const t = copy[locale];
+function PaymentNote({ t }: { t: PricingContent }) {
   return (
     <div className="inline-flex items-center gap-3.5 self-start rounded-[24px] xl:self-auto border border-ink-2/8 bg-white py-2.5 pr-6 pl-2">
       <span className="grid size-9 shrink-0 place-items-center rounded-full bg-lime">
         <img src="/images/pricing/card-icon.svg" alt="" className="size-[18px]" />
       </span>
       <span className="flex flex-col gap-[3px]">
-        <span className="font-display text-[14px] leading-display font-medium text-ink-2">{t.paymentTitle}</span>
-        <span className="text-[13px] leading-body text-ink-2/55">{t.paymentNote}</span>
+        <span className="font-display text-[14px] leading-display font-medium text-ink-2">{t.payment.title}</span>
+        <span className="text-[13px] leading-body text-ink-2/55">{t.payment.note}</span>
       </span>
     </div>
   );
@@ -147,17 +114,17 @@ function HitPointer({ size, className }: { size: number; className: string }) {
   );
 }
 
-function DiscountsTitle({ className, locale }: { className: string; locale: Locale }) {
-  const [plain, accent] = copy[locale].discounts;
+function DiscountsTitle({ className, title }: { className: string; title: PricingContent["discountsTitle"] }) {
+  const [first, second] = title.parts;
   return (
     <p className={`font-pixel leading-pixel whitespace-nowrap text-white ${className}`}>
-      {locale === "en" ? (
+      {title.accent === 0 ? (
         <>
-          <span className="text-orange">{plain}</span> {accent}
+          <span className="text-orange">{first}</span> {second}
         </>
       ) : (
         <>
-          {plain} <span className="text-orange">{accent}</span>
+          {first} <span className="text-orange">{second}</span>
         </>
       )}
     </p>
@@ -179,8 +146,7 @@ function KeepLastSentence({ text }: { text: string }) {
   );
 }
 
-function CompactPlanCard({ plan, locale }: { plan: Plan; locale: Locale }) {
-  const t = copy[locale];
+function CompactPlanCard({ plan, locale, t }: { plan: Plan; locale: Locale; t: PricingContent }) {
   const isMulti = plan.id === "multi";
   return (
     <LeadCard
@@ -246,7 +212,7 @@ function CompactPlanCard({ plan, locale }: { plan: Plan; locale: Locale }) {
       </div>
 
       <div className="relative mt-auto pt-5">
-        <Price value={plan.price} size="sm" animate locale={locale} />
+        <Price value={plan.price} size="sm" animate locale={locale} t={t} />
         <PillButton as="span" variant={isMulti ? "white" : "lime"} className="mt-[18px] h-[60px] w-full pr-1.5 pl-7">
           {t.choose}
         </PillButton>
@@ -255,9 +221,8 @@ function CompactPlanCard({ plan, locale }: { plan: Plan; locale: Locale }) {
   );
 }
 
-function CompactCustomCard({ locale }: { locale: Locale }) {
-  const t = copy[locale];
-  const { customPlan, discounts } = pricingByLocale[locale];
+function CompactCustomCard({ t }: { t: PricingContent }) {
+  const { customPlan, discounts, customPlanMobile: m } = t;
   return (
     <LeadCard
       preset={customPlan.lead}
@@ -280,23 +245,12 @@ function CompactCustomCard({ locale }: { locale: Locale }) {
           <div className="flex flex-col gap-3">
             <h3 className="font-display text-[32px] leading-display font-medium tracking-[-0.04em] whitespace-nowrap text-white">{customPlan.title}</h3>
             <p className="text-[14px] leading-[1.5] text-white/60">
-              {locale === "en" ? (
-                <>
-                  AI assistants, Telegram bots,
-                  <br />
-                  <span className="whitespace-nowrap">process automation</span> and
-                  <br />
-                  <span className="whitespace-nowrap">integrations for your business.</span>
-                </>
-              ) : (
-                <>
-                  AI-асистенти, Telegram-боти,
-                  <br />
-                  <span className="whitespace-nowrap">автоматизація процесів</span> та
-                  <br />
-                  <span className="whitespace-nowrap">інтеграції під ваш бізнес.</span>
-                </>
-              )}
+              {m.line1}
+              <br />
+              <span className="whitespace-nowrap">{m.line2Nowrap}</span>
+              {m.line2Tail}
+              <br />
+              <span className="whitespace-nowrap">{m.line3Nowrap}</span>
             </p>
           </div>
         </div>
@@ -306,7 +260,7 @@ function CompactCustomCard({ locale }: { locale: Locale }) {
       </div>
 
       <div className="relative mt-6 h-px bg-white/30" />
-      <DiscountsTitle className="relative mt-5 text-[20px]" locale={locale} />
+      <DiscountsTitle className="relative mt-5 text-[20px]" title={t.discountsTitle} />
       <div className="relative mt-7 flex flex-col md:flex-row md:gap-8">
         <Discount d={discounts[0]} mobile />
         <div className="my-5 h-px bg-white/30 md:my-0 md:h-auto md:w-px" />
@@ -320,8 +274,7 @@ function CompactCustomCard({ locale }: { locale: Locale }) {
 /* Desktop (≥ 1280px): 1440px Figma frame                            */
 /* ---------------------------------------------------------------- */
 
-function DesktopPlanCard({ plan, locale }: { plan: Plan; locale: Locale }) {
-  const t = copy[locale];
+function DesktopPlanCard({ plan, locale, t }: { plan: Plan; locale: Locale; t: PricingContent }) {
   const isMulti = plan.id === "multi";
   return (
     <LeadCard
@@ -380,15 +333,14 @@ function DesktopPlanCard({ plan, locale }: { plan: Plan; locale: Locale }) {
         <PillButton as="span" variant={isMulti ? "white" : "lime"} className={locale === "en" ? "h-[60px] w-auto min-w-[250px] shrink-0 pr-1.5 pl-7" : "h-[60px] w-[250px] pr-1.5 pl-7"}>
           {t.choose}
         </PillButton>
-        <Price value={plan.price} size="lg" locale={locale} />
+        <Price value={plan.price} size="lg" locale={locale} t={t} />
       </div>
     </LeadCard>
   );
 }
 
-function DesktopCustomCard({ locale }: { locale: Locale }) {
-  const t = copy[locale];
-  const { customPlan, discounts } = pricingByLocale[locale];
+function DesktopCustomCard({ t }: { t: PricingContent }) {
+  const { customPlan, discounts } = t;
   return (
     <LeadCard
       preset={customPlan.lead}
@@ -422,7 +374,7 @@ function DesktopCustomCard({ locale }: { locale: Locale }) {
       <div className="relative w-px shrink-0 bg-white/30" />
 
       <div className="relative flex min-w-0 flex-1 flex-col gap-[37px] pt-[98px]">
-        <DiscountsTitle className="text-[35px]" locale={locale} />
+        <DiscountsTitle className="text-[35px]" title={t.discountsTitle} />
         <div className="flex gap-8">
           <Discount d={discounts[0]} />
           <div className="w-px shrink-0 self-stretch bg-white/30" />
@@ -435,9 +387,9 @@ function DesktopCustomCard({ locale }: { locale: Locale }) {
 
 /* ---------------------------------------------------------------- */
 
-export function Pricing({ locale = "uk" }: { locale?: Locale }) {
-  const t = copy[locale];
-  const { plans } = pricingByLocale[locale];
+export function Pricing({ locale = "uk", content = siteContent[locale].pricing }: { locale?: Locale; content?: PricingContent }) {
+  const t = content;
+  const { plans } = t;
   return (
     <section id="pricing" className="relative bg-ink px-2 md:bg-transparent pt-6 pb-10 md:px-[33px] md:pt-[84px] md:pb-[93px]">
       <div className="mx-auto max-w-[1375px] rounded-[32px] bg-paper px-4 pt-10 pb-6 md:rounded-[48px] md:px-10 md:pt-14 md:pb-[83px] xl:pb-[47px] xl:pr-[58px] xl:pl-[57px]">
@@ -451,18 +403,18 @@ export function Pricing({ locale = "uk" }: { locale?: Locale }) {
               {t.title}
             </h2>
           </div>
-          <PaymentNote locale={locale} />
+          <PaymentNote t={t} />
         </Reveal>
 
         {/* Mobile / tablet */}
         <div className="mt-6 grid gap-3 md:mt-10 md:gap-5 lg:grid-cols-2 xl:hidden">
           {plans.map((plan, i) => (
             <Reveal key={plan.id} delay={i * 80} className="flex [&>article]:flex-1">
-              <CompactPlanCard plan={plan} locale={locale} />
+              <CompactPlanCard plan={plan} locale={locale} t={t} />
             </Reveal>
           ))}
           <Reveal className="lg:col-span-2">
-            <CompactCustomCard locale={locale} />
+            <CompactCustomCard t={t} />
           </Reveal>
         </div>
 
@@ -471,12 +423,12 @@ export function Pricing({ locale = "uk" }: { locale?: Locale }) {
           <div className="flex h-[500px] gap-5">
             {plans.map((plan, i) => (
               <Reveal key={plan.id} delay={i * 90} className="flex min-w-0 flex-1 items-start [&>article]:flex-1">
-                <DesktopPlanCard plan={plan} locale={locale} />
+                <DesktopPlanCard plan={plan} locale={locale} t={t} />
               </Reveal>
             ))}
           </div>
           <Reveal>
-            <DesktopCustomCard locale={locale} />
+            <DesktopCustomCard t={t} />
           </Reveal>
         </div>
       </div>

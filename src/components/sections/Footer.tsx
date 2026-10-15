@@ -1,57 +1,9 @@
 import Image from "next/image";
-import { contacts, contactsEn, socialLinks } from "@/data/navigation";
 import { PillButton } from "@/components/ui/PillButton";
 import { FooterWordmark } from "@/components/ui/FooterWordmark";
-import { routes, type Locale } from "@/i18n/locale";
-
-const copy = {
-  uk: {
-    nav: [
-      { label: "Послуги", href: "#services" },
-      { label: "Роботи", href: "#works" },
-      { label: "Про нас", href: "#about" },
-      { label: "Тарифи", href: "#pricing" },
-      { label: "FAQ", href: "#faq" },
-    ],
-    services: ["Landing Page", "Інтернет-магазини", "UI/UX дизайн", "AI-асистенти", "Telegram-боти"],
-    home: "MIROFORM — на головну",
-    tagline: "Digital-студія, що поєднує дизайн, технології та результат.",
-    cta: "Обговорити проєкт",
-    navLabel: "Навігація у футері",
-    navTitle: "Навігація",
-    servicesTitle: "Послуги",
-    contactsTitle: "Контакти",
-    rights: "© 2026 MIROFORM®. Усі права захищені.",
-    privacy: "Політика конфіденційності",
-    contacts,
-  },
-  en: {
-    nav: [
-      { label: "Services", href: "#services" },
-      { label: "Projects", href: "#works" },
-      { label: "About", href: "#about" },
-      { label: "Pricing", href: "#pricing" },
-      { label: "FAQ", href: "#faq" },
-    ],
-    services: ["Landing pages", "Online stores", "UI/UX design", "AI assistants", "Telegram bots"],
-    home: "MIROFORM — home",
-    tagline: "A digital studio that brings together design, technology and results.",
-    cta: "Discuss your project",
-    navLabel: "Footer navigation",
-    navTitle: "Navigation",
-    servicesTitle: "Services",
-    contactsTitle: "Contact",
-    rights: "© 2026 MIROFORM®. All rights reserved.",
-    privacy: "Privacy Policy",
-    contacts: contactsEn,
-  },
-} satisfies Record<Locale, unknown>;
-
-const socials = [
-  { label: "IG", name: "Instagram", href: socialLinks.instagram },
-  { label: "TG", name: "Telegram", href: socialLinks.telegram },
-  { label: "WA", name: "WhatsApp", href: socialLinks.whatsapp },
-];
+import type { Locale } from "@/i18n/locale";
+import { siteContent } from "@/content";
+import type { FooterContent } from "@/content/types";
 
 function ColumnTitle({ children }: { children: string }) {
   return <p className="font-display text-[12px] leading-display font-medium tracking-[0.08em] text-lime uppercase">{children}</p>;
@@ -59,10 +11,10 @@ function ColumnTitle({ children }: { children: string }) {
 
 const linkClass = "text-[15px] leading-body font-[350] text-white/75 transition-colors duration-300 hover:text-lime";
 
-function Socials() {
+function Socials({ items }: { items: FooterContent["socials"] }) {
   return (
     <ul className="flex gap-[7px]">
-      {socials.map((s) => (
+      {items.map((s) => (
         <li key={s.label}>
           <a
             href={s.href}
@@ -91,8 +43,8 @@ function LimeArc({ className }: { className: string }) {
   );
 }
 
-export function Footer({ locale = "uk" }: { locale?: Locale }) {
-  const t = copy[locale];
+export function Footer({ locale = "uk", content = siteContent[locale].footer }: { locale?: Locale; content?: FooterContent }) {
+  const t = content;
   const { contacts } = t;
   return (
     <footer className="relative overflow-hidden rounded-t-[32px] border-t border-white/8 bg-ink-2 md:rounded-t-[70px]">
@@ -137,8 +89,8 @@ export function Footer({ locale = "uk" }: { locale?: Locale }) {
             <p className="mt-3 w-[300px] text-[15px] leading-[1.55] text-white/60 md:mt-[30px] md:w-[330px] md:max-w-full md:text-[16px]">
               {t.tagline}
             </p>
-            <PillButton href="#contact" circleSize={44} gap={10} className="mt-[21px] h-[60px] w-[273px] pr-[8px] pl-[27px] md:mt-7">
-              {t.cta}
+            <PillButton href={t.cta.href} circleSize={44} gap={10} className="mt-[21px] h-[60px] w-[273px] pr-[8px] pl-[27px] md:mt-7">
+              {t.cta.label}
             </PillButton>
           </div>
 
@@ -160,7 +112,7 @@ export function Footer({ locale = "uk" }: { locale?: Locale }) {
             <ul className="mt-4 flex flex-col gap-[13px] leading-body">
               {t.services.map((s) => (
                 <li key={s}>
-                  <a href="#services" className={linkClass}>
+                  <a href={t.servicesHref} className={linkClass}>
                     {s}
                   </a>
                 </li>
@@ -183,7 +135,7 @@ export function Footer({ locale = "uk" }: { locale?: Locale }) {
               </li>
             </ul>
             <div className="mt-[18px] md:hidden">
-              <Socials />
+              <Socials items={t.socials} />
             </div>
             <p className="mt-[31px] text-[13px] leading-[1.5] text-white/40 md:mt-7">
               {contacts.legalName}
@@ -199,11 +151,11 @@ export function Footer({ locale = "uk" }: { locale?: Locale }) {
         {/* ---------- Bottom ---------- */}
         <div className="mt-[27px] border-t border-white/99 pt-5 pb-8 md:mt-[72px] md:grid md:h-[73px] md:grid-cols-[45.58%_1fr_auto] md:items-center md:border-white/10 md:pt-0 md:pb-0 lg:h-[115px] lg:items-start lg:pt-[28px]">
           <p className="hidden text-[14px] leading-body text-white/50 md:block lg:pt-[13.5px]">{t.rights}</p>
-          <a href={routes[locale].privacy} className="block self-start justify-self-start text-[14px] leading-[17px] text-white/50 underline decoration-white/35 underline-offset-4 md:leading-body transition-colors hover:text-white hover:decoration-white md:self-center lg:self-auto lg:pt-[13.5px]">
-            {t.privacy}
+          <a href={t.privacy.href} className="block self-start justify-self-start text-[14px] leading-[17px] text-white/50 underline decoration-white/35 underline-offset-4 md:leading-body transition-colors hover:text-white hover:decoration-white md:self-center lg:self-auto lg:pt-[13.5px]">
+            {t.privacy.label}
           </a>
           <div className="hidden md:block">
-            <Socials />
+            <Socials items={t.socials} />
           </div>
           <p className="mt-2.5 text-[14px] leading-[17px] text-white/50 md:hidden">{t.rights}</p>
         </div>

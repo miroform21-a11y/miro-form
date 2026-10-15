@@ -3,37 +3,17 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { navLinksByLocale } from "@/data/navigation";
 import { LangSwitch } from "@/components/ui/LangSwitch";
 import { PillButton } from "@/components/ui/PillButton";
 import { Pinned } from "@/components/ui/Pinned";
 import { usePixelMorph } from "@/components/ui/usePixelMorph";
 import type { Locale } from "@/i18n/locale";
+import { siteContent } from "@/content";
+import type { HeaderContent } from "@/content/types";
 
-const copy = {
-  uk: {
-    home: "MIROFORM — на головну",
-    nav: "Основна навігація",
-    mobileNav: "Мобільна навігація",
-    cta: "Зв’язатися",
-    openMenu: "Відкрити меню",
-    closeMenu: "Закрити меню",
-    menu: "Меню",
-  },
-  en: {
-    home: "MIROFORM — home",
-    nav: "Main navigation",
-    mobileNav: "Mobile navigation",
-    cta: "Get in touch",
-    openMenu: "Open menu",
-    closeMenu: "Close menu",
-    menu: "Menu",
-  },
-} satisfies Record<Locale, Record<string, string>>;
-
-export function Header({ locale = "uk" }: { locale?: Locale }) {
-  const t = copy[locale];
-  const navLinks = navLinksByLocale[locale];
+export function Header({ locale = "uk", content = siteContent[locale].header }: { locale?: Locale; content?: HeaderContent }) {
+  const t = content;
+  const navLinks = t.links;
   const [open, setOpen] = useState(false);
   const [hovered, setHovered] = useState(0);
   const menuRef = useRef<HTMLUListElement>(null);
@@ -136,8 +116,8 @@ export function Header({ locale = "uk" }: { locale?: Locale }) {
           <LangSwitch solid={scrolled} locale={locale} />
         </Pinned>
         <div className="hidden md:block">
-          <PillButton href="#contact" circleSize={44} className="h-[52px] w-[225px] pr-[9px] pl-[31px]">
-            {t.cta}
+          <PillButton href={t.cta.href} circleSize={44} className="h-[52px] w-[225px] pr-[9px] pl-[31px]">
+            {t.cta.label}
           </PillButton>
         </div>
         <Pinned className="xl:hidden">
@@ -156,7 +136,7 @@ export function Header({ locale = "uk" }: { locale?: Locale }) {
         </Pinned>
       </div>
 
-      <MobileMenu open={open} onClose={() => setOpen(false)} locale={locale} />
+      <MobileMenu open={open} onClose={() => setOpen(false)} locale={locale} content={t} />
     </header>
   );
 }
@@ -165,9 +145,9 @@ export function Header({ locale = "uk" }: { locale?: Locale }) {
  * Rendered into <body>: the hero is its own stacking context (isolate), so a fixed menu inside it
  * would be painted under every later section once the page is scrolled — invisible, yet scroll-locked.
  */
-function MobileMenu({ open, onClose, locale }: { open: boolean; onClose: () => void; locale: Locale }) {
-  const t = copy[locale];
-  const navLinks = navLinksByLocale[locale];
+function MobileMenu({ open, onClose, locale, content }: { open: boolean; onClose: () => void; locale: Locale; content: HeaderContent }) {
+  const t = content;
+  const navLinks = t.links;
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   if (!mounted) return null;
@@ -241,8 +221,8 @@ function MobileMenu({ open, onClose, locale }: { open: boolean; onClose: () => v
       </nav>
 
       <div className="relative mt-10">
-        <PillButton href="#contact" onClick={onClose} className="h-[55px] w-full pr-[6px] pl-7">
-          {t.cta}
+        <PillButton href={t.cta.href} onClick={onClose} className="h-[55px] w-full pr-[6px] pl-7">
+          {t.cta.label}
         </PillButton>
       </div>
     </div>,

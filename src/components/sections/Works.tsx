@@ -1,6 +1,8 @@
 import Image from "next/image";
-import { projectsByLocale, projectsTotal, type Project } from "@/data/projects";
+import type { Project } from "@/data/projects";
 import type { Locale } from "@/i18n/locale";
+import { siteContent } from "@/content";
+import type { WorksContent } from "@/content/types";
 import { SectionTag } from "@/components/ui/SectionTag";
 import { PillButton } from "@/components/ui/PillButton";
 import { Reveal } from "@/components/ui/Reveal";
@@ -15,16 +17,11 @@ const bento = (projects: Project[]) =>
     { items: [projects[4], projects[5]], narrow: "right", height: 600 },
   ] as const;
 
-const copy = {
-  uk: { tag: "Роботи", title: "Наші проєкти", all: "Усі роботи" },
-  en: { tag: "Portfolio", title: "Our Projects", all: "All projects" },
-} satisfies Record<Locale, Record<string, string>>;
-
-export function Works({ locale = "uk" }: { locale?: Locale }) {
-  const t = copy[locale];
-  const projects = projectsByLocale[locale];
+export function Works({ locale = "uk", content = siteContent[locale].works }: { locale?: Locale; content?: WorksContent }) {
+  const t = content;
+  const projects = t.projects;
   const rows = bento(projects);
-  const counter = `( ${String(projects.length).padStart(2, "0")} / ${projectsTotal} )`;
+  const counter = `( ${String(projects.length).padStart(2, "0")} / ${t.total} )`;
   return (
     <section id="works" className="relative z-10 overflow-x-clip bg-ink px-2 pt-6 pb-5 md:px-[33px] md:pt-[82px] md:pb-[83px]">
       {/* Purple 3D star overlapping the sheet's top edge */}
@@ -50,8 +47,8 @@ export function Works({ locale = "uk" }: { locale?: Locale }) {
           <Reveal delay={100} className="flex items-center gap-[37px]">
             <p className="font-pixel text-[13px] leading-pixel whitespace-nowrap text-ink-2/50 md:text-[18px]">{counter}</p>
             <div className="hidden md:block">
-              <PillButton href="#contact" variant="dark" circleSize={44} gap={12} className="h-[60px] w-[190px] pr-2 pl-[27px]">
-                {t.all}
+              <PillButton href={t.all.href} variant="dark" circleSize={44} gap={12} className="h-[60px] w-[190px] pr-2 pl-[27px]">
+                {t.all.label}
               </PillButton>
             </div>
           </Reveal>
@@ -59,9 +56,9 @@ export function Works({ locale = "uk" }: { locale?: Locale }) {
 
         {/* Mobile slider */}
         <div className="mt-4 md:hidden">
-          <WorksSlider projects={projects} locale={locale} />
-          <PillButton href="#contact" variant="dark" circleSize={44} className="mt-6 h-[60px] w-full pr-2 pl-[27px]">
-            {t.all}
+          <WorksSlider projects={projects} labels={t.slider} cardLabels={t.card} />
+          <PillButton href={t.all.href} variant="dark" circleSize={44} className="mt-6 h-[60px] w-full pr-2 pl-[27px]">
+            {t.all.label}
           </PillButton>
         </div>
 
@@ -72,7 +69,7 @@ export function Works({ locale = "uk" }: { locale?: Locale }) {
               <ProjectCard
                 project={project}
                 variant="mobile"
-                locale={locale}
+                labels={t.card}
                 className="h-[360px]"
               />
             </Reveal>
@@ -94,7 +91,7 @@ export function Works({ locale = "uk" }: { locale?: Locale }) {
                     <ProjectCard
                       project={project}
                       variant="desktop"
-                      locale={locale}
+                      labels={t.card}
                       className={`h-full ${isNarrow ? "[--project-title-max:clamp(22px,2.1vw,30px)]" : "[--project-title-max:clamp(24px,2.2vw,30px)]"}`}
                     />
                   </Reveal>

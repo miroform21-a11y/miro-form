@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
 import { PrivacyPolicy } from "@/components/pages/PrivacyPolicy";
+import { getSiteContent } from "@/server/cms/published";
 
-export const metadata: Metadata = pageMetadata({
-  title: "Політика конфіденційності — MIROFORM",
-  description: "Як MIROFORM збирає, використовує та захищає персональні дані відвідувачів сайту.",
-  path: "/privacy",
-});
+/** Regenerated in the background at most every 10 minutes (publishing refreshes it at once) — also when the build ran without the database */
+export const revalidate = 600;
 
-export default function PrivacyPage() {
-  return <PrivacyPolicy />;
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata({ ...(await getSiteContent("uk")).seo.privacy, path: "/privacy" });
+}
+
+export default async function PrivacyPage() {
+  return <PrivacyPolicy content={(await getSiteContent("uk")).privacy} />;
 }

@@ -1,11 +1,12 @@
 /**
  * The English /en/brief questionnaire: the same 8 steps, field keys, types, required marks and
  * conditional fields as the Ukrainian brief (data/brief.ts), with English labels and options.
- * Conditions (`showIf`, `exclusive`, `independent`, defaults) point at the English option values.
+ * Conditions (`showIf`, `exclusive`, `independent`, defaults) are written with the English option labels and turned
+ * into option ids by withOptionIds().
  */
 
 import { socialLinks } from "@/data/navigation";
-import { briefSchemaUk, type BriefSchema, type BriefStep } from "@/data/brief";
+import { briefSchemaUk, withOptionIds, type BriefSchema, type BriefStepSource } from "@/data/brief";
 import type { Locale } from "@/i18n/locale";
 
 const OTHER_NETWORK_EN = "Other";
@@ -15,7 +16,7 @@ const yesNo = ["Yes", "No"] as const;
 const NOTHING_YET = "Nothing yet";
 const TURNKEY = "I want a turnkey project";
 
-const briefStepsEn: BriefStep[] = [
+const briefStepsEnSource: BriefStepSource[] = [
   {
     id: "general",
     number: "01",
@@ -269,6 +270,6 @@ const briefStepsEn: BriefStep[] = [
   },
 ];
 
-export const briefSchemaEn: BriefSchema = { locale: "en", steps: briefStepsEn, socialNetworks: SOCIAL_NETWORKS_EN, otherNetwork: OTHER_NETWORK_EN };
+export const briefSchemaEn: BriefSchema = { locale: "en", steps: withOptionIds(briefStepsEnSource), socialNetworks: SOCIAL_NETWORKS_EN, otherNetwork: OTHER_NETWORK_EN };
 
 export const briefSchemas: Record<Locale, BriefSchema> = { uk: briefSchemaUk, en: briefSchemaEn };

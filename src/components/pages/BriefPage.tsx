@@ -3,31 +3,29 @@ import Link from "next/link";
 import { PillButton } from "@/components/ui/PillButton";
 import { BriefForm } from "@/components/brief/BriefForm";
 import { routes, type Locale } from "@/i18n/locale";
+import { briefContent } from "@/content";
+import type { BriefPageContent, BriefUiContent } from "@/content/types";
+import type { BriefSchema } from "@/data/brief";
 
 const pad = "px-5 md:px-8 lg:px-[clamp(40px,6.25vw,90px)]";
 
-const copy = {
-  uk: {
-    home: "MIROFORM — на головну",
-    back: "На головну",
-    title: "Бриф",
-    intro: "Бриф допоможе нам зрозуміти ваш проєкт: за відповідями ми продумаємо структуру, дизайн і функціонал майбутнього сайту.",
-    help: "Якщо якесь питання здається складним, пропустіть його або напишіть нам — ми підкажемо.",
-    privacy: "Ми гарантуємо повну конфіденційність інформації про вас і вашу діяльність.",
-  },
-  en: {
-    home: "MIROFORM — home",
-    back: "Back to home",
-    title: "Brief",
-    intro: "This brief helps us understand your project: based on your answers, we’ll plan the structure, design and features of your future website.",
-    help: "If a question seems difficult, skip it or message us — we’re happy to help.",
-    privacy: "We guarantee full confidentiality of all information about you and your business.",
-  },
-} satisfies Record<Locale, Record<string, string>>;
 
 /** The /brief page (and /en/brief): intro + the wizard. */
-export function BriefPage({ locale = "uk" }: { locale?: Locale }) {
-  const t = copy[locale];
+export function BriefPage({
+  locale = "uk",
+  content = briefContent[locale].page,
+  uiContent,
+  schema,
+  initialStep,
+}: {
+  locale?: Locale;
+  content?: BriefPageContent;
+  /** wizard texts / questionnaire / first step — used by the admin preview */
+  uiContent?: BriefUiContent;
+  schema?: BriefSchema;
+  initialStep?: number;
+}) {
+  const t = content;
   const home = routes[locale].home;
   return (
     <main className="relative isolate overflow-hidden bg-ink">
@@ -90,7 +88,7 @@ export function BriefPage({ locale = "uk" }: { locale?: Locale }) {
           </p>
         </header>
 
-        <BriefForm locale={locale} />
+        <BriefForm locale={locale} content={uiContent} schema={schema} initialStep={initialStep} />
 
         <p className="py-12 text-center text-[13px] leading-body text-white/40">© 2026 MIROFORM®</p>
       </div>

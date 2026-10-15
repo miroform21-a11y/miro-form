@@ -2,7 +2,8 @@
 
 import { useRef, useState } from "react";
 import { projects as projectsUk, type Project } from "@/data/projects";
-import type { Locale } from "@/i18n/locale";
+import { siteContent } from "@/content";
+import type { WorksContent } from "@/content/types";
 import { ProjectCard } from "./ProjectCard";
 
 /** Card geometry from the mobile Figma frame: height, media→info gap, bottom padding, info block height */
@@ -15,14 +16,17 @@ const mobileCards = [
   { h: 328.74, gap: 18, pb: 18, info: 84.74 },
 ];
 
-const copy = {
-  uk: { label: "Наші проєкти", slides: "Слайди", slide: "Слайд" },
-  en: { label: "Our projects", slides: "Slides", slide: "Slide" },
-} satisfies Record<Locale, Record<string, string>>;
-
 /** Mobile swipe slider with pagination dots. */
-export function WorksSlider({ projects = projectsUk, locale = "uk" }: { projects?: Project[]; locale?: Locale }) {
-  const t = copy[locale];
+export function WorksSlider({
+  projects = projectsUk,
+  labels = siteContent.uk.works.slider,
+  cardLabels = siteContent.uk.works.card,
+}: {
+  projects?: Project[];
+  labels?: WorksContent["slider"];
+  cardLabels?: WorksContent["card"];
+}) {
+  const t = labels;
   const trackRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
 
@@ -56,7 +60,7 @@ export function WorksSlider({ projects = projectsUk, locale = "uk" }: { projects
             key={project.id}
             project={project}
             variant="mobile"
-            locale={locale}
+            labels={cardLabels}
             className="w-full shrink-0 snap-start"
             style={
               {

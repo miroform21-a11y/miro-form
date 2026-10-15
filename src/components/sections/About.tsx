@@ -4,32 +4,10 @@ import { Reveal } from "@/components/ui/Reveal";
 import { CountUp } from "@/components/ui/CountUp";
 import { ArrowShot } from "@/components/ui/ArrowShot";
 import { ReadWords, ScrollRead } from "@/components/ui/ScrollRead";
-import { socialLinks } from "@/data/navigation";
 import type { Locale } from "@/i18n/locale";
-
-const copy = {
-  uk: {
-    tag: "Про нас",
-    founderAlt: "German Guk — засновник MIROFORM",
-    statement: "— digital-студія, що поєднує дизайн, технології та результат.",
-    // "…нова [photo] форма" — the photo sits inside the phrase
-    readBefore: "Сім років досвіду — нова",
-    readAfter: "форма, нове ім’я.",
-    projects: "Реалізованих проєктів",
-    years: "Років досвіду в digital",
-    fullCycle: "Full-cycle підхід: аналітика, дизайн, розробка, запуск і підтримка — разом, від ідеї до результату.",
-  },
-  en: {
-    tag: "About us",
-    founderAlt: "German Guk — founder of MIROFORM",
-    statement: "— a digital studio uniting design, technology and results.",
-    readBefore: "Seven years of craft — a new",
-    readAfter: "form, a new name.",
-    projects: "Projects delivered",
-    years: "Years of experience",
-    fullCycle: "Full-cycle approach: research, design, development, launch and support — together, from idea to results.",
-  },
-} satisfies Record<Locale, Record<string, string>>;
+import { siteContent } from "@/content";
+import type { AboutContent } from "@/content/types";
+import { founderPhoto } from "@/content/site/about";
 
 function InlinePhoto({ className }: { className: string }) {
   return (
@@ -46,14 +24,17 @@ function InlinePhoto({ className }: { className: string }) {
   );
 }
 
-function FounderCard({ locale }: { locale: Locale }) {
+function FounderCard({ founder }: { founder: AboutContent["founder"] }) {
+  const { desktop, mobile } = founder.photo;
+  // a replacement photo keeps its proportions inside the same frame and crop box (the Figma files are pre-cut to fit)
+  const cover = (src: string, own: string) => (src === own ? undefined : { objectFit: "cover" as const });
   return (
     <a
       // for now the card leads to the company Instagram (@miro.form); founderInstagram (@gukgerman) is kept in navigation.ts
-      href={socialLinks.instagram}
+      href={founder.href}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="German Guk, Founder & CEO — Instagram MIROFORM @miro.form"
+      aria-label={founder.ariaLabel}
       draggable={false}
       className="pop-trigger no-native-image relative flex flex-col gap-[34px] overflow-hidden rounded-[28px] border border-white/8 bg-[#111] transition-[translate,border-color,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 active:-translate-y-1 hover:border-white/16 hover:shadow-[0_24px_60px_-30px_rgba(174,238,5,0.3)] active:border-white/16 p-2.5 [--photo-h:calc((100vw-62px)*372/340)] max-md:h-[496px] min-[403px]:max-md:h-[calc(124px+var(--photo-h))] md:gap-[30px] md:rounded-[32px] md:p-5 lg:h-full">
       <Image
@@ -71,29 +52,31 @@ function FounderCard({ locale }: { locale: Locale }) {
       <div className="relative h-[372px] w-full shrink-0 overflow-hidden rounded-[20px] min-[403px]:max-md:h-(--photo-h) md:h-auto md:min-h-[320px] md:flex-1 md:rounded-[22px] lg:h-[432px] lg:flex-none">
         {/* Mobile photo */}
         <Image
-          src="/images/about/m-founder.png"
-          alt={copy[locale].founderAlt}
+          src={mobile}
+          alt={founder.alt}
           fill
           sizes="350px"
           draggable={false}
+          style={cover(mobile, founderPhoto.mobile)}
           className="no-native-image object-fill md:hidden"
         />
         {/* Desktop photo (crop from Figma) */}
         <Image
-          src="/images/about/founder.png"
-          alt={copy[locale].founderAlt}
+          src={desktop}
+          alt={founder.alt}
           width={839}
           height={1119}
           sizes="420px"
           draggable={false}
+          style={cover(desktop, founderPhoto.desktop)}
           className="no-native-image absolute top-[-7.41%] left-[-1.17%] h-[119.61%] w-[101.96%] max-w-none max-md:hidden"
         />
       </div>
 
       <div className="relative flex items-center justify-between px-3 md:px-4">
         <div className="flex flex-col gap-2.5 whitespace-nowrap">
-          <p className="font-pixel text-[20px] leading-pixel tracking-[-0.01em] text-white md:text-[24px]">German Guk</p>
-          <p className="text-[18px] leading-body text-white/60 md:text-[21px]">Founder &amp; CEO</p>
+          <p className="font-pixel text-[20px] leading-pixel tracking-[-0.01em] text-white md:text-[24px]">{founder.name}</p>
+          <p className="text-[18px] leading-body text-white/60 md:text-[21px]">{founder.role}</p>
         </div>
         <span aria-hidden="true" className="relative grid size-[52px] shrink-0 place-items-center overflow-hidden rounded-full bg-lime">
           <ArrowShot color="#0A0A0A" size={20} />
@@ -127,7 +110,7 @@ function StatCard({ label, value, suffix, tone }: { label: string; value: number
   );
 }
 
-function FullCycleCard({ locale }: { locale: Locale }) {
+function FullCycleCard({ data }: { data: AboutContent["fullCycle"] }) {
   return (
     <div className="relative flex h-[340px] flex-col gap-4 overflow-hidden rounded-[28px] border border-white/8 transition-[translate,border-color,box-shadow] duration-500 ease-(--ease-smooth) hover:-translate-y-1.5 active:-translate-y-1 hover:border-white/16 hover:shadow-[0_24px_60px_-30px_rgba(174,238,5,0.3)] active:border-white/16 px-5 pt-[30px] pb-5 md:h-[280px] md:gap-[18px] md:rounded-[32px] md:p-8">
       {/* Glow + fade + glass star (mobile and desktop placements differ) */}
@@ -153,23 +136,23 @@ function FullCycleCard({ locale }: { locale: Locale }) {
       />
 
       <CountUp
-        to={100}
-        suffix="%"
+        to={data.value}
+        suffix={data.suffix}
         className="relative font-pixel text-[44px] leading-pixel tracking-[-0.03em] whitespace-nowrap text-white md:text-[75px]"
       />
       <p className="relative w-[272px] text-[15px] leading-[1.1] text-white/80 md:w-[462px] md:max-w-[60%] md:text-[18px] md:leading-[1.5] xl:max-[1439px]:max-w-[55%]">
-        {copy[locale].fullCycle}
+        {data.text}
       </p>
       <p className="relative font-pixel text-[11px] leading-[1.4] text-lime uppercase md:text-[15px] md:leading-pixel">
-        Make the right
-        <br className="md:hidden" /> decision
+        {data.tagline[0]}
+        <br className="md:hidden" /> {data.tagline[1]}
       </p>
     </div>
   );
 }
 
-export function About({ locale = "uk" }: { locale?: Locale }) {
-  const t = copy[locale];
+export function About({ locale = "uk", content = siteContent[locale].about }: { locale?: Locale; content?: AboutContent }) {
+  const t = content;
   return (
     <section id="about" className="relative overflow-hidden bg-ink pt-6 pb-8 md:pt-[69px] md:pb-[70px]">
       {/* Faint left glow (desktop) */}
@@ -215,21 +198,21 @@ export function About({ locale = "uk" }: { locale?: Locale }) {
 
         <div className="mt-9 flex flex-col gap-2 md:mt-[63px] md:grid md:grid-cols-2 md:gap-5 lg:flex lg:flex-row">
           <Reveal className="lg:w-[clamp(380px,33.4%,420px)] lg:shrink-0">
-            <FounderCard locale={locale} />
+            <FounderCard founder={t.founder} />
           </Reveal>
 
           <div className="flex min-w-0 flex-1 flex-col gap-2 md:gap-5">
             <Reveal delay={80} className="flex gap-2.5 md:flex-col md:gap-5 md:max-lg:flex-1 lg:flex-row">
-              <StatCard label={t.projects} value={400} suffix="+" tone="lime" />
-              <StatCard label={t.years} value={7} suffix="+" tone="dark" />
+              <StatCard label={t.stats[0].label} value={t.stats[0].value} suffix={t.stats[0].suffix} tone="lime" />
+              <StatCard label={t.stats[1].label} value={t.stats[1].value} suffix={t.stats[1].suffix} tone="dark" />
             </Reveal>
             <Reveal delay={160} className="md:max-lg:hidden">
-              <FullCycleCard locale={locale} />
+              <FullCycleCard data={t.fullCycle} />
             </Reveal>
           </div>
 
           <Reveal className="hidden md:col-span-2 md:block lg:hidden">
-            <FullCycleCard locale={locale} />
+            <FullCycleCard data={t.fullCycle} />
           </Reveal>
         </div>
       </div>
