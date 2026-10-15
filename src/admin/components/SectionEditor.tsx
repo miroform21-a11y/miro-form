@@ -14,7 +14,7 @@ import { localeName } from "./AdminShell";
 import { BriefStepsEditor } from "./BriefStepsEditor";
 import { briefStepsIssues } from "../brief-rules";
 
-const time = (iso?: string) => (iso ? new Date(iso).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "");
+const time = (iso?: string) => (iso ? new Date(iso).toLocaleString("ru-RU", { timeZone: "Europe/Kyiv", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "");
 
 export function SectionEditor({ locale, section }: { locale: Locale; section: SectionDef }) {
   const admin = useAdmin();

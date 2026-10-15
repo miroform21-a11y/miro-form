@@ -8,7 +8,7 @@ import { sectionHref } from "../sections";
 import { btnCls } from "./FieldEditor";
 
 const SHOWN = 5;
-const time = (iso: string) => new Date(iso).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+const time = (iso: string) => new Date(iso).toLocaleString("ru-RU", { timeZone: "Europe/Kyiv", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
 /** The last saved changes with an undo button each (overview page) */
 export function RecentChanges() {

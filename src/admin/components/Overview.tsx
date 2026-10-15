@@ -8,7 +8,8 @@ import { btnCls, inputCls } from "./FieldEditor";
 import { localeName } from "./AdminShell";
 import { RecentChanges } from "./RecentChanges";
 
-const time = (iso?: string) => (iso ? new Date(iso).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "");
+// Kyiv time on the server and in the browser alike (otherwise the server, in UTC, renders a different text)
+const time = (iso?: string) => (iso ? new Date(iso).toLocaleString("ru-RU", { timeZone: "Europe/Kyiv", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "");
 const sourceName = { seed: "исходный перенос", publish: "публикация", restore: "откат" } as const;
 
 /** Section titles of "area/locale/section" keys */
