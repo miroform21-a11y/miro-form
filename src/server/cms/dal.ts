@@ -50,7 +50,13 @@ export async function isAdmin() {
   return (await readSession()) !== null;
 }
 
+/**
+ * Expires both session cookies. A bare delete() omits Secure, and browsers ignore a Set-Cookie for a "__Host-"
+ * name without it, so the expiry repeats the flags the cookie was set with.
+ */
 export async function clearSessionCookies() {
   const jar = await cookies();
-  for (const name of SESSION_COOKIE_NAMES) jar.delete(name);
+  for (const name of SESSION_COOKIE_NAMES) {
+    jar.set(name, "", { httpOnly: true, secure: name.startsWith("__Host-"), sameSite: "strict", path: "/", maxAge: 0 });
+  }
 }
