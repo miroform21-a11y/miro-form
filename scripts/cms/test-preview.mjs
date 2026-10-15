@@ -95,7 +95,7 @@ check("admin shows the database state (not the «not connected» notice)", (awai
 await pa.goto(BASE + "/admin/uk/site/hero");
 await pa.waitForTimeout(3000);
 const eyebrow = pa.getByLabel(rx("Надзаголовок")).first();
-await eyebrow.fill("PREVIEW-ТЕСТ");
+await eyebrow.fill(`PREVIEW-ТЕСТ ${Date.now() % 100000}`);
 await pa.getByRole("button", { name: /Сохранить черновик/ }).click();
 await pa.waitForTimeout(3500);
 check("draft saved on the Preview", (await pa.getByText(/ещё не опубликован|Черновики сохранены/).count()) > 0);
@@ -109,7 +109,7 @@ await B.page.getByRole("button", { name: "Войти" }).click();
 await B.page.waitForURL(BASE + "/admin", { timeout: 30000 }).catch(() => {});
 await B.page.goto(BASE + "/admin/uk/site/hero");
 await B.page.waitForTimeout(3000);
-check("second device sees the same draft", (await B.page.getByLabel(rx("Надзаголовок")).first().inputValue()) === "PREVIEW-ТЕСТ");
+check("second device sees the same draft", (await B.page.getByLabel(rx("Надзаголовок")).first().inputValue()).startsWith("PREVIEW-ТЕСТ"));
 
 // photo upload
 const photo = await sharp({ create: { width: 800, height: 1000, channels: 3, background: { r: 30, g: 120, b: 200 } } }).png().toBuffer();
@@ -194,10 +194,8 @@ for (const [label, bt, opts] of [
     await page.waitForTimeout(800);
     if (await page.evaluate(() => { const y = scrollY; scrollTo(300, y); const moved = scrollX > 0; scrollTo(0, y); return moved; })) overflow++;
   }
-  await page.goto(BASE + "/admin/login");
-  await page.getByLabel("Пароль администратора").fill(process.env.ADMIN_PASSWORD);
-  await page.getByRole("button", { name: "Войти" }).click();
-  await page.waitForURL(BASE + "/admin", { timeout: 30000 }).catch(() => {});
+  // reuse device A's session: a fresh login per width would use up the 5-per-IP login limit
+  await ctx.addCookies((await A.ctx.cookies()).filter((c) => c.name.includes("mf_admin")));
   for (const p of ["/admin", "/admin/uk/site/pricing", "/admin/en/brief/steps"]) {
     await page.goto(BASE + p);
     await page.waitForTimeout(2000);
@@ -219,6 +217,10 @@ await C.page.goto(BASE + "/admin/login");
 await C.page.getByLabel("Пароль администратора").fill(process.env.ADMIN_PASSWORD);
 await C.page.getByRole("button", { name: "Войти" }).click();
 await C.page.waitForURL(BASE + "/admin", { timeout: 30000 }).catch(() => {});
+if (!C.page.url().endsWith("/admin")) {
+  console.log(`FAIL  final login refused (${C.page.url().replace(BASE, "")}); restore with scripts/cms/publish-source.mjs`);
+  process.exit(1);
+}
 const resets = C.page.getByRole("button", { name: "Исходный контент в черновик" });
 for (let i = 0; i < (await resets.count()); i++) {
   await resets.nth(i).click();

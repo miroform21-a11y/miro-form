@@ -9,7 +9,11 @@ loadEnv();
 const [BASE, NOTE = "Исходный контент (src/content)"] = process.argv.slice(2);
 const { chromium } = createRequire(path.join(root, "package.json"))("playwright");
 const browser = await chromium.launch();
-const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+// Publish through the deployment whose cache must refresh: updateTag() only clears the cache of the app that runs it.
+// A protected Vercel Preview needs the automation bypass (from .env.local, never printed).
+const bypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+const extraHTTPHeaders = bypass && BASE.includes(".vercel.app") ? { "x-vercel-protection-bypass": bypass, "x-vercel-set-bypass-cookie": "true" } : {};
+const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, extraHTTPHeaders })).newPage();
 page.on("dialog", (d) => d.accept());
 await page.goto(BASE + "/admin/login");
 await page.getByLabel("Пароль администратора").fill(process.env.ADMIN_PASSWORD);
