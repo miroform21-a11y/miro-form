@@ -176,8 +176,16 @@ for (const [label, bt, opts] of [
   ["WebKit iPhone", webkit, devices["iPhone 13"]],
 ]) {
   const b = bt === chromium ? browser : await webkit.launch();
-  const ctx = await b.newContext(ctxOpts(opts));
-  const page = await ctx.newPage();
+  let ctx, page;
+  try {
+    ctx = await b.newContext(ctxOpts(opts));
+    page = await ctx.newPage();
+  } catch (e) {
+    out.push(`SKIP  ${label}: browser could not start on this machine (${String(e.message).split(String.fromCharCode(10))[0].slice(0, 80)})`);
+    console.log(out.at(-1));
+    if (b !== browser) await b.close().catch(() => {});
+    continue;
+  }
   const errs = [];
   page.on("pageerror", (e) => errs.push(e.message));
   let overflow = 0;
