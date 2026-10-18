@@ -22,16 +22,15 @@ export type Project = {
 
 export const projects: Project[] = [
   {
-    id: "car-rental",
-    title: "Premium Car Rental",
-    description: "Стиль. Комфорт. Свобода руху",
+    id: "nef-life",
+    title: "NEF LIFE",
+    description: "Оазис тисячі в центрі Балі",
     tags: ["Landing Page", "Figma", "Framer"],
-    image: { src: "/images/works/car-rental.png", width: 1256, height: 1908 },
-    video: { desktop: "/videos/prestige-rent-preview.mp4", mobile: "/videos/prestige-rent-preview-mobile.mp4" },
-    crop: { left: 0, top: 0, width: 99.99, height: 269.07 },
-    mobileCrop: { left: 0, top: 0, width: 100, height: 245.16 },
-    titleSize: [30, 20],
-    href: "https://www.prestige-rent.info/",
+    image: { src: "/images/works/nef-life.png", width: 1920, height: 1080 },
+    crop: { left: 0, top: 0, width: 100, height: 105.17 },
+    mobileCrop: { left: -5.08, top: 0, width: 110.15, height: 100 },
+    titleSize: [30, 22],
+    href: "https://chetkov.pro/",
   },
   {
     id: "we-padel",
@@ -58,17 +57,16 @@ export const projects: Project[] = [
     href: "https://blooomly.space/",
   },
   {
-    id: "modular-homes",
-    title: "Modern Modular Homes",
-    description: "Функціональні будинки сучасного формату",
-    mobileDescription: "Будинки сучасного формату",
-    tags: ["Website", "Figma", "Framer"],
-    image: { src: "/images/works/modular-homes.png", width: 1920, height: 1028 },
-    video: { desktop: "/videos/modular-homes-preview.mp4", mobile: "/videos/modular-homes-preview-540.mp4" },
-    crop: { left: -0.39, top: 0.13, width: 100.83, height: 102.5 },
-    mobileCrop: { left: 0, top: 0, width: 101.23, height: 100 },
-    titleSize: [30, 16],
-    href: "https://chetkov.pro/",
+    id: "car-rental",
+    title: "Premium Car Rental",
+    description: "Стиль. Комфорт. Свобода руху",
+    tags: ["Landing Page", "Figma", "Framer"],
+    image: { src: "/images/works/car-rental.png", width: 1256, height: 1908 },
+    video: { desktop: "/videos/prestige-rent-preview.mp4", mobile: "/videos/prestige-rent-preview-mobile.mp4" },
+    crop: { left: 0, top: 0, width: 100, height: 330.1 },
+    mobileCrop: { left: 0, top: 0, width: 100, height: 245.16 },
+    titleSize: [30, 20],
+    href: "https://www.prestige-rent.info/",
   },
   {
     id: "avalon",
@@ -97,11 +95,29 @@ export const projects: Project[] = [
   },
 ];
 
+/** Taken off the list, kept with its photo and videos so it can be put back */
+export const archivedProjects: Project[] = [
+  {
+    id: "modular-homes",
+    title: "Modern Modular Homes",
+    description: "Функціональні будинки сучасного формату",
+    mobileDescription: "Будинки сучасного формату",
+    tags: ["Website", "Figma", "Framer"],
+    image: { src: "/images/works/modular-homes.png", width: 1920, height: 1028 },
+    video: { desktop: "/videos/modular-homes-preview.mp4", mobile: "/videos/modular-homes-preview-540.mp4" },
+    crop: { left: -0.39, top: 0.13, width: 100.83, height: 102.5 },
+    mobileCrop: { left: 0, top: 0, width: 101.23, height: 100 },
+    titleSize: [30, 16],
+    href: "https://chetkov.pro/",
+  },
+];
+
 /** Total number of delivered projects shown in the counter */
 export const projectsTotal = "40+";
 
 /** English descriptions; media, crops, videos and links are the same objects as on the Ukrainian site */
 const projectCopyEn: Record<string, Pick<Project, "description" | "mobileDescription">> = {
+  "nef-life": { description: "An oasis of calm in the heart of Bali" },
   "car-rental": { description: "Style. Comfort. Freedom to move" },
   "we-padel": { description: "Where sport becomes pure joy" },
   bloomly: { description: "Grooming for beloved pets" },
