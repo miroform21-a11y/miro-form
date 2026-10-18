@@ -27,6 +27,7 @@ export const projects: Project[] = [
     description: "Оазис тисячі в центрі Балі",
     tags: ["Landing Page", "Figma", "Framer"],
     image: { src: "/images/works/nef-life.png", width: 1920, height: 1080 },
+    video: { desktop: "/videos/nef-life-preview.mp4", mobile: "/videos/nef-life-preview-540.mp4" },
     crop: { left: 0, top: 0, width: 100, height: 105.17 },
     mobileCrop: { left: -5.08, top: 0, width: 110.15, height: 100 },
     titleSize: [30, 22],
