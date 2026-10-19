@@ -274,6 +274,20 @@
   translate: 0 0;
 }
 
+/* Swiping the works slider (WorksSlider sets data-swiping): no press effect on the cards */
+[data-swiping] .pop-trigger {
+  translate: none !important;
+  box-shadow: none !important;
+}
+
+[data-swiping] .pop-trigger .arrow-shot-out {
+  translate: 0 0 !important;
+}
+
+[data-swiping] .pop-trigger .arrow-shot-in {
+  translate: -150% 150% !important;
+}
+
 @media (hover: hover) {
   .pop-trigger:hover .arrow-shot-out {
     translate: 150% -150%;

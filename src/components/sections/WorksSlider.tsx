@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { projects as projectsUk, type Project } from "@/data/projects";
 import { siteContent } from "@/content";
 import type { WorksContent } from "@/content/types";
@@ -38,6 +38,42 @@ export function WorksSlider({
     const step = card.offsetWidth + 12;
     setActive(Math.min(projects.length - 1, Math.round(track.scrollLeft / step)));
   };
+
+  // A horizontal finger move marks the track as swiping: the cards' press effect (lift, arrow) is for taps only
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    let x = 0;
+    let y = 0;
+    let timer: number | undefined;
+    const end = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => delete track.dataset.swiping, 350);
+    };
+    const onStart = (e: TouchEvent) => {
+      x = e.touches[0].clientX;
+      y = e.touches[0].clientY;
+    };
+    const onMove = (e: TouchEvent) => {
+      if (track.dataset.swiping) return;
+      const dx = Math.abs(e.touches[0].clientX - x);
+      if (dx > 6 && dx > Math.abs(e.touches[0].clientY - y)) {
+        window.clearTimeout(timer);
+        track.dataset.swiping = "";
+      }
+    };
+    track.addEventListener("touchstart", onStart, { passive: true });
+    track.addEventListener("touchmove", onMove, { passive: true });
+    track.addEventListener("touchend", end, { passive: true });
+    track.addEventListener("touchcancel", end, { passive: true });
+    return () => {
+      window.clearTimeout(timer);
+      track.removeEventListener("touchstart", onStart);
+      track.removeEventListener("touchmove", onMove);
+      track.removeEventListener("touchend", end);
+      track.removeEventListener("touchcancel", end);
+    };
+  }, []);
 
   const goTo = (i: number) => {
     const track = trackRef.current;

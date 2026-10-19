@@ -58,7 +58,7 @@ export const projects: Project[] = [
   {
     id: "car-rental",
     title: "Car Rental",
-    description: "Стиль. Свобода руху.",
+    description: "Стиль. Свобода руху",
     tags: ["Landing Page", "Framer"],
     /** Desktop: two real screens of the site stacked to the 380x370 frame (no video on desktop) */
     image: { src: "/images/works/car-rental-desktop.png", width: 2160, height: 2104 },
@@ -71,13 +71,13 @@ export const projects: Project[] = [
   },  {
     id: "bloomly",
     title: "Ліжка з масиву бука",
-    description: "Натурально, надійно, з душею.",
+    description: "Натурально, надійно, з душею",
     tags: ["Landing Page", "webflow"],
     image: { src: "/images/works/bloomly-beds-desktop.png", width: 1536, height: 864 },
-    mobileImage: { src: "/images/works/bloomly-beds-mobile.png", width: 780, height: 1688 },
-    video: { desktop: "/videos/bloomly-beds-preview.mp4", mobile: "/videos/bloomly-beds-preview-mobile.mp4" },
+    mobileImage: { src: "/images/works/bloomly-beds-card.png", width: 1316, height: 848 },
+    video: { desktop: "/videos/bloomly-beds-preview.mp4", mobile: "/videos/bloomly-beds-preview-card.mp4" },
     crop: { left: 0, top: 0, width: 100, height: 122.24 },
-    mobileCrop: { left: 0, top: 0, width: 100, height: 348.85 },
+    mobileCrop: { left: 0, top: 0, width: 100, height: 103.9 },
     mobileCover: true,
     titleSize: [30, 19],
     href: "https://blooomly.space/",
@@ -131,9 +131,9 @@ export const projectsTotal = "40+";
 /** English descriptions; media, crops, videos and links are the same objects as on the Ukrainian site */
 const projectCopyEn: Record<string, Partial<Pick<Project, "title" | "description" | "mobileDescription">>> = {
   "nef-life": { description: "An oasis of calm in the heart of Bali" },
-  "car-rental": { description: "Style. Freedom to move." },
+  "car-rental": { description: "Style. Freedom to move" },
   "we-padel": { description: "Where sport becomes pure joy" },
-  bloomly: { title: "Solid Beech Beds", description: "Natural, reliable, made with soul." },
+  bloomly: { title: "Solid Beech Beds", description: "Natural, reliable, made with soul" },
   "modular-homes": { description: "Functional homes for modern living", mobileDescription: "Homes for modern living" },
   avalon: { description: "Avalon investment project with Oleksandr Usyk", mobileDescription: "Avalon project with Oleksandr Usyk" },
   "padel-alicante": { description: "A modern padel club in Alicante" },
