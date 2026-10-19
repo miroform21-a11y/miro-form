@@ -47,16 +47,11 @@ export const projects: Project[] = [
     title: "We Padel",
     description: "Місце, де спорт стає задоволенням",
     tags: ["Landing Page", "Next.js"],
-    /** Desktop: the whole first screen + the "Падел. Природа. Атмосфера" block, real screens stacked to the 380x430 frame */
-    image: { src: "/images/works/we-padel-desktop-v2.png", width: 2160, height: 2444 },
-    mobileImage: { src: "/images/works/we-padel-phone-173.png", width: 1440, height: 832 },
-    video: {
-      mobile: "/videos/we-padel-phone-192.mp4",
-      // the first screen is 100vh on this site: each recording shows it whole at its own proportion
-      mobileVariants: [173, 182, 192, 203, 214].map((r) => ({ ratio: r / 100, src: `/videos/we-padel-phone-${r}.mp4`, poster: `/images/works/we-padel-phone-${r}.png` })),
-    },
-    crop: { left: 0, top: 0, width: 100, height: 100 },
-    mobileCrop: { left: 0, top: 0, width: 100, height: 110.8 },
+    /** The original card format: a full-page screenshot (same proportions as the first one, 1538x4096), current site */
+    image: { src: "/images/works/we-padel-page.png", width: 1800, height: 4794 },
+    video: { mobile: "/videos/we-padel-preview-lutsk-v2-540.mp4" },
+    crop: { left: 0, top: 0, width: 100, height: 222.14 },
+    mobileCrop: { left: 0.04, top: 0.18, width: 100, height: 497.11 },
     mobileCover: true,
     titleSize: [30, 22],
     href: "https://www.we-padel.fun/",
