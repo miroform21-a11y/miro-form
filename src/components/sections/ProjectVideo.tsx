@@ -20,7 +20,8 @@ const FLASH_TIMING: KeyframeAnimationOptions = { duration: 320, easing: "cubic-b
  * underneath stays visible until a video frame is actually presented, and whenever the video is not playing
  * (after stop, on load error, if autoplay is refused, with reduced motion).
  */
-export function ProjectVideo({ src, trigger, delay, label }: { src: string; trigger: Trigger; delay: number; label: string }) {
+/** `matte`: on phones the video sits whole inside a 10 px margin, like the picture under it (ProjectCard) */
+export function ProjectVideo({ src, trigger, delay, label, matte = false }: { src: string; trigger: Trigger; delay: number; label: string; matte?: boolean }) {
   const ref = useRef<HTMLVideoElement>(null);
   const flashRef = useRef<HTMLSpanElement>(null);
   const [shown, setShown] = useState(false);
@@ -125,7 +126,7 @@ export function ProjectVideo({ src, trigger, delay, label }: { src: string; trig
         playsInline
         preload="none"
         aria-label={label}
-        className={`absolute inset-0 size-full object-cover object-top transition-opacity duration-[400ms] ease-out ${shown ? "opacity-100" : "opacity-0"}`}
+        className={`absolute inset-0 size-full object-cover object-top ${matte ? "max-md:inset-[10px] max-md:size-[calc(100%-20px)] max-md:object-contain" : ""} transition-opacity duration-[400ms] ease-out ${shown ? "opacity-100" : "opacity-0"}`}
       />
       <span
         ref={flashRef}

@@ -11,29 +11,21 @@ type CardLabels = WorksContent["card"];
 function Media({ project, crop, sizes, radius, mobile, labels }: { project: Project; crop: ProjectCrop; sizes: string; radius: string; mobile: boolean; labels: CardLabels }) {
   const { src, width, height } = (mobile && project.mobileImage) || project.image;
   const videoSrc = mobile ? project.video?.mobile : project.video?.desktop;
-  // Phones only (the slider): the whole picture in its own proportions, centred; the thin margins left on other
-  // phone widths are filled by a blurred copy of the same picture. Tablet and desktop keep the crop.
-  const fit = mobile && project.mobileFit === "contain";
+  // Phones only (the slider): picture and video shown whole, centred with a margin on the page's own background
+  // colour, so a site laid out edge to edge does not look cut off. Tablet and desktop keep the crop.
+  const matte = mobile ? project.mobileMatte : undefined;
   return (
-    <div className={`relative min-h-0 w-full flex-1 overflow-hidden ${radius}`}>
-      {fit && (
-        <Image
-          src={src}
-          alt=""
-          aria-hidden="true"
-          width={width}
-          height={height}
-          sizes={sizes}
-          className="absolute inset-0 size-full scale-110 object-cover blur-md md:hidden"
-        />
-      )}
+    <div
+      className={`relative min-h-0 w-full flex-1 overflow-hidden ${radius} ${matte ? "max-md:bg-(--matte)" : ""}`}
+      style={matte ? ({ "--matte": matte } as CSSProperties) : undefined}
+    >
       <Image
         src={src}
         alt={`${project.title} — ${labels.screenshot}`}
         width={width}
         height={height}
         sizes={sizes}
-        className={`absolute max-w-none ${fit ? "max-md:top-0! max-md:left-0! max-md:size-full! max-md:object-contain" : ""}`}
+        className={`absolute max-w-none ${matte ? "max-md:top-[10px]! max-md:left-[10px]! max-md:h-[calc(100%-20px)]! max-md:w-[calc(100%-20px)]! max-md:object-contain" : ""}`}
         style={{ left: `${crop.left}%`, top: `${crop.top}%`, width: `${crop.width}%`, height: `${crop.height}%` }}
       />
       {videoSrc && (
@@ -41,6 +33,7 @@ function Media({ project, crop, sizes, radius, mobile, labels }: { project: Proj
           src={videoSrc}
           trigger={mobile ? "visible" : "hover"}
           delay={mobile ? 1000 : 0}
+          matte={!!matte}
           label={`${project.title} — ${labels.video}`}
         />
       )}
