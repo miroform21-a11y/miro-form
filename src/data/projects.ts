@@ -15,6 +15,8 @@ export type Project = {
   video?: { desktop?: string; mobile: string };
   crop: ProjectCrop;
   mobileCrop: ProjectCrop;
+  /** Phones: "width" shows the whole picture width in its own proportions instead of `mobileCrop` (no side crop) */
+  mobileFit?: "width";
   /** Title font sizes from Figma: desktop / mobile */
   titleSize: [number, number];
   href: string;
@@ -30,6 +32,7 @@ export const projects: Project[] = [
     video: { desktop: "/videos/nef-life-preview.mp4", mobile: "/videos/nef-life-preview-mobile.mp4" },
     crop: { left: 0, top: 0, width: 100, height: 105.17 },
     mobileCrop: { left: -5.08, top: 0, width: 110.15, height: 100 },
+    mobileFit: "width",
     titleSize: [30, 22],
     href: "https://chetkov.pro/",
   },
@@ -39,7 +42,7 @@ export const projects: Project[] = [
     description: "Місце, де спорт стає задоволенням",
     tags: ["Landing Page", "Next.js"],
     image: { src: "/images/works/we-padel.png", width: 1538, height: 4096 },
-    video: { mobile: "/videos/we-padel-preview-mobile.mp4" },
+    video: { mobile: "/videos/we-padel-preview-540.mp4" },
     crop: { left: 0, top: 0, width: 100, height: 222.14 },
     mobileCrop: { left: 0.04, top: 0.18, width: 100, height: 497.11 },
     titleSize: [30, 22],

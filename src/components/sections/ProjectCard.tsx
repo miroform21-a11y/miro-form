@@ -11,15 +11,29 @@ type CardLabels = WorksContent["card"];
 function Media({ project, crop, sizes, radius, mobile, labels }: { project: Project; crop: ProjectCrop; sizes: string; radius: string; mobile: boolean; labels: CardLabels }) {
   const { src, width, height } = project.image;
   const videoSrc = mobile ? project.video?.mobile : project.video?.desktop;
+  // Phones only (the slider): the whole width in its own proportions, top-aligned like the video; the strip left
+  // below is filled by a blurred copy of the same picture. Tablet and desktop keep the crop.
+  const fitWidth = mobile && project.mobileFit === "width";
   return (
     <div className={`relative min-h-0 w-full flex-1 overflow-hidden ${radius}`}>
+      {fitWidth && (
+        <Image
+          src={src}
+          alt=""
+          aria-hidden="true"
+          width={width}
+          height={height}
+          sizes={sizes}
+          className="absolute inset-0 size-full scale-110 object-cover object-bottom blur-md md:hidden"
+        />
+      )}
       <Image
         src={src}
         alt={`${project.title} — ${labels.screenshot}`}
         width={width}
         height={height}
         sizes={sizes}
-        className="absolute max-w-none"
+        className={`absolute max-w-none ${fitWidth ? "max-md:top-0! max-md:left-0! max-md:h-auto! max-md:w-full!" : ""}`}
         style={{ left: `${crop.left}%`, top: `${crop.top}%`, width: `${crop.width}%`, height: `${crop.height}%` }}
       />
       {videoSrc && (
