@@ -73,6 +73,8 @@ export type WorksContent = {
   total: string;
   /** Exactly six slots: the desktop bento rows and the phone card geometry are tied to the slot index */
   projects: Project[];
+  /** Order of the cards on phones and tablets (project ids); the desktop bento keeps `projects` */
+  mobileOrder?: string[];
   /** Screen-reader / alt suffixes of a project card */
   card: { screenshot: string; video: string; open: string };
   slider: { label: string; slides: string; slide: string };

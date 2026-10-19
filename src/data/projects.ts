@@ -49,34 +49,39 @@ export const projects: Project[] = [
     video: { mobile: "/videos/we-padel-preview-540.mp4" },
     crop: { left: 0, top: 0, width: 100, height: 222.14 },
     mobileCrop: { left: 0.04, top: 0.18, width: 100, height: 497.11 },
+    mobileCover: true,
     titleSize: [30, 22],
     href: "https://www.we-padel.fun/",
   },
-  {
-    id: "bloomly",
-    title: "Bloomly",
-    description: "Грумінг для улюбленців",
-    tags: ["Landing Page", "webflow"],
-    image: { src: "/images/works/bloomly.png", width: 817, height: 4096 },
-    video: { mobile: "/videos/bloomly-preview-540.mp4" },
-    crop: { left: 0.08, top: -453.07, width: 100, height: 624.66 },
-    mobileCrop: { left: 0, top: 0.28, width: 100, height: 1011.35 },
-    titleSize: [30, 22],
-    href: "https://blooomly.space/",
-  },
+
+
   {
     id: "car-rental",
-    title: "Premium Car Rental",
-    description: "Стиль. Комфорт. Свобода руху",
-    tags: ["Landing Page", "Figma", "Framer"],
-    image: { src: "/images/works/car-rental.png", width: 1256, height: 1908 },
-    video: { desktop: "/videos/prestige-rent-preview.mp4", mobile: "/videos/prestige-rent-preview-mobile.mp4" },
-    crop: { left: 0, top: 0, width: 100, height: 330.1 },
+    title: "Car Rental",
+    description: "Стиль. Свобода руху.",
+    tags: ["Landing Page", "Framer"],
+    /** Desktop: two real screens of the site stacked to the 380x370 frame (no video on desktop) */
+    image: { src: "/images/works/car-rental-desktop.png", width: 2160, height: 2104 },
+    mobileImage: { src: "/images/works/car-rental.png", width: 1256, height: 1908 },
+    video: { mobile: "/videos/prestige-rent-preview-mobile.mp4" },
+    crop: { left: 0, top: 0, width: 100, height: 100 },
     mobileCrop: { left: 0, top: 0, width: 100, height: 245.16 },
     titleSize: [30, 20],
     href: "https://www.prestige-rent.info/",
-  },
-  {
+  },  {
+    id: "bloomly",
+    title: "Ліжка з масиву бука",
+    description: "Натурально, надійно, з душею.",
+    tags: ["Landing Page", "webflow"],
+    image: { src: "/images/works/bloomly-beds-desktop.png", width: 1536, height: 864 },
+    mobileImage: { src: "/images/works/bloomly-beds-mobile.png", width: 780, height: 1688 },
+    video: { desktop: "/videos/bloomly-beds-preview.mp4", mobile: "/videos/bloomly-beds-preview-mobile.mp4" },
+    crop: { left: 0, top: 0, width: 100, height: 122.24 },
+    mobileCrop: { left: 0, top: 0, width: 100, height: 348.85 },
+    mobileCover: true,
+    titleSize: [30, 19],
+    href: "https://blooomly.space/",
+  },  {
     id: "avalon",
     title: "Avalon x Ready to Fight",
     description: "Інвестиційний проєкт Avalon з Олександром Усиком",
@@ -124,11 +129,11 @@ export const archivedProjects: Project[] = [
 export const projectsTotal = "40+";
 
 /** English descriptions; media, crops, videos and links are the same objects as on the Ukrainian site */
-const projectCopyEn: Record<string, Pick<Project, "description" | "mobileDescription">> = {
+const projectCopyEn: Record<string, Partial<Pick<Project, "title" | "description" | "mobileDescription">>> = {
   "nef-life": { description: "An oasis of calm in the heart of Bali" },
-  "car-rental": { description: "Style. Comfort. Freedom to move" },
+  "car-rental": { description: "Style. Freedom to move." },
   "we-padel": { description: "Where sport becomes pure joy" },
-  bloomly: { description: "Grooming for beloved pets" },
+  bloomly: { title: "Solid Beech Beds", description: "Natural, reliable, made with soul." },
   "modular-homes": { description: "Functional homes for modern living", mobileDescription: "Homes for modern living" },
   avalon: { description: "Avalon investment project with Oleksandr Usyk", mobileDescription: "Avalon project with Oleksandr Usyk" },
   "padel-alicante": { description: "A modern padel club in Alicante" },

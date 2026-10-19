@@ -21,6 +21,9 @@ export function Works({ locale = "uk", content = siteContent[locale].works }: { 
   const t = content;
   const projects = t.projects;
   const rows = bento(projects);
+  // phones and tablets: own order when the content sets one (unknown ids keep their place at the end)
+  const rank = (id: string) => { const i = t.mobileOrder?.indexOf(id) ?? -1; return i < 0 ? Infinity : i; };
+  const mobileProjects = t.mobileOrder ? [...projects].sort((a, b) => rank(a.id) - rank(b.id)) : projects;
   const counter = `( ${String(projects.length).padStart(2, "0")} / ${t.total} )`;
   return (
     <section id="works" className="relative z-10 overflow-x-clip bg-ink px-2 pt-6 pb-5 md:px-[33px] md:pt-[82px] md:pb-[83px]">
@@ -56,7 +59,7 @@ export function Works({ locale = "uk", content = siteContent[locale].works }: { 
 
         {/* Mobile slider */}
         <div className="mt-4 md:hidden">
-          <WorksSlider projects={projects} labels={t.slider} cardLabels={t.card} />
+          <WorksSlider projects={mobileProjects} labels={t.slider} cardLabels={t.card} />
           <PillButton href={t.all.href} variant="dark" circleSize={44} className="mt-6 h-[60px] w-full pr-2 pl-[27px]">
             {t.all.label}
           </PillButton>
@@ -64,7 +67,7 @@ export function Works({ locale = "uk", content = siteContent[locale].works }: { 
 
         {/* Tablet: 2-column grid */}
         <div className="mt-12 hidden grid-cols-2 items-start gap-4 md:grid lg:hidden">
-          {projects.map((project, i) => (
+          {mobileProjects.map((project, i) => (
             <Reveal key={project.id} delay={(i % 2) * 80}>
               <ProjectCard
                 project={project}
