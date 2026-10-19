@@ -61,22 +61,24 @@ export const projects: Project[] = [
     titleSize: [30, 22],
     href: "https://www.we-padel.fun/",
   },
-
-
   {
-    id: "car-rental",
-    title: "Car Rental",
-    description: "Стиль. Свобода руху",
-    tags: ["Landing Page", "Framer"],
-    /** Desktop: two real screens of the site stacked to the 380x370 frame (no video on desktop) */
-    image: { src: "/images/works/car-rental-desktop.png", width: 2160, height: 2104 },
-    mobileImage: { src: "/images/works/car-rental.png", width: 1256, height: 1908 },
-    video: { mobile: "/videos/prestige-rent-preview-mobile.mp4" },
+    id: "brium",
+    title: "Brium",
+    description: "Цегла та плитка ручного формування",
+    tags: ["Website", "Tilda"],
+    /** Desktop: real screens of brium.pro stacked to the 380x370 frame */
+    image: { src: "/images/works/brium-desktop.png", width: 2160, height: 2103 },
+    mobileImage: { src: "/images/works/brium-card.png", width: 1230, height: 848 },
+    /** Phones: desktop site at the card ratio — loading intro, home, Портфоліо, Термопанелі (real clicks) */
+    video: { mobile: "/videos/brium-preview-card.mp4" },
     crop: { left: 0, top: 0, width: 100, height: 100 },
-    mobileCrop: { left: 0, top: 0, width: 100, height: 245.16 },
-    titleSize: [30, 20],
-    href: "https://www.prestige-rent.info/",
-  },  {
+    cover: true,
+    mobileCrop: { left: 0, top: 0, width: 100, height: 111.2 },
+    mobileCover: true,
+    titleSize: [30, 22],
+    href: "https://brium.pro/",
+  },
+  {
     id: "bloomly",
     title: "Ліжка з масиву бука",
     description: "Натурально, надійно, з душею",
@@ -89,7 +91,8 @@ export const projects: Project[] = [
     mobileCover: true,
     titleSize: [30, 19],
     href: "https://blooomly.space/",
-  },  {
+  },
+  {
     id: "avalon",
     title: "Avalon x Ready to Fight",
     description: "Інвестиційний проєкт Avalon з Олександром Усиком",
@@ -103,6 +106,25 @@ export const projects: Project[] = [
     href: "https://om-residence.com/ua",
   },
   {
+    id: "car-rental",
+    title: "Car Rental",
+    description: "Стиль. Свобода руху",
+    tags: ["Landing Page", "Framer"],
+    /** Desktop: real screens of the site stacked to the 380x430 frame of the last row (no video on desktop) */
+    image: { src: "/images/works/car-rental-desktop-v2.png", width: 2160, height: 2444 },
+    mobileImage: { src: "/images/works/car-rental.png", width: 1256, height: 1908 },
+    video: { mobile: "/videos/prestige-rent-preview-mobile.mp4" },
+    crop: { left: 0, top: 0, width: 100, height: 100 },
+    cover: true,
+    mobileCrop: { left: 0, top: 0, width: 100, height: 245.16 },
+    titleSize: [30, 20],
+    href: "https://www.prestige-rent.info/",
+  },
+];
+
+/** Taken off the list, kept with its photo and videos so it can be put back */
+export const archivedProjects: Project[] = [
+  {
     id: "padel-alicante",
     title: "Padel Alicante",
     description: "Сучасний падел-клуб в Аліканте",
@@ -114,10 +136,6 @@ export const projects: Project[] = [
     titleSize: [25, 22],
     href: "https://top-padel.pro/",
   },
-];
-
-/** Taken off the list, kept with its photo and videos so it can be put back */
-export const archivedProjects: Project[] = [
   {
     id: "modular-homes",
     title: "Modern Modular Homes",
@@ -139,6 +157,7 @@ export const projectsTotal = "40+";
 /** English descriptions; media, crops, videos and links are the same objects as on the Ukrainian site */
 const projectCopyEn: Record<string, Partial<Pick<Project, "title" | "description" | "mobileDescription">>> = {
   "nef-life": { description: "An oasis of calm in the heart of Bali" },
+  brium: { description: "Handmade brick and tiles" },
   "car-rental": { description: "Style. Freedom to move" },
   "we-padel": { description: "Where sport becomes pure joy" },
   bloomly: { title: "Solid Beech Beds", description: "Natural, reliable, made with soul" },
