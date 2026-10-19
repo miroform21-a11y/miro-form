@@ -52,9 +52,12 @@ export const projects: Project[] = [
     /** The original card format: a full-page screenshot (same proportions as the first one, 1538x4096), current site */
     /** Desktop: with a thin page-colour margin, so the rounded card corners do not clip the hero's brown frame */
     image: { src: "/images/works/we-padel-page-framed-v4.png", width: 1896, height: 4699 },
-    /** Phones: the desktop picture with side margins, so the whole first screen and its brown frame fit every phone width */
-    mobileImage: { src: "/images/works/we-padel-phone-v2.png", width: 2092, height: 1433 },
-    video: { mobile: "/videos/we-padel-preview-lutsk-v3-540.mp4" },
+    /** Phones: recordings of the desktop site with a margin in the site's colour, one per card proportion */
+    mobileImage: { src: "/images/works/we-padel-m166.png", width: 1920, height: 1156 },
+    video: {
+      mobile: "/videos/we-padel-m166.mp4",
+      mobileVariants: [146, 156, 166, 176, 186].map((r) => ({ ratio: r / 100, src: `/videos/we-padel-m${r}.mp4`, poster: `/images/works/we-padel-m${r}.png` })),
+    },
     crop: { left: 0, top: 0, width: 100, height: 222.14 },
     mobileCrop: { left: 0.04, top: 0.18, width: 100, height: 497.11 },
     mobileCover: true,
@@ -69,12 +72,12 @@ export const projects: Project[] = [
     tags: ["Website", "Framer"],
     /** Desktop: real screens of brium.pro to the 380x370 frame, with a thin page-colour margin at the top and sides (the menu is not clipped by the rounded corners), ending inside the white block */
     image: { src: "/images/works/brium-desktop-v3.png", width: 2202, height: 2144 },
-    mobileImage: { src: "/images/works/brium-phone-182.png", width: 1440, height: 791 },
+    mobileImage: { src: "/images/works/brium-m192.png", width: 1920, height: 1000 },
     /** Phones: desktop site — the loading intro whole, home to the footer, Прайс to the footer, then the video on
-     * "Про цеглу" (real clicks); one recording per frame proportion so the intro always fits the card */
+     * "Про цеглу" (real clicks); one recording per card proportion, with a margin in the site's colour */
     video: {
-      mobile: "/videos/brium-phone-192.mp4",
-      mobileVariants: [173, 182, 192, 203, 214].map((r) => ({ ratio: r / 100, src: `/videos/brium-phone-${r}.mp4`, poster: `/images/works/brium-phone-${r}.png` })),
+      mobile: "/videos/brium-m192.mp4",
+      mobileVariants: [173, 182, 192, 203, 214].map((r) => ({ ratio: r / 100, src: `/videos/brium-m${r}.mp4`, poster: `/images/works/brium-m${r}.png` })),
     },
     crop: { left: 0, top: 0, width: 100, height: 100 },
     cover: true,
