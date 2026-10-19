@@ -14,6 +14,7 @@ function Media({ project, crop, sizes, radius, mobile, labels }: { project: Proj
   // Phones only (the slider): the picture fills the frame exactly like the video over it (cover, top-aligned).
   // Tablet and desktop keep the crop.
   const cover = mobile && project.mobileCover;
+  const coverDesktop = !mobile && project.cover;
   return (
     <div className={`relative min-h-0 w-full flex-1 overflow-hidden ${radius}`}>
       <Image
@@ -22,7 +23,7 @@ function Media({ project, crop, sizes, radius, mobile, labels }: { project: Proj
         width={width}
         height={height}
         sizes={sizes}
-        className={`absolute max-w-none ${cover ? "max-md:top-0! max-md:left-0! max-md:size-full! max-md:object-cover max-md:object-top" : ""}`}
+        className={`absolute max-w-none ${cover ? "max-md:top-0! max-md:left-0! max-md:size-full! max-md:object-cover max-md:object-top" : ""} ${coverDesktop ? "top-0! left-0! size-full! object-cover object-top" : ""}`}
         style={{ left: `${crop.left}%`, top: `${crop.top}%`, width: `${crop.width}%`, height: `${crop.height}%` }}
       />
       {videoSrc && (

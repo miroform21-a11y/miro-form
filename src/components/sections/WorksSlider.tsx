@@ -39,39 +39,74 @@ export function WorksSlider({
     setActive(Math.min(projects.length - 1, Math.round(track.scrollLeft / step)));
   };
 
-  // A horizontal finger move marks the track as swiping: the cards' press effect (lift, arrow) is for taps only
+  // Touch swipes: any horizontal move longer than 30 px goes exactly one card that way (the native snap alone
+  // springs back on short or slightly diagonal swipes). While the finger moves, the cards' press effect is off
+  // (data-swiping) and a swipe never counts as a tap on the card link.
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
+    let x0 = 0;
+    let y0 = 0;
     let x = 0;
-    let y = 0;
+    let from = 0;
+    let swiping = false;
+    let swipedAt = 0;
     let timer: number | undefined;
-    const end = () => {
-      window.clearTimeout(timer);
-      timer = window.setTimeout(() => delete track.dataset.swiping, 350);
+    const index = () => {
+      const card = track.firstElementChild as HTMLElement | null;
+      return card ? Math.round(track.scrollLeft / (card.offsetWidth + 12)) : 0;
+    };
+    const go = (i: number) => {
+      const card = track.children[i] as HTMLElement | undefined;
+      if (card) track.scrollTo({ left: card.offsetLeft - track.offsetLeft, behavior: "smooth" });
     };
     const onStart = (e: TouchEvent) => {
-      x = e.touches[0].clientX;
-      y = e.touches[0].clientY;
+      x0 = x = e.touches[0].clientX;
+      y0 = e.touches[0].clientY;
+      from = index();
+      swiping = false;
     };
     const onMove = (e: TouchEvent) => {
-      if (track.dataset.swiping) return;
-      const dx = Math.abs(e.touches[0].clientX - x);
-      if (dx > 6 && dx > Math.abs(e.touches[0].clientY - y)) {
+      x = e.touches[0].clientX;
+      if (swiping) return;
+      const dx = Math.abs(x - x0);
+      if (dx > 6 && dx > Math.abs(e.touches[0].clientY - y0)) {
+        swiping = true;
         window.clearTimeout(timer);
         track.dataset.swiping = "";
       }
     };
+    const onEnd = () => {
+      if (swiping) {
+        swipedAt = Date.now();
+        const dx = x - x0;
+        if (Math.abs(dx) > 30) {
+          const to = Math.max(0, Math.min(track.children.length - 1, from + (dx < 0 ? 1 : -1)));
+          requestAnimationFrame(() => go(to));
+        }
+      }
+      swiping = false;
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => delete track.dataset.swiping, 350);
+    };
+    const onClick = (e: MouseEvent) => {
+      if (Date.now() - swipedAt < 500) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
     track.addEventListener("touchstart", onStart, { passive: true });
     track.addEventListener("touchmove", onMove, { passive: true });
-    track.addEventListener("touchend", end, { passive: true });
-    track.addEventListener("touchcancel", end, { passive: true });
+    track.addEventListener("touchend", onEnd, { passive: true });
+    track.addEventListener("touchcancel", onEnd, { passive: true });
+    track.addEventListener("click", onClick, true);
     return () => {
       window.clearTimeout(timer);
       track.removeEventListener("touchstart", onStart);
       track.removeEventListener("touchmove", onMove);
-      track.removeEventListener("touchend", end);
-      track.removeEventListener("touchcancel", end);
+      track.removeEventListener("touchend", onEnd);
+      track.removeEventListener("touchcancel", onEnd);
+      track.removeEventListener("click", onClick, true);
     };
   }, []);
 
