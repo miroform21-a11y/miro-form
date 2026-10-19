@@ -64,10 +64,10 @@ export const projects: Project[] = [
   {
     id: "brium",
     title: "Brium",
-    description: "Цегла та плитка ручного формування",
+    description: "Плитка ручного формування",
     tags: ["Website", "Tilda"],
-    /** Desktop: real screens of brium.pro stacked to the 380x370 frame */
-    image: { src: "/images/works/brium-desktop.png", width: 2160, height: 2103 },
+    /** Desktop: real screens of brium.pro to the 380x370 frame, with a thin page-colour margin at the top and sides (the menu is not clipped by the rounded corners), ending inside the white block */
+    image: { src: "/images/works/brium-desktop-v3.png", width: 2202, height: 2144 },
     mobileImage: { src: "/images/works/brium-card.png", width: 1230, height: 848 },
     /** Phones: desktop site at the card ratio — loading intro, home, Портфоліо, Термопанелі (real clicks) */
     video: { mobile: "/videos/brium-preview-card.mp4" },
@@ -157,7 +157,7 @@ export const projectsTotal = "40+";
 /** English descriptions; media, crops, videos and links are the same objects as on the Ukrainian site */
 const projectCopyEn: Record<string, Partial<Pick<Project, "title" | "description" | "mobileDescription">>> = {
   "nef-life": { description: "An oasis of calm in the heart of Bali" },
-  brium: { description: "Handmade brick and tiles" },
+  brium: { description: "Handmade tiles" },
   "car-rental": { description: "Style. Freedom to move" },
   "we-padel": { description: "Where sport becomes pure joy" },
   bloomly: { title: "Solid Beech Beds", description: "Natural, reliable, made with soul" },
