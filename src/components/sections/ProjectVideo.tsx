@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import type { VideoVariant } from "@/data/projects";
 
 type Trigger = "hover" | "visible";
 
@@ -20,10 +22,28 @@ const FLASH_TIMING: KeyframeAnimationOptions = { duration: 320, easing: "cubic-b
  * underneath stays visible until a video frame is actually presented, and whenever the video is not playing
  * (after stop, on load error, if autoplay is refused, with reduced motion).
  */
-export function ProjectVideo({ src, trigger, delay, label }: { src: string; trigger: Trigger; delay: number; label: string }) {
+export function ProjectVideo({ src: baseSrc, variants, trigger, delay, label }: { src: string; variants?: VideoVariant[]; trigger: Trigger; delay: number; label: string }) {
   const ref = useRef<HTMLVideoElement>(null);
   const flashRef = useRef<HTMLSpanElement>(null);
   const [shown, setShown] = useState(false);
+  // Several recordings for different frame proportions: the one closest to this card's frame (and its first frame
+  // as the picture under it), so the recording is never cut noticeably on any phone width
+  const [variant, setVariant] = useState<VideoVariant | null>(null);
+  const src = variant?.src ?? baseSrc;
+
+  useEffect(() => {
+    const video = ref.current;
+    if (!video || !variants?.length) return;
+    const pick = () => {
+      const r = video.clientWidth / video.clientHeight;
+      if (!r || !Number.isFinite(r)) return;
+      const best = variants.reduce((a, b) => (Math.abs(Math.log(b.ratio / r)) < Math.abs(Math.log(a.ratio / r)) ? b : a));
+      setVariant((cur) => (cur?.src === best.src ? cur : best));
+    };
+    pick();
+    window.addEventListener("resize", pick);
+    return () => window.removeEventListener("resize", pick);
+  }, [variants]);
 
   useEffect(() => {
     const video = ref.current;
@@ -43,7 +63,7 @@ export function ProjectVideo({ src, trigger, delay, label }: { src: string; trig
       flashRef.current?.animate(FLASH_KEYFRAMES, FLASH_TIMING);
     };
     const prepare = () => {
-      if (video.getAttribute("src")) return;
+      if (video.getAttribute("src") === src) return;
       video.preload = "auto";
       video.src = src;
     };
@@ -118,6 +138,9 @@ export function ProjectVideo({ src, trigger, delay, label }: { src: string; trig
 
   return (
     <>
+      {variant && (
+        <Image src={variant.poster} alt="" aria-hidden="true" fill sizes="(min-width: 768px) 50vw, 100vw" className="object-cover object-top" />
+      )}
       <video
         ref={ref}
         muted

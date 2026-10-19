@@ -28,6 +28,7 @@ function Media({ project, crop, sizes, radius, mobile, labels }: { project: Proj
       {videoSrc && (
         <ProjectVideo
           src={videoSrc}
+          variants={mobile ? project.video?.mobileVariants : undefined}
           trigger={mobile ? "visible" : "hover"}
           delay={mobile ? 1000 : 0}
           label={`${project.title} — ${labels.video}`}

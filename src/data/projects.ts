@@ -3,6 +3,9 @@ import type { Locale } from "@/i18n/locale";
 /** Image box inside the media frame, in % of the frame (exact values from Figma). */
 export type ProjectCrop = { left: number; top: number; width: number; height: number };
 
+/** A recording for one frame proportion (width / height) and its first frame */
+export type VideoVariant = { ratio: number; src: string; poster: string };
+
 export type Project = {
   id: string;
   title: string;
@@ -12,7 +15,7 @@ export type Project = {
   tags: string[];
   image: { src: string; width: number; height: number };
   /** Screen recordings layered over `image`: `desktop` (hover, bento) is optional, `mobile` serves the touch layouts. Remove to show only the photo. */
-  video?: { desktop?: string; mobile: string };
+  video?: { desktop?: string; mobile: string; mobileVariants?: VideoVariant[] };
   crop: ProjectCrop;
   mobileCrop: ProjectCrop;
   /** Picture for phones and tablets instead of `image` (`mobileCrop` refers to it) */
@@ -44,11 +47,15 @@ export const projects: Project[] = [
     title: "We Padel",
     description: "Місце, де спорт стає задоволенням",
     tags: ["Landing Page", "Next.js"],
-    /** Desktop: two real screens of we-padel.fun stacked to the 380x430 frame */
-    image: { src: "/images/works/we-padel-desktop.png", width: 2160, height: 2446 },
-    mobileImage: { src: "/images/works/we-padel-card.png", width: 1440, height: 837 },
-    video: { mobile: "/videos/we-padel-preview-card.mp4" },
-    crop: { left: 0, top: 0, width: 100, height: 100.07 },
+    /** Desktop: the whole first screen + the "Падел. Природа. Атмосфера" block, real screens stacked to the 380x430 frame */
+    image: { src: "/images/works/we-padel-desktop-v2.png", width: 2160, height: 2444 },
+    mobileImage: { src: "/images/works/we-padel-phone-173.png", width: 1440, height: 832 },
+    video: {
+      mobile: "/videos/we-padel-phone-192.mp4",
+      // the first screen is 100vh on this site: each recording shows it whole at its own proportion
+      mobileVariants: [173, 182, 192, 203, 214].map((r) => ({ ratio: r / 100, src: `/videos/we-padel-phone-${r}.mp4`, poster: `/images/works/we-padel-phone-${r}.png` })),
+    },
+    crop: { left: 0, top: 0, width: 100, height: 100 },
     mobileCrop: { left: 0, top: 0, width: 100, height: 110.8 },
     mobileCover: true,
     titleSize: [30, 22],
