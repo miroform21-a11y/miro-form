@@ -15,8 +15,10 @@ export type Project = {
   video?: { desktop?: string; mobile: string };
   crop: ProjectCrop;
   mobileCrop: ProjectCrop;
-  /** Phones: "width" shows the whole picture width in its own proportions instead of `mobileCrop` (no side crop) */
-  mobileFit?: "width";
+  /** Picture for phones and tablets instead of `image` (`mobileCrop` refers to it) */
+  mobileImage?: { src: string; width: number; height: number };
+  /** Phones: "contain" shows the whole picture in its own proportions instead of `mobileCrop` */
+  mobileFit?: "contain";
   /** Title font sizes from Figma: desktop / mobile */
   titleSize: [number, number];
   href: string;
@@ -28,11 +30,12 @@ export const projects: Project[] = [
     title: "NEF LIFE",
     description: "Оазис тисячі в центрі Балі",
     tags: ["Landing Page", "Figma", "Framer"],
-    image: { src: "/images/works/nef-life.png", width: 1920, height: 1080 },
+    image: { src: "/images/works/nef-life-desktop.png", width: 1920, height: 1080 },
+    mobileImage: { src: "/images/works/nef-life-mobile.png", width: 1845, height: 1143 },
     video: { desktop: "/videos/nef-life-preview.mp4", mobile: "/videos/nef-life-preview-mobile.mp4" },
     crop: { left: 0, top: 0, width: 100, height: 105.17 },
-    mobileCrop: { left: -5.08, top: 0, width: 110.15, height: 100 },
-    mobileFit: "width",
+    mobileCrop: { left: 0, top: 0, width: 100, height: 100 },
+    mobileFit: "contain",
     titleSize: [30, 22],
     href: "https://chetkov.pro/",
   },
@@ -42,6 +45,7 @@ export const projects: Project[] = [
     description: "Місце, де спорт стає задоволенням",
     tags: ["Landing Page", "Next.js"],
     image: { src: "/images/works/we-padel.png", width: 1538, height: 4096 },
+    mobileImage: { src: "/images/works/we-padel.png", width: 1538, height: 4096 },
     video: { mobile: "/videos/we-padel-preview-540.mp4" },
     crop: { left: 0, top: 0, width: 100, height: 222.14 },
     mobileCrop: { left: 0.04, top: 0.18, width: 100, height: 497.11 },
