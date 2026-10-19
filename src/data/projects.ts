@@ -17,8 +17,8 @@ export type Project = {
   mobileCrop: ProjectCrop;
   /** Picture for phones and tablets instead of `image` (`mobileCrop` refers to it) */
   mobileImage?: { src: string; width: number; height: number };
-  /** Phones: picture and video shown whole, centred on this colour (the page background) instead of `mobileCrop` */
-  mobileMatte?: string;
+  /** Phones: the picture fills the frame like the video (cover, top-aligned) instead of `mobileCrop` */
+  mobileCover?: boolean;
   /** Title font sizes from Figma: desktop / mobile */
   titleSize: [number, number];
   href: string;
@@ -35,7 +35,7 @@ export const projects: Project[] = [
     video: { desktop: "/videos/nef-life-preview.mp4", mobile: "/videos/nef-life-preview-mobile.mp4" },
     crop: { left: 0, top: 0, width: 100, height: 105.17 },
     mobileCrop: { left: 0, top: 0, width: 100, height: 100 },
-    mobileMatte: "#161618",
+    mobileCover: true,
     titleSize: [30, 22],
     href: "https://chetkov.pro/",
   },
