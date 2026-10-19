@@ -50,7 +50,9 @@ export const projects: Project[] = [
     description: "Місце, де спорт стає задоволенням",
     tags: ["Landing Page", "Next.js"],
     /** The original card format: a full-page screenshot (same proportions as the first one, 1538x4096), current site */
-    image: { src: "/images/works/we-padel-page.png", width: 1800, height: 4794 },
+    /** Desktop: with a thin page-colour margin, so the rounded card corners do not clip the hero's brown frame */
+    image: { src: "/images/works/we-padel-page-framed.png", width: 1896, height: 4842 },
+    mobileImage: { src: "/images/works/we-padel-page.png", width: 1800, height: 4794 },
     video: { mobile: "/videos/we-padel-preview-lutsk-v3-540.mp4" },
     crop: { left: 0, top: 0, width: 100, height: 222.14 },
     mobileCrop: { left: 0.04, top: 0.18, width: 100, height: 497.11 },
