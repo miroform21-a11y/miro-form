@@ -52,7 +52,8 @@ export const projects: Project[] = [
     /** The original card format: a full-page screenshot (same proportions as the first one, 1538x4096), current site */
     /** Desktop: with a thin page-colour margin, so the rounded card corners do not clip the hero's brown frame */
     image: { src: "/images/works/we-padel-page-framed-v4.png", width: 1896, height: 4699 },
-    mobileImage: { src: "/images/works/we-padel-page.png", width: 1800, height: 4794 },
+    /** Phones: the desktop picture with side margins, so the whole first screen and its brown frame fit every phone width */
+    mobileImage: { src: "/images/works/we-padel-phone-v2.png", width: 2092, height: 1433 },
     video: { mobile: "/videos/we-padel-preview-lutsk-v3-540.mp4" },
     crop: { left: 0, top: 0, width: 100, height: 222.14 },
     mobileCrop: { left: 0.04, top: 0.18, width: 100, height: 497.11 },
@@ -65,15 +66,19 @@ export const projects: Project[] = [
     id: "brium",
     title: "Brium",
     description: "Плитка ручного формування",
-    tags: ["Website", "Tilda"],
+    tags: ["Website", "Framer"],
     /** Desktop: real screens of brium.pro to the 380x370 frame, with a thin page-colour margin at the top and sides (the menu is not clipped by the rounded corners), ending inside the white block */
     image: { src: "/images/works/brium-desktop-v3.png", width: 2202, height: 2144 },
-    mobileImage: { src: "/images/works/brium-card.png", width: 1230, height: 848 },
-    /** Phones: desktop site at the card ratio — loading intro, home, Портфоліо, Термопанелі (real clicks) */
-    video: { mobile: "/videos/brium-preview-card.mp4" },
+    mobileImage: { src: "/images/works/brium-phone-182.png", width: 1440, height: 791 },
+    /** Phones: desktop site — the loading intro whole, home to the footer, Прайс to the footer, then the video on
+     * "Про цеглу" (real clicks); one recording per frame proportion so the intro always fits the card */
+    video: {
+      mobile: "/videos/brium-phone-192.mp4",
+      mobileVariants: [173, 182, 192, 203, 214].map((r) => ({ ratio: r / 100, src: `/videos/brium-phone-${r}.mp4`, poster: `/images/works/brium-phone-${r}.png` })),
+    },
     crop: { left: 0, top: 0, width: 100, height: 100 },
     cover: true,
-    mobileCrop: { left: 0, top: 0, width: 100, height: 111.2 },
+    mobileCrop: { left: 0, top: 0, width: 100, height: 100 },
     mobileCover: true,
     titleSize: [30, 22],
     href: "https://brium.pro/",
