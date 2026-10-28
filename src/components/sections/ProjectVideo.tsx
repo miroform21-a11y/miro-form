@@ -67,13 +67,22 @@ export function ProjectVideo({ src: baseSrc, variants, trigger, delay, label }: 
       video.preload = "auto";
       video.src = src;
     };
+    // Autoplay refused (iPhone in Low Power Mode): the photo stays, and the next touch on the page — a user
+    // gesture, which Safari accepts — retries while the card is still in view
+    let refused = false;
+    const play = () => {
+      refused = false;
+      video.play().catch((e: DOMException) => {
+        if (e.name === "NotAllowedError") refused = true;
+      });
+    };
     const start = () => {
       if (armed) return;
       armed = true;
       prepare();
       timer = window.setTimeout(() => {
         if (video.currentTime > 0) video.currentTime = 0; // hidden at this point, so the rewind is invisible
-        video.play().catch(() => {}); // refused or interrupted: the photo stays
+        play();
       }, delay);
     };
     const stop = () => {
@@ -83,13 +92,23 @@ export function ProjectVideo({ src: baseSrc, variants, trigger, delay, label }: 
       video.pause();
       setShown(false);
     };
+    const onTouch = () => {
+      if (armed && refused && video.paused) play();
+    };
+    document.addEventListener("touchend", onTouch, { passive: true });
     // Show only once a frame is really on screen — no black or empty frame over the photo
     const onPlaying = () => {
       if (!armed) return video.pause();
       if ("requestVideoFrameCallback" in video) video.requestVideoFrameCallback(reveal);
       else reveal();
     };
+    // Safari on iPhone may never run the frame callback while the video is still transparent, which left the
+    // recording playing invisibly under the photo; once playback time moves, a frame is decoded and can be shown
+    const onTime = () => {
+      if (video.currentTime > 0 && !video.paused) reveal();
+    };
     video.addEventListener("playing", onPlaying);
+    video.addEventListener("timeupdate", onTime);
 
     const onEnter = (e: PointerEvent) => e.pointerType !== "touch" && start();
     let observer: IntersectionObserver | undefined;
@@ -128,6 +147,8 @@ export function ProjectVideo({ src: baseSrc, variants, trigger, delay, label }: 
     return () => {
       stop();
       video.removeEventListener("playing", onPlaying);
+      video.removeEventListener("timeupdate", onTime);
+      document.removeEventListener("touchend", onTouch);
       card.removeEventListener("pointerenter", onEnter);
       card.removeEventListener("pointerleave", stop);
       observer?.disconnect();
