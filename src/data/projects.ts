@@ -162,9 +162,9 @@ export const archivedProjects: Project[] = [
 /** Total number of delivered projects shown in the counter */
 export const projectsTotal = "40+";
 
-/** English descriptions; media, crops, videos and links are the same objects as on the Ukrainian site */
+/** English descriptions; crops and layout are the same as on the Ukrainian site */
 const projectCopyEn: Record<string, Partial<Pick<Project, "title" | "description" | "mobileDescription">>> = {
-  "nef-life": { description: "An oasis of calm in the heart of Bali" },
+  "nef-life": { title: "New Life Chetkov", description: "An oasis of calm in the heart of Bali" },
   brium: { description: "Handmade tiles" },
   "car-rental": { description: "Style. Freedom to move" },
   "we-padel": { description: "Where sport becomes pure joy" },
@@ -174,7 +174,49 @@ const projectCopyEn: Record<string, Partial<Pick<Project, "title" | "description
   "padel-alicante": { description: "A modern padel club in Alicante" },
 };
 
+const variantsEn = (id: string, ratios: number[]): VideoVariant[] =>
+  ratios.map((r) => ({ ratio: r / 100, src: `/videos/${id}-m${r}-en.mp4`, poster: `/images/works/${id}-m${r}-en.png` }));
+
+/** English versions of the sites: the same takes and screenshots (sizes, framing, scenario) recorded on the English pages */
+const projectMediaEn: Record<string, Partial<Pick<Project, "image" | "mobileImage" | "video" | "href">>> = {
+  "nef-life": {
+    image: { src: "/images/works/nef-life-desktop-en.png", width: 1920, height: 1080 },
+    mobileImage: { src: "/images/works/nef-life-mobile-en.png", width: 1230, height: 848 },
+    video: { desktop: "/videos/nef-life-preview-en.mp4", mobile: "/videos/nef-life-preview-mobile-en.mp4" },
+    href: "https://chetkov.pro/en",
+  },
+  "we-padel": {
+    image: { src: "/images/works/we-padel-page-framed-en.png", width: 1896, height: 4699 },
+    mobileImage: { src: "/images/works/we-padel-m166-en.png", width: 1920, height: 1156 },
+    video: { mobile: "/videos/we-padel-m166-en.mp4", mobileVariants: variantsEn("we-padel", [146, 156, 166, 176, 186]) },
+    href: "https://www.we-padel.fun/en",
+  },
+  brium: {
+    image: { src: "/images/works/brium-desktop-en.png", width: 2202, height: 2144 },
+    mobileImage: { src: "/images/works/brium-m192-en.png", width: 1920, height: 1000 },
+    video: { mobile: "/videos/brium-m192-en.mp4", mobileVariants: variantsEn("brium", [173, 182, 192, 203, 214]) },
+    href: "https://brium.pro/en",
+  },
+  bloomly: {
+    image: { src: "/images/works/bloomly-beds-desktop-en.png", width: 1536, height: 864 },
+    mobileImage: { src: "/images/works/bloomly-beds-card-en.png", width: 1316, height: 848 },
+    video: { desktop: "/videos/bloomly-beds-preview-en.mp4", mobile: "/videos/bloomly-beds-preview-card-en.mp4" },
+    href: "https://blooomly.space/en",
+  },
+  avalon: {
+    image: { src: "/images/works/avalon-en.png", width: 999, height: 497 },
+    video: { desktop: "/videos/avalon-preview-en.mp4", mobile: "/videos/avalon-preview-en-540.mp4" },
+    href: "https://om-residence.com/",
+  },
+  "car-rental": {
+    image: { src: "/images/works/car-rental-desktop-en.png", width: 2160, height: 2444 },
+    mobileImage: { src: "/images/works/car-rental-en.png", width: 1256, height: 1908 },
+    video: { mobile: "/videos/prestige-rent-preview-mobile-en.mp4" },
+    href: "https://www.prestige-rent.info/en",
+  },
+};
+
 export const projectsByLocale: Record<Locale, Project[]> = {
   uk: projects,
-  en: projects.map((p) => ({ ...p, mobileDescription: undefined, ...projectCopyEn[p.id] })),
+  en: projects.map((p) => ({ ...p, mobileDescription: undefined, ...projectCopyEn[p.id], ...projectMediaEn[p.id] })),
 };
