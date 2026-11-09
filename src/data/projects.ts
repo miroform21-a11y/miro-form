@@ -117,15 +117,17 @@ export const projects: Project[] = [
     id: "good2go",
     title: "GOOD2GO",
     description: "Спорядження для спорту",
-    tags: ["Online Store", "Tilda"],
-    /** Desktop: the hero and the sport list with the hover picture of "Mountain sports", stacked to the 380x430 frame of the last row (no video on desktop) */
-    image: { src: "/images/works/good2go-desktop.png", width: 2160, height: 2444 },
+    tags: ["Online Store", "Webflow"],
+    /** Desktop: the hero and the sport list with the hover picture of "Mountain sports" (no video on desktop). Taller
+     * than the narrowest frame of the last row (316x430 at 1024), so the full width always fits and only the bottom is cut */
+    image: { src: "/images/works/good2go-desktop-v2.png", width: 2160, height: 3000 },
     /** Phones: recording of the desktop site — home, catalog, Freeride — the poster is its first frame */
     mobileImage: { src: "/images/works/good2go-mobile.png", width: 960, height: 596 },
     video: { mobile: "/videos/good2go-preview-mobile.mp4" },
     crop: { left: 0, top: 0, width: 100, height: 100 },
     cover: true,
-    mobileCrop: { left: 0, top: 0, width: 100, height: 100 },
+    /** Tablets: the poster at its own proportion for a ~1.25 frame (phones use mobileCover) */
+    mobileCrop: { left: -14.45, top: 0, width: 128.9, height: 100 },
     mobileCover: true,
     titleSize: [30, 20],
     // TODO: placeholder until the real address of the site is ready
