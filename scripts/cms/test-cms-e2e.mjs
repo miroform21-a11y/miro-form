@@ -170,8 +170,8 @@ check("contact form shows the new project type", (await html("/")).includes("Т�
 fs.writeFileSync(
   path.join(OUT, "form-cases.json"),
   JSON.stringify([
-    { name: "lead NEW option", api: "lead", body: { kind: "lead", name: "Тест", contact: "+380501234567", option: "Тест-лендінг", budget: "до $500", message: "x" } },
-    { name: "lead REMOVED option", api: "lead", body: { kind: "lead", name: "Тест2", contact: "+380501234568", option: "Лендінг", budget: "до $500", message: "x" } },
+    { name: "lead NEW option", api: "lead", body: { kind: "lead", name: "Тест", contact: "+380501234567", option: "Тест-лендінг", budget: "до $799", message: "x" } },
+    { name: "lead REMOVED option", api: "lead", body: { kind: "lead", name: "Тест2", contact: "+380501234568", option: "Лендінг", budget: "до $799", message: "x" } },
     { name: "brief renamed option", api: "brief", body: { answers: { project_type: "o2", name: "Тест Тестович", contact: "+380501234567", contact_method: "o2", contact_time: "o2" } } },
   ]),
 );

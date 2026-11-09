@@ -36,7 +36,7 @@ export const directionById = (id: DirectionId) => directions.find((d) => d.id ==
 export const projectTypes = ["Лендінг", "Багатосторінковий сайт", "Інтернет-магазин", "Дизайн", "AI-рішення"] as const;
 export type ProjectType = (typeof projectTypes)[number];
 
-export const budgets = ["до $500", "$500–1500", "$1500+", "Не знаю"] as const;
+export const budgets = ["до $799", "$800–1600", "$1600–4000", "$4000+", "Не знаю"] as const;
 export type Budget = (typeof budgets)[number];
 
 /**
@@ -51,15 +51,15 @@ export const directionsEn = [
 
 export const projectTypesEn = ["Landing page", "Multi-page website", "Online store", "Design", "AI solution"] as const;
 
-/** US budget ranges (the same as in the English brief), separate from the Ukrainian ones */
-export const budgetsEn = ["Up to $1,500", "From $1,500 to $3,000", "From $3,000 to $7,000", "Not sure"] as const;
+/** The same budget ranges as the Ukrainian ones */
+export const budgetsEn = ["Up to $799", "$800–1600", "$1600–4000", "$4000+", "Not sure"] as const;
 
 type Direction = { id: DirectionId; popupTitle: string; options: readonly string[] };
 
 /** Everything the lead forms need, per language */
 export const leadOptions: Record<Locale, { directions: readonly Direction[]; projectTypes: readonly string[]; budgets: readonly string[]; defaultBudget: string }> = {
-  uk: { directions, projectTypes, budgets, defaultBudget: "$500–1500" },
-  en: { directions: directionsEn, projectTypes: projectTypesEn, budgets: budgetsEn, defaultBudget: "Up to $1,500" },
+  uk: { directions, projectTypes, budgets, defaultBudget: "$800–1600" },
+  en: { directions: directionsEn, projectTypes: projectTypesEn, budgets: budgetsEn, defaultBudget: "$800–1600" },
 };
 
 export const directionByIdFor = (locale: Locale, id: DirectionId) => leadOptions[locale].directions.find((d) => d.id === id)!;

@@ -18,9 +18,9 @@ export function Contact({
   const t = content;
   return (
     <section id="contact" className="relative bg-ink px-2.5 pt-6 pb-[72px] md:px-[38px] md:py-[55px]">
-      {/* English budget chips wrap to a second row, so the English card may grow past the 806px Figma height */}
+      {/* the budget chips wrap to a second row, so the card may grow past the 806px Figma height */}
       <div
-        className={`relative mx-auto flex max-w-[1364px] flex-col gap-[34px] overflow-hidden rounded-[28px] border border-white/8 bg-ink-2 pt-8 pr-[11px] pb-[216px] pl-[13px] md:rounded-[40px] md:px-12 md:pt-12 md:pb-[300px] ${locale === "en" ? "xl:min-h-[806px]" : "xl:h-[806px]"} xl:flex-row xl:items-start xl:justify-between xl:gap-10 xl:px-[67px] xl:pt-[47px] xl:pb-[46px]`}
+        className={`relative mx-auto flex max-w-[1364px] flex-col gap-[34px] overflow-hidden rounded-[28px] border border-white/8 bg-ink-2 pt-8 pr-[11px] pb-[216px] pl-[13px] md:rounded-[40px] md:px-12 md:pt-12 md:pb-[300px] xl:min-h-[806px] xl:flex-row xl:items-start xl:justify-between xl:gap-10 xl:px-[67px] xl:pt-[47px] xl:pb-[46px]`}
       >
         {/* ---------- Background (mobile / tablet) ---------- */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 xl:hidden">

@@ -213,9 +213,9 @@ const briefStepsEnSource: BriefStepSource[] = [
         type: "choice",
         label: "Approximate project budget",
         required: true,
-        // US ranges — the same as in the home page form (data/leads.ts), separate from the Ukrainian brief
-        options: ["Up to $1,500", "From $1,500 to $3,000", "From $3,000 to $7,000", "Installment payments", "I need a consultation"],
-        default: "Up to $1,500",
+        // the same ranges as the home page form (data/leads.ts) and the Ukrainian brief
+        options: ["Up to $799", "$800–1600", "$1600–4000", "$4000+", "Installment payments", "I need a consultation"],
+        default: "$800–1600",
       },
       {
         key: "deadline",
