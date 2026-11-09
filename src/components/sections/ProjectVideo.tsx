@@ -53,17 +53,20 @@ export function ProjectVideo({ src: baseSrc, variants, trigger, delay, label }: 
     video.muted = true;
 
     let timer: number | undefined;
+    let poll: number | undefined;
     let armed = false;
     let visible = false;
 
     const reveal = () => {
       if (!armed || visible) return;
       visible = true;
+      window.clearInterval(poll);
       setShown(true);
       flashRef.current?.animate(FLASH_KEYFRAMES, FLASH_TIMING);
     };
     const prepare = () => {
-      if (video.getAttribute("src") === src) return;
+      // A failed load (dropped mobile connection) is retried the next time the card comes into view
+      if (video.getAttribute("src") === src && !video.error) return;
       video.preload = "auto";
       video.src = src;
     };
@@ -72,6 +75,12 @@ export function ProjectVideo({ src: baseSrc, variants, trigger, delay, label }: 
     let refused = false;
     const play = () => {
       refused = false;
+      // Safari sometimes sends neither the frame callback nor timeupdate for the still transparent video, which
+      // left it playing unseen under the photo: checking the playback time directly shows it in any case
+      window.clearInterval(poll);
+      poll = window.setInterval(() => {
+        if (video.currentTime > 0 && !video.paused) reveal();
+      }, 250);
       video.play().catch((e: DOMException) => {
         if (e.name === "NotAllowedError") refused = true;
       });
@@ -89,11 +98,22 @@ export function ProjectVideo({ src: baseSrc, variants, trigger, delay, label }: 
       armed = false;
       visible = false;
       window.clearTimeout(timer);
+      window.clearInterval(poll);
       video.pause();
       setShown(false);
     };
+    // Safari lifts the restriction for good on a video played during a touch, so the first touch on the page also
+    // unlocks the cards not in view yet (play + immediate pause, nothing loads or shows): they then start by
+    // themselves when swiped to, instead of only the card that happened to be on screen during a touch
+    let unlocked = false;
     const onTouch = () => {
-      if (armed && refused && video.paused) play();
+      if (armed && refused && video.paused) return play();
+      if (unlocked || trigger !== "visible" || !card.offsetParent || !video.paused) return;
+      unlocked = true;
+      video.play().catch((e: DOMException) => {
+        if (e.name === "NotAllowedError") unlocked = false;
+      });
+      video.pause();
     };
     document.addEventListener("touchend", onTouch, { passive: true });
     // Show only once a frame is really on screen — no black or empty frame over the photo
