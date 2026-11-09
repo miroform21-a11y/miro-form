@@ -114,6 +114,28 @@ export const projects: Project[] = [
     href: "https://om-residence.com/ua",
   },
   {
+    id: "good2go",
+    title: "GOOD2GO",
+    description: "Спорядження для спорту",
+    tags: ["Online Store", "Tilda"],
+    /** Desktop: the hero and the sport list with the hover picture of "Mountain sports", stacked to the 380x430 frame of the last row (no video on desktop) */
+    image: { src: "/images/works/good2go-desktop.png", width: 2160, height: 2444 },
+    /** Phones: recording of the desktop site — home, catalog, Freeride — the poster is its first frame */
+    mobileImage: { src: "/images/works/good2go-mobile.png", width: 960, height: 596 },
+    video: { mobile: "/videos/good2go-preview-mobile.mp4" },
+    crop: { left: 0, top: 0, width: 100, height: 100 },
+    cover: true,
+    mobileCrop: { left: 0, top: 0, width: 100, height: 100 },
+    mobileCover: true,
+    titleSize: [30, 20],
+    // TODO: placeholder until the real address of the site is ready
+    href: "https://www.miro-form.com/",
+  },
+];
+
+/** Taken off the list, kept with its photo and videos so it can be put back */
+export const archivedProjects: Project[] = [
+  {
     id: "car-rental",
     title: "Car Rental",
     description: "Стиль. Свобода руху",
@@ -128,10 +150,6 @@ export const projects: Project[] = [
     titleSize: [30, 20],
     href: "https://www.prestige-rent.info/",
   },
-];
-
-/** Taken off the list, kept with its photo and videos so it can be put back */
-export const archivedProjects: Project[] = [
   {
     id: "padel-alicante",
     title: "Padel Alicante",
@@ -167,6 +185,7 @@ const projectCopyEn: Record<string, Partial<Pick<Project, "title" | "description
   "nef-life": { title: "New Life Chetkov", description: "An oasis of calm in the heart of Bali" },
   brium: { description: "Handmade tiles" },
   "car-rental": { description: "Style. Freedom to move" },
+  good2go: { description: "Sports and outdoor gear" },
   "we-padel": { description: "Where sport becomes pure joy" },
   bloomly: { title: "Solid Beech Beds", description: "Natural, reliable, made with soul" },
   "modular-homes": { description: "Functional homes for modern living", mobileDescription: "Homes for modern living" },
@@ -214,6 +233,8 @@ const projectMediaEn: Record<string, Partial<Pick<Project, "image" | "mobileImag
     video: { mobile: "/videos/prestige-rent-preview-mobile-en.mp4" },
     href: "https://www.prestige-rent.info/en",
   },
+  // the site exists only in English: the same screenshot and recording; TODO: placeholder link until the real one
+  good2go: { href: "https://www.miro-form.com/en" },
 };
 
 export const projectsByLocale: Record<Locale, Project[]> = {
