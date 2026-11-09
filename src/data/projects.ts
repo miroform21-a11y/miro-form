@@ -130,8 +130,7 @@ export const projects: Project[] = [
     mobileCrop: { left: -14.45, top: 0, width: 128.9, height: 100 },
     mobileCover: true,
     titleSize: [30, 20],
-    // TODO: placeholder until the real address of the site is ready
-    href: "https://www.miro-form.com/",
+    href: "https://good-go.space/",
   },
 ];
 
@@ -235,8 +234,6 @@ const projectMediaEn: Record<string, Partial<Pick<Project, "image" | "mobileImag
     video: { mobile: "/videos/prestige-rent-preview-mobile-en.mp4" },
     href: "https://www.prestige-rent.info/en",
   },
-  // the site exists only in English: the same screenshot and recording; TODO: placeholder link until the real one
-  good2go: { href: "https://www.miro-form.com/en" },
 };
 
 export const projectsByLocale: Record<Locale, Project[]> = {
