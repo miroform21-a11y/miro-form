@@ -36,7 +36,7 @@ export const directionById = (id: DirectionId) => directions.find((d) => d.id ==
 export const projectTypes = ["Лендінг", "Багатосторінковий сайт", "Інтернет-магазин", "Дизайн", "AI-рішення"] as const;
 export type ProjectType = (typeof projectTypes)[number];
 
-export const budgets = ["до $799", "$800–1600", "$1600–4000", "$4000+", "Не знаю"] as const;
+export const budgets = ["до $800", "$800–1600", "$1600–4000", "$4000+", "Не знаю"] as const;
 export type Budget = (typeof budgets)[number];
 
 /**
@@ -52,7 +52,7 @@ export const directionsEn = [
 export const projectTypesEn = ["Landing page", "Multi-page website", "Online store", "Design", "AI solution"] as const;
 
 /** The same budget ranges as the Ukrainian ones */
-export const budgetsEn = ["Up to $799", "$800–1600", "$1600–4000", "$4000+", "Not sure"] as const;
+export const budgetsEn = ["Up to $800", "$800–1600", "$1600–4000", "$4000+", "Not sure"] as const;
 
 type Direction = { id: DirectionId; popupTitle: string; options: readonly string[] };
 
