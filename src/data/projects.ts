@@ -32,8 +32,8 @@ export type Project = {
 export const projects: Project[] = [
   {
     id: "nef-life",
-    title: "NEF LIFE",
-    description: "Оазис тисячі в центрі Балі",
+    title: "New Life Chetkov",
+    description: "Оазис тиші в центрі Балі",
     tags: ["Landing Page", "Figma", "Framer"],
     image: { src: "/images/works/nef-life-desktop.png", width: 1920, height: 1080 },
     mobileImage: { src: "/images/works/nef-life-mobile-v2.png", width: 1230, height: 848 },
