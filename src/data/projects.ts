@@ -45,25 +45,23 @@ export const projects: Project[] = [
     href: "https://chetkov.pro/",
   },
   {
-    id: "we-padel",
-    title: "We Padel",
-    description: "Місце, де спорт стає задоволенням",
-    tags: ["Landing Page", "Next.js"],
-    /** The original card format: a full-page screenshot (same proportions as the first one, 1538x4096), current site */
-    /** Desktop: with a thin page-colour margin, so the rounded card corners do not clip the hero's brown frame */
-    image: { src: "/images/works/we-padel-page-framed-v4.png", width: 1896, height: 4699 },
-    /** Phones: recordings of the desktop site with a margin in the site's colour, one per card proportion */
-    mobileImage: { src: "/images/works/we-padel-m166.png", width: 1920, height: 1156 },
-    video: {
-      mobile: "/videos/we-padel-m166.mp4",
-      mobileVariants: [146, 156, 166, 176, 186].map((r) => ({ ratio: r / 100, src: `/videos/we-padel-m${r}.mp4`, poster: `/images/works/we-padel-m${r}.png` })),
-    },
-    crop: { left: 0, top: 0, width: 100, height: 222.14 },
-    mobileCrop: { left: 0.04, top: 0.18, width: 100, height: 497.11 },
-    mobileCover: true,
+    id: "good2go",
+    title: "GOOD2GO",
+    description: "Спорядження для спорту",
+    tags: ["Online Store", "Webflow"],
+    /** Desktop: the hero and the sport list with the hover picture of "Mountain sports" (no video on desktop). Taller
+     * than the narrowest frame of the last row (316x430 at 1024), so the full width always fits and only the bottom is cut */
+    image: { src: "/images/works/good2go-desktop-v2.png", width: 2160, height: 3000 },
+    /** Phones: recording of the desktop site — home, catalog, Freeride — the poster is its first frame */
+    mobileImage: { src: "/images/works/good2go-mobile.png", width: 960, height: 596 },
+    video: { mobile: "/videos/good2go-preview-mobile.mp4" },
+    crop: { left: 0, top: 0, width: 100, height: 100 },
     cover: true,
-    titleSize: [30, 22],
-    href: "https://www.we-padel.fun/",
+    /** Tablets: the poster at its own proportion for a ~1.25 frame (phones use mobileCover) */
+    mobileCrop: { left: -14.45, top: 0, width: 128.9, height: 100 },
+    mobileCover: true,
+    titleSize: [30, 20],
+    href: "https://good-go.space/",
   },
   {
     id: "brium",
@@ -114,23 +112,25 @@ export const projects: Project[] = [
     href: "https://om-residence.com/ua",
   },
   {
-    id: "good2go",
-    title: "GOOD2GO",
-    description: "Спорядження для спорту",
-    tags: ["Online Store", "Webflow"],
-    /** Desktop: the hero and the sport list with the hover picture of "Mountain sports" (no video on desktop). Taller
-     * than the narrowest frame of the last row (316x430 at 1024), so the full width always fits and only the bottom is cut */
-    image: { src: "/images/works/good2go-desktop-v2.png", width: 2160, height: 3000 },
-    /** Phones: recording of the desktop site — home, catalog, Freeride — the poster is its first frame */
-    mobileImage: { src: "/images/works/good2go-mobile.png", width: 960, height: 596 },
-    video: { mobile: "/videos/good2go-preview-mobile.mp4" },
-    crop: { left: 0, top: 0, width: 100, height: 100 },
-    cover: true,
-    /** Tablets: the poster at its own proportion for a ~1.25 frame (phones use mobileCover) */
-    mobileCrop: { left: -14.45, top: 0, width: 128.9, height: 100 },
+    id: "we-padel",
+    title: "We Padel",
+    description: "Місце, де спорт стає задоволенням",
+    tags: ["Landing Page", "Next.js"],
+    /** The original card format: a full-page screenshot (same proportions as the first one, 1538x4096), current site */
+    /** Desktop: with a thin page-colour margin, so the rounded card corners do not clip the hero's brown frame */
+    image: { src: "/images/works/we-padel-page-framed-v4.png", width: 1896, height: 4699 },
+    /** Phones: recordings of the desktop site with a margin in the site's colour, one per card proportion */
+    mobileImage: { src: "/images/works/we-padel-m166.png", width: 1920, height: 1156 },
+    video: {
+      mobile: "/videos/we-padel-m166.mp4",
+      mobileVariants: [146, 156, 166, 176, 186].map((r) => ({ ratio: r / 100, src: `/videos/we-padel-m${r}.mp4`, poster: `/images/works/we-padel-m${r}.png` })),
+    },
+    crop: { left: 0, top: 0, width: 100, height: 222.14 },
+    mobileCrop: { left: 0.04, top: 0.18, width: 100, height: 497.11 },
     mobileCover: true,
-    titleSize: [30, 20],
-    href: "https://good-go.space/",
+    cover: true,
+    titleSize: [30, 22],
+    href: "https://www.we-padel.fun/",
   },
 ];
 
