@@ -146,7 +146,7 @@ function KeepLastSentence({ text }: { text: string }) {
   );
 }
 
-function CompactPlanCard({ plan, locale, t }: { plan: Plan; locale: Locale; t: PricingContent }) {
+function CompactPlanCard({ plan, locale, t, hidePrice }: { plan: Plan; locale: Locale; t: PricingContent; hidePrice?: boolean }) {
   const isMulti = plan.id === "multi";
   return (
     <LeadCard
@@ -212,8 +212,8 @@ function CompactPlanCard({ plan, locale, t }: { plan: Plan; locale: Locale; t: P
       </div>
 
       <div className="relative mt-auto pt-5">
-        <Price value={plan.price} size="sm" animate locale={locale} t={t} />
-        <PillButton as="span" variant={isMulti ? "white" : "lime"} className="mt-[18px] h-[60px] w-full pr-1.5 pl-7">
+        {!hidePrice && <Price value={plan.price} size="sm" animate locale={locale} t={t} />}
+        <PillButton as="span" variant={isMulti ? "white" : "lime"} className={`h-[60px] w-full pr-1.5 pl-7 ${hidePrice ? "" : "mt-[18px]"}`}>
           {t.choose}
         </PillButton>
       </div>
@@ -274,7 +274,7 @@ function CompactCustomCard({ t }: { t: PricingContent }) {
 /* Desktop (≥ 1280px): 1440px Figma frame                            */
 /* ---------------------------------------------------------------- */
 
-function DesktopPlanCard({ plan, locale, t }: { plan: Plan; locale: Locale; t: PricingContent }) {
+function DesktopPlanCard({ plan, locale, t, hidePrice }: { plan: Plan; locale: Locale; t: PricingContent; hidePrice?: boolean }) {
   const isMulti = plan.id === "multi";
   return (
     <LeadCard
@@ -333,7 +333,7 @@ function DesktopPlanCard({ plan, locale, t }: { plan: Plan; locale: Locale; t: P
         <PillButton as="span" variant={isMulti ? "white" : "lime"} className={locale === "en" ? "h-[60px] w-auto min-w-[250px] shrink-0 pr-1.5 pl-7" : "h-[60px] w-[250px] pr-1.5 pl-7"}>
           {t.choose}
         </PillButton>
-        <Price value={plan.price} size="lg" locale={locale} t={t} />
+        {!hidePrice && <Price value={plan.price} size="lg" locale={locale} t={t} />}
       </div>
     </LeadCard>
   );
@@ -387,7 +387,16 @@ function DesktopCustomCard({ t }: { t: PricingContent }) {
 
 /* ---------------------------------------------------------------- */
 
-export function Pricing({ locale = "uk", content = siteContent[locale].pricing }: { locale?: Locale; content?: PricingContent }) {
+/** `hidePrices`: the shared switch of the admin (the English page passes the Ukrainian value) */
+export function Pricing({
+  locale = "uk",
+  content = siteContent[locale].pricing,
+  hidePrices = content.hidePrices,
+}: {
+  locale?: Locale;
+  content?: PricingContent;
+  hidePrices?: boolean;
+}) {
   const t = content;
   const { plans } = t;
   return (
@@ -410,7 +419,7 @@ export function Pricing({ locale = "uk", content = siteContent[locale].pricing }
         <div className="mt-6 grid gap-3 md:mt-10 md:gap-5 lg:grid-cols-2 xl:hidden">
           {plans.map((plan, i) => (
             <Reveal key={plan.id} delay={i * 80} className="flex [&>article]:flex-1">
-              <CompactPlanCard plan={plan} locale={locale} t={t} />
+              <CompactPlanCard plan={plan} locale={locale} t={t} hidePrice={hidePrices} />
             </Reveal>
           ))}
           <Reveal className="lg:col-span-2">
@@ -423,7 +432,7 @@ export function Pricing({ locale = "uk", content = siteContent[locale].pricing }
           <div className="flex h-[500px] gap-5">
             {plans.map((plan, i) => (
               <Reveal key={plan.id} delay={i * 90} className="flex min-w-0 flex-1 items-start [&>article]:flex-1">
-                <DesktopPlanCard plan={plan} locale={locale} t={t} />
+                <DesktopPlanCard plan={plan} locale={locale} t={t} hidePrice={hidePrices} />
               </Reveal>
             ))}
           </div>

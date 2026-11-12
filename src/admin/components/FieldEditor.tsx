@@ -546,9 +546,7 @@ export function Fields(props: Props) {
   const { fields, ...rest } = props;
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      {fields.map((f, i) => (
-        <FieldView key={i} f={f} {...rest} />
-      ))}
+      {fields.map((f, i) => ("only" in f && f.only && f.only !== rest.ctx.locale ? null : <FieldView key={i} f={f} {...rest} />))}
     </div>
   );
 }

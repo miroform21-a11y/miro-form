@@ -53,10 +53,11 @@ export type Field =
     })
   | { kind: "group"; label?: string; hint?: string; path?: string; fields: Field[] }
   | (Common & { kind: "select"; options: SelectOption[] | ((ctx: FieldContext) => SelectOption[]); numeric?: boolean; allowEmpty?: string })
-  | (Common & { kind: "toggle" })
+  /** `only`: shown in the editor of this language only */
+  | (Common & { kind: "toggle"; only?: Locale })
   /** Optional sub-object / tuple: a checkbox adds it with `make()` or removes it */
   | (Common & { kind: "optional"; make: (item: unknown) => unknown; fields: Field[] })
-  | { kind: "note"; text: string; tone?: "info" | "warn" }
+  | { kind: "note"; text: string; tone?: "info" | "warn"; only?: Locale }
   /** Cross-field rule of the current level (no own input) */
   | { kind: "check"; run: (value: unknown, ctx: FieldContext) => Omit<Issue, "path"> & { path?: string } | undefined };
 

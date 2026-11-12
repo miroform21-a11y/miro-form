@@ -7,6 +7,8 @@ export const pricingContent: Record<Locale, PricingContent> = {
     tag: "Тарифи",
     title: "Пакети та вартість",
     from: "Від",
+    // one switch for both sites (the English page reads it from here)
+    hidePrices: false,
     // only used when a price is not set (the Ukrainian plans always have one)
     quote: ["Ціна", "за запитом"],
     payment: { title: "Гнучка оплата частинами", note: "До 12 місяців — деталі на консультації" },

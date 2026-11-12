@@ -13,7 +13,7 @@ import { Footer } from "@/components/sections/Footer";
 import { LeadModal } from "@/components/sections/LeadModal";
 import { JsonLd } from "@/components/ui/JsonLd";
 import { faqJsonLd, offerCatalogJsonLd, pageMetadata } from "@/lib/seo";
-import { getSiteContent } from "@/server/cms/published";
+import { getPricesHidden, getSiteContent } from "@/server/cms/published";
 
 /** Regenerated in the background at most every 10 minutes (publishing refreshes it at once) — also when the build ran without the database */
 export const revalidate = 600;
@@ -26,6 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
 /** Home page: every section renders the published content (src/content when nothing is published). */
 export default async function Home() {
   const c = await getSiteContent("uk");
+  const hidePrices = await getPricesHidden();
   return (
     <>
       <main>
@@ -35,14 +36,14 @@ export default async function Home() {
         <About locale="uk" content={c.about} />
         <Facts locale="uk" content={c.facts} />
         <Process locale="uk" content={c.process} />
-        <Pricing locale="uk" content={c.pricing} />
+        <Pricing locale="uk" content={c.pricing} hidePrices={hidePrices} />
         <Reviews locale="uk" content={c.reviews} />
         <Faq locale="uk" content={c.faq} />
         <Contact locale="uk" content={c.contact} formsContent={c.forms} />
       </main>
       <Footer locale="uk" content={c.footer} />
       <LeadModal locale="uk" content={c.forms} />
-      <JsonLd data={{ "@context": "https://schema.org", "@graph": [faqJsonLd(c.faq.items), offerCatalogJsonLd("uk", c.pricing.plans)] }} />
+      <JsonLd data={{ "@context": "https://schema.org", "@graph": [faqJsonLd(c.faq.items), offerCatalogJsonLd("uk", hidePrices ? [] : c.pricing.plans)] }} />
     </>
   );
 }

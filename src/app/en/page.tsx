@@ -13,7 +13,7 @@ import { Footer } from "@/components/sections/Footer";
 import { LeadModal } from "@/components/sections/LeadModal";
 import { JsonLd } from "@/components/ui/JsonLd";
 import { faqJsonLd, offerCatalogJsonLd, pageMetadata } from "@/lib/seo";
-import { getSiteContent } from "@/server/cms/published";
+import { getPricesHidden, getSiteContent } from "@/server/cms/published";
 
 /** Regenerated in the background at most every 10 minutes (publishing refreshes it at once) — also when the build ran without the database */
 export const revalidate = 600;
@@ -26,6 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
 /** The English home page: the same sections as the Ukrainian site, with English copy (published content). */
 export default async function EnglishHome() {
   const c = await getSiteContent("en");
+  const hidePrices = await getPricesHidden();
   return (
     <>
       <main>
@@ -35,14 +36,14 @@ export default async function EnglishHome() {
         <About locale="en" content={c.about} />
         <Facts locale="en" content={c.facts} />
         <Process locale="en" content={c.process} />
-        <Pricing locale="en" content={c.pricing} />
+        <Pricing locale="en" content={c.pricing} hidePrices={hidePrices} />
         <Reviews locale="en" content={c.reviews} />
         <Faq locale="en" content={c.faq} />
         <Contact locale="en" content={c.contact} formsContent={c.forms} />
       </main>
       <Footer locale="en" content={c.footer} />
       <LeadModal locale="en" content={c.forms} />
-      <JsonLd data={{ "@context": "https://schema.org", "@graph": [faqJsonLd(c.faq.items), offerCatalogJsonLd("en", c.pricing.plans)] }} />
+      <JsonLd data={{ "@context": "https://schema.org", "@graph": [faqJsonLd(c.faq.items), offerCatalogJsonLd("en", hidePrices ? [] : c.pricing.plans)] }} />
     </>
   );
 }

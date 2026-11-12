@@ -131,6 +131,11 @@ export type PricingContent = {
   title: string;
   /** Small label before a price ("Від 390$") */
   from: string;
+  /**
+   * Hides the price of both packages ("Від" + amount) on both sites. Only the Ukrainian value counts
+   * (one checkbox in the admin); the English page receives it from there.
+   */
+  hidePrices?: boolean;
   /** Shown in the price slot when a plan has no price: small label + big word */
   quote: [string, string];
   payment: { title: string; note: string };

@@ -74,4 +74,6 @@ export async function getPublishedOrBuiltIn(): Promise<Published> {
 }
 
 export const getSiteContent = async (locale: Locale): Promise<SiteContent> => (await getPublished()).snapshot.site[locale];
-export const getBriefContent = async (locale: Locale): Promise<BriefContent> => (await getPublished()).snapshot.brief[locale];
+/** The shared "Скрыть цену" switch: set once in the Ukrainian pricing section, applies to both sites */
+export const getPricesHidden = async (): Promise<boolean> => !!(await getPublished()).snapshot.site.uk.pricing.hidePrices;
+export const getBriefContent =async (locale: Locale): Promise<BriefContent> => (await getPublished()).snapshot.brief[locale];
